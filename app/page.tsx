@@ -7,49 +7,91 @@ const services = [
     icon: "🪪",
     en: "CNIC / NADRA",
     ur: "شناختی کارڈ / نادرا",
-    text: "Documents, renewal and general guidance",
+    textEn: "Documents, renewal and general guidance",
+    textUr: "دستاویزات، تجدید اور عمومی رہنمائی",
   },
   {
     icon: "🛂",
     en: "Passport",
     ur: "پاسپورٹ",
-    text: "Application and renewal guidance",
+    textEn: "Application and renewal guidance",
+    textUr: "درخواست اور تجدید کی رہنمائی",
   },
   {
     icon: "🚗",
     en: "Driving Licence",
     ur: "ڈرائیونگ لائسنس",
-    text: "General licence information",
+    textEn: "General licence information",
+    textUr: "لائسنس سے متعلق عمومی معلومات",
   },
   {
     icon: "🏠",
     en: "Domicile",
     ur: "ڈومیسائل",
-    text: "Requirements and application guidance",
+    textEn: "Requirements and application guidance",
+    textUr: "ضروریات اور درخواست کی رہنمائی",
   },
   {
     icon: "🎓",
     en: "Scholarships",
     ur: "اسکالرشپس",
-    text: "Find eligibility and official information",
+    textEn: "Find eligibility and official information",
+    textUr: "اہلیت اور سرکاری معلومات تلاش کریں",
   },
   {
     icon: "🔎",
-    en: "Search Services",
-    ur: "سروس تلاش کریں",
-    text: "Ask about another public service",
+    en: "Other Services",
+    ur: "دیگر سروسز",
+    textEn: "Ask about another public service",
+    textUr: "کسی دوسری سرکاری سروس کے بارے میں پوچھیں",
+  },
+];
+
+const examples = [
+  {
+    en: "What documents are required for a passport?",
+    ur: "پاسپورٹ کے لیے کون سے کاغذات ضروری ہیں؟",
+  },
+  {
+    en: "How can I renew my CNIC?",
+    ur: "میں اپنا شناختی کارڈ کیسے تجدید کروا سکتا ہوں؟",
+  },
+  {
+    en: "How can I apply for a domicile?",
+    ur: "میں ڈومیسائل کے لیے کیسے درخواست دے سکتا ہوں؟",
   },
 ];
 
 export default function Home() {
   const [urdu, setUrdu] = useState(false);
   const [query, setQuery] = useState("");
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [asked, setAsked] = useState(false);
 
   const visibleServices = services.filter((service) =>
-    `${service.en} ${service.ur} ${service.text}`
+    `${service.en} ${service.ur} ${service.textEn} ${service.textUr}`
       .toLowerCase()
       .includes(query.toLowerCase())
   );
+
+  function askQuestion() {
+    if (!question.trim()) return;
+
+    setAsked(true);
+
+    setAnswer(
+      urdu
+        ? "شکریہ! آپ کا سوال موصول ہوگیا ہے۔ اگلے مرحلے میں Citizen Helper AI سرکاری ذرائع سے تصدیق شدہ معلومات فراہم کرے گا۔"
+        : "Thank you! Your question has been received. In the next phase, Citizen Helper AI will provide verified information using official government sources."
+    );
+  }
+
+  function chooseExample(text: string) {
+    setQuestion(text);
+    setAsked(false);
+    setAnswer("");
+  }
 
   return (
     <main>
@@ -75,7 +117,6 @@ export default function Home() {
       {/* HERO */}
       <section className="hero">
         <div className="heroContent">
-
           <div className="pill">
             🇵🇰{" "}
             {urdu
@@ -95,7 +136,7 @@ export default function Home() {
               : "Find documents, steps and official sources in one simple place."}
           </p>
 
-          {/* SEARCH */}
+          {/* SERVICE SEARCH */}
           <div className="search">
             <span>🔎</span>
 
@@ -105,7 +146,7 @@ export default function Home() {
               placeholder={
                 urdu
                   ? "مثلاً شناختی کارڈ، پاسپورٹ، ڈومیسائل..."
-                  : "Ask about CNIC, passport, domicile..."
+                  : "Search CNIC, passport, domicile..."
               }
             />
 
@@ -124,7 +165,6 @@ export default function Home() {
 
       {/* SERVICES */}
       <section className="content">
-
         <div className="sectionHead">
           <div>
             <span className="eyebrow">
@@ -139,53 +179,51 @@ export default function Home() {
           </div>
 
           <span className="count">
-            {visibleServices.length} services
+            {visibleServices.length}{" "}
+            {urdu ? "سروسز" : "services"}
           </span>
         </div>
 
         <div className="grid">
-
           {visibleServices.map((service) => (
             <button
               className="card"
               key={service.en}
-              onClick={() => setQuery(service.en)}
-            >
+              onClick={() => {
+                setQuery(service.en);
+                setQuestion(
+                  urdu
+                    ? `${service.ur} کے بارے میں معلومات چاہیے۔`
+                    : `I need information about ${service.en}.`
+                );
 
-              <div className="icon">
-                {service.icon}
-              </div>
+                document
+                  .getElementById("ask")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              <div className="icon">{service.icon}</div>
 
               <div className="cardText">
-
-                <h3>
-                  {urdu ? service.ur : service.en}
-                </h3>
+                <h3>{urdu ? service.ur : service.en}</h3>
 
                 <p>
-                  {service.text}
+                  {urdu
+                    ? service.textUr
+                    : service.textEn}
                 </p>
-
               </div>
 
-              <span className="arrow">
-                →
-              </span>
-
+              <span className="arrow">→</span>
             </button>
           ))}
-
         </div>
 
-        {/* AI SECTION */}
-        <section className="ask">
+        {/* ASK CITIZEN HELPER */}
+        <section className="ask" id="ask">
+          <div className="askIcon">🤖</div>
 
-          <div className="askIcon">
-            🤖
-          </div>
-
-          <div>
-
+          <div className="askContent">
             <span className="eyebrow">
               CITIZEN HELPER AI
             </span>
@@ -193,36 +231,91 @@ export default function Home() {
             <h2>
               {urdu
                 ? "اپنا سوال عام زبان میں پوچھیں"
-                : "Ask your question in your own words"}
+                : "Ask Citizen Helper"}
             </h2>
 
             <p>
               {urdu
-                ? "اگلے مرحلے میں AI آپ کو متعلقہ معلومات اور سرکاری ذریعہ دکھائے گا۔"
-                : "In the next phase, AI will guide you using approved service information and official sources."}
+                ? "اپنا سوال لکھیں۔ مستقبل میں AI آپ کو سرکاری ذرائع سے تصدیق شدہ معلومات فراہم کرے گا۔"
+                : "Ask your question in simple language. The AI will guide you using verified official information."}
             </p>
 
+            {/* QUESTION BOX */}
+            <div className="questionBox">
+              <textarea
+                value={question}
+                onChange={(e) => {
+                  setQuestion(e.target.value);
+                  setAsked(false);
+                }}
+                placeholder={
+                  urdu
+                    ? "مثلاً پاسپورٹ بنوانے کے لیے کون سے کاغذات چاہئیں؟"
+                    : "Example: What documents are required for a passport?"
+                }
+                rows={4}
+              />
+
+              <button
+                className="askButton"
+                onClick={askQuestion}
+              >
+                {urdu ? "سوال پوچھیں" : "Ask Question"} →
+              </button>
+            </div>
+
+            {/* EXAMPLE QUESTIONS */}
+            <div className="examples">
+              <span>
+                {urdu
+                  ? "مثالی سوالات:"
+                  : "Try an example:"}
+              </span>
+
+              <div className="exampleList">
+                {examples.map((item) => (
+                  <button
+                    key={item.en}
+                    onClick={() =>
+                      chooseExample(
+                        urdu ? item.ur : item.en
+                      )
+                    }
+                  >
+                    {urdu ? item.ur : item.en}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* TEMPORARY ANSWER */}
+            {asked && (
+              <div className="answerBox">
+                <div className="answerTitle">
+                  🤖{" "}
+                  {urdu
+                    ? "Citizen Helper"
+                    : "Citizen Helper"}
+                </div>
+
+                <p>{answer}</p>
+
+                <small>
+                  ⚠️{" "}
+                  {urdu
+                    ? "یہ عارضی جواب ہے۔ AI اور سرکاری ذرائع اگلے مرحلے میں منسلک کیے جائیں گے۔"
+                    : "This is a temporary response. AI and verified official sources will be connected in the next phase."}
+                </small>
+              </div>
+            )}
           </div>
-
-          <button
-            onClick={() =>
-              alert(
-                "AI Assistant will be enabled in the next version."
-              )
-            }
-          >
-            {urdu ? "جلد آرہا ہے" : "Coming next"} ✨
-          </button>
-
         </section>
 
-        {/* WARNING */}
+        {/* NOTICE */}
         <section className="notice">
-
           <div>⚠️</div>
 
           <div>
-
             <strong>
               {urdu ? "اہم نوٹ" : "Important note"}
             </strong>
@@ -232,16 +325,12 @@ export default function Home() {
                 ? "یہ ایپ سرکاری ادارہ نہیں ہے۔ ہمیشہ تازہ معلومات کے لیے متعلقہ سرکاری ذریعہ چیک کریں۔"
                 : "This app is not a government department. Always check the relevant official source for current information."}
             </p>
-
           </div>
-
         </section>
-
       </section>
 
       {/* FOOTER */}
       <footer>
-
         <strong>
           Pakistan Citizen Helper 🇵🇰
         </strong>
@@ -253,9 +342,7 @@ export default function Home() {
         <small>
           V1 • Bilingual public-service information assistant
         </small>
-
       </footer>
-
     </main>
   );
-              }
+}

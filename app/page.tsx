@@ -62,6 +62,263 @@ const examples = [
   },
 ];
 
+/* =========================================================
+   MARKDOWN ANSWER RENDERER
+   Converts common AI markdown into readable UI
+========================================================= */
+
+function renderMarkdown(text: string) {
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+
+  let bulletItems: string[] = [];
+  let numberedItems: string[] = [];
+  let tableRows: string[][] = [];
+  let insideTable = false;
+
+  function flushBullets() {
+    if (bulletItems.length > 0) {
+      elements.push(
+        <ul className="answerList" key={`bullets-${elements.length}`}>
+          {bulletItems.map((item, index) => (
+            <li key={index}>{formatInline(item)}</li>
+          ))}
+        </ul>
+      );
+
+      bulletItems = [];
+    }
+  }
+
+  function flushNumbered() {
+    if (numberedItems.length > 0) {
+      elements.push(
+        <ol className="answerNumberedList" key={`numbers-${elements.length}`}>
+          {numberedItems.map((item, index) => (
+            <li key={index}>{formatInline(item)}</li>
+          ))}
+        </ol>
+      );
+
+      numberedItems = [];
+    }
+  }
+
+  function flushTable() {
+    if (tableRows.length >= 2) {
+      const header = tableRows[0];
+      const rows = tableRows.slice(1);
+
+      elements.push(
+        <div
+          className="answerTableWrapper"
+          key={`table-${elements.length}`}
+        >
+          <table className="answerTable">
+            <thead>
+              <tr>
+                {header.map((cell, index) => (
+                  <th key={index}>{formatInline(cell)}</th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody>
+              {rows.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {header.map((_, cellIndex) => (
+                    <td key={cellIndex}>
+                      {formatInline(row[cellIndex] || "")}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    tableRows = [];
+    insideTable = false;
+  }
+
+  function formatInline(value: string) {
+    const parts = value.split(
+      /(\*\*.*?\*\*|\[.*?\]\(.*?\)|https?:\/\/[^\s]+)/g
+    );
+
+    return parts.map((part, index) => {
+      if (!part) return null;
+
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return (
+          <strong key={index}>
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+
+      const markdownLink = part.match(/^\[(.*?)\]\((.*?)\)$/);
+
+      if (markdownLink) {
+        return (
+          <a
+            key={index}
+            href={markdownLink[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {markdownLink[1]}
+          </a>
+        );
+      }
+
+      if (part.startsWith("http://") || part.startsWith("https://")) {
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Official source
+          </a>
+        );
+      }
+
+      return <span key={index}>{part}</span>;
+    });
+  }
+
+  lines.forEach((rawLine, index) => {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushBullets();
+      flushNumbered();
+
+      if (insideTable) {
+        flushTable();
+      }
+
+      return;
+    }
+
+    /* TABLE */
+    if (line.includes("|")) {
+      const cells = line
+        .split("|")
+        .map((cell) => cell.trim())
+        .filter(Boolean);
+
+      const isSeparator = cells.every((cell) =>
+        /^:?-{3,}:?$/.test(cell)
+      );
+
+      if (isSeparator) {
+        insideTable = true;
+        return;
+      }
+
+      if (!insideTable && tableRows.length === 0) {
+        insideTable = true;
+      }
+
+      tableRows.push(cells);
+      return;
+    }
+
+    if (insideTable) {
+      flushTable();
+    }
+
+    /* BULLET */
+    if (/^[-*•]\s+/.test(line)) {
+      flushNumbered();
+
+      bulletItems.push(
+        line.replace(/^[-*•]\s+/, "")
+      );
+
+      return;
+    }
+
+    /* NUMBERED LIST */
+    if (/^\d+[\.\)]\s+/.test(line)) {
+      flushBullets();
+
+      numberedItems.push(
+        line.replace(/^\d+[\.\)]\s+/, "")
+      );
+
+      return;
+    }
+
+    flushBullets();
+    flushNumbered();
+
+    /* H1 / H2 / H3 */
+    if (line.startsWith("### ")) {
+      elements.push(
+        <h4
+          className="answerHeading small"
+          key={`h-${index}`}
+        >
+          {formatInline(line.replace(/^###\s+/, ""))}
+        </h4>
+      );
+
+      return;
+    }
+
+    if (line.startsWith("## ")) {
+      elements.push(
+        <h3
+          className="answerHeading"
+          key={`h-${index}`}
+        >
+          {formatInline(line.replace(/^##\s+/, ""))}
+        </h3>
+      );
+
+      return;
+    }
+
+    if (line.startsWith("# ")) {
+      elements.push(
+        <h2
+          className="answerHeading large"
+          key={`h-${index}`}
+        >
+          {formatInline(line.replace(/^#\s+/, ""))}
+        </h2>
+      );
+
+      return;
+    }
+
+    /* NORMAL PARAGRAPH */
+    elements.push(
+      <p
+        className="answerParagraph"
+        key={`p-${index}`}
+      >
+        {formatInline(line)}
+      </p>
+    );
+  });
+
+  flushBullets();
+  flushNumbered();
+
+  if (insideTable) {
+    flushTable();
+  }
+
+  return elements;
+}
+
 export default function Home() {
   const [urdu, setUrdu] = useState(false);
   const [query, setQuery] = useState("");
@@ -102,8 +359,20 @@ export default function Home() {
         );
       }
 
-      setAnswer(data.answer || "No answer was returned.");
+      setAnswer(
+        data.answer || "No answer was returned."
+      );
+
       setAsked(true);
+
+      setTimeout(() => {
+        document
+          .getElementById("answer-result")
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+      }, 100);
     } catch (error) {
       console.error(error);
 
@@ -127,7 +396,10 @@ export default function Home() {
 
   return (
     <main>
-      {/* NAVIGATION */}
+      {/* =====================================================
+          NAVIGATION
+      ===================================================== */}
+
       <nav className="nav">
         <div className="brand">
           <div className="flag">🇵🇰</div>
@@ -146,7 +418,10 @@ export default function Home() {
         </button>
       </nav>
 
-      {/* HERO */}
+      {/* =====================================================
+          HERO
+      ===================================================== */}
+
       <section className="hero">
         <div className="heroContent">
           <div className="pill">
@@ -169,12 +444,15 @@ export default function Home() {
           </p>
 
           {/* SERVICE SEARCH */}
+
           <div className="search">
             <span>🔎</span>
 
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) =>
+                setQuery(e.target.value)
+              }
               placeholder={
                 urdu
                   ? "مثلاً شناختی کارڈ، پاسپورٹ، ڈومیسائل..."
@@ -195,12 +473,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SERVICES */}
+      {/* =====================================================
+          SERVICES
+      ===================================================== */}
+
       <section className="content">
         <div className="sectionHead">
           <div>
             <span className="eyebrow">
-              {urdu ? "مقبول سروسز" : "POPULAR SERVICES"}
+              {urdu
+                ? "مقبول سروسز"
+                : "POPULAR SERVICES"}
             </span>
 
             <h2>
@@ -232,13 +515,21 @@ export default function Home() {
 
                 document
                   .getElementById("ask")
-                  ?.scrollIntoView({ behavior: "smooth" });
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                  });
               }}
             >
-              <div className="icon">{service.icon}</div>
+              <div className="icon">
+                {service.icon}
+              </div>
 
               <div className="cardText">
-                <h3>{urdu ? service.ur : service.en}</h3>
+                <h3>
+                  {urdu
+                    ? service.ur
+                    : service.en}
+                </h3>
 
                 <p>
                   {urdu
@@ -252,7 +543,10 @@ export default function Home() {
           ))}
         </div>
 
-        {/* ASK CITIZEN HELPER */}
+        {/* =====================================================
+            ASK CITIZEN HELPER
+        ===================================================== */}
+
         <section className="ask" id="ask">
           <div className="askIcon">🤖</div>
 
@@ -269,11 +563,12 @@ export default function Home() {
 
             <p>
               {urdu
-                ? "اپنا سوال لکھیں اور Citizen Helper AI سے رہنمائی حاصل کریں۔"
-                : "Ask your question in simple language and get guidance from Citizen Helper AI."}
+                ? "اپنا سوال لکھیں اور Citizen Helper AI سے آسان رہنمائی حاصل کریں۔"
+                : "Ask your question in simple language and get clear guidance from Citizen Helper AI."}
             </p>
 
             {/* QUESTION BOX */}
+
             <div className="questionBox">
               <textarea
                 value={question}
@@ -293,7 +588,9 @@ export default function Home() {
               <button
                 className="askButton"
                 onClick={askQuestion}
-                disabled={loading || !question.trim()}
+                disabled={
+                  loading || !question.trim()
+                }
               >
                 {loading
                   ? urdu
@@ -301,12 +598,42 @@ export default function Home() {
                     : "Getting answer..."
                   : urdu
                     ? "سوال پوچھیں"
-                    : "Ask Question"}{" "}
-                {!loading && "→"}
+                    : "Ask Question"}
+
+                {!loading && " →"}
               </button>
             </div>
 
-            {/* EXAMPLES */}
+            {/* =================================================
+                LOADING
+            ================================================= */}
+
+            {loading && (
+              <div className="loadingBox">
+                <div className="loadingIcon">
+                  🤖
+                </div>
+
+                <div>
+                  <strong>
+                    {urdu
+                      ? "Citizen Helper جواب تیار کر رہا ہے"
+                      : "Citizen Helper is preparing your answer"}
+                  </strong>
+
+                  <div className="loadingDots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* =================================================
+                EXAMPLES
+            ================================================= */}
+
             <div className="examples">
               <span>
                 {urdu
@@ -320,46 +647,129 @@ export default function Home() {
                     key={item.en}
                     onClick={() =>
                       chooseExample(
-                        urdu ? item.ur : item.en
+                        urdu
+                          ? item.ur
+                          : item.en
                       )
                     }
                     disabled={loading}
                   >
-                    {urdu ? item.ur : item.en}
+                    {urdu
+                      ? item.ur
+                      : item.en}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* AI ANSWER */}
+            {/* =================================================
+                AI ANSWER
+            ================================================= */}
+
             {asked && (
-              <div className="answerBox">
-                <div className="answerTitle">
-                  🤖 Citizen Helper AI
+              <section
+                className="answerBox"
+                id="answer-result"
+              >
+                {/* ANSWER HEADER */}
+
+                <div className="answerHeader">
+                  <div className="answerHeaderLeft">
+                    <div className="answerRobot">
+                      🤖
+                    </div>
+
+                    <div>
+                      <strong>
+                        Citizen Helper AI
+                      </strong>
+
+                      <span>
+                        {urdu
+                          ? "آپ کے سوال کا جواب"
+                          : "Response to your question"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="answerBadge">
+                    AI
+                  </div>
                 </div>
 
-                <p className="aiAnswer">
-                  {answer}
-                </p>
+                {/* USER QUESTION */}
 
-                <small>
-                  ⚠️{" "}
-                  {urdu
-                    ? "اہم معلومات کے لیے متعلقہ سرکاری ذریعہ ضرور چیک کریں۔"
-                    : "For important matters, always verify information with the relevant official government source."}
-                </small>
-              </div>
+                <div className="questionSummary">
+                  <span>
+                    {urdu
+                      ? "آپ کا سوال"
+                      : "Your question"}
+                  </span>
+
+                  <p>{question}</p>
+                </div>
+
+                {/* ANSWER CONTENT */}
+
+                <div className="answerContent">
+                  {renderMarkdown(answer)}
+                </div>
+
+                {/* VERIFICATION NOTICE */}
+
+                <div className="verificationBox">
+                  <div className="verificationIcon">
+                    ⚠️
+                  </div>
+
+                  <div>
+                    <strong>
+                      {urdu
+                        ? "اہم: معلومات کی تصدیق کریں"
+                        : "Important: Verify before acting"}
+                    </strong>
+
+                    <p>
+                      {urdu
+                        ? "سرکاری فیس، دستاویزات، اوقات اور طریقہ کار میں تبدیلی ہو سکتی ہے۔ اہم کام کرنے سے پہلے متعلقہ سرکاری ادارے کے تازہ ترین ذرائع سے تصدیق کریں۔"
+                        : "Government fees, documents, timings and procedures may change. Before taking important action, verify the latest information from the relevant official government source."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* ANSWER FOOTER */}
+
+                <div className="answerFooter">
+                  <span>
+                    🇵🇰{" "}
+                    {urdu
+                      ? "پاکستان سٹیزن ہیلپر"
+                      : "Pakistan Citizen Helper"}
+                  </span>
+
+                  <span>
+                    {urdu
+                      ? "سرکاری معلومات کو ترجیح دی جاتی ہے"
+                      : "Official sources are preferred"}
+                  </span>
+                </div>
+              </section>
             )}
           </div>
         </section>
 
-        {/* NOTICE */}
+        {/* =====================================================
+            NOTICE
+        ===================================================== */}
+
         <section className="notice">
           <div>⚠️</div>
 
           <div>
             <strong>
-              {urdu ? "اہم نوٹ" : "Important note"}
+              {urdu
+                ? "اہم نوٹ"
+                : "Important note"}
             </strong>
 
             <p>
@@ -371,7 +781,10 @@ export default function Home() {
         </section>
       </section>
 
-      {/* FOOTER */}
+      {/* =====================================================
+          FOOTER
+      ===================================================== */}
+
       <footer>
         <strong>
           Pakistan Citizen Helper 🇵🇰

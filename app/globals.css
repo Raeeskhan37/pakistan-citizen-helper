@@ -1,0 +1,492 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #173042;
+  background: #f7faf9;
+}
+
+/* =========================
+   NAVIGATION
+========================= */
+
+.nav {
+  height: 76px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 7%;
+  border-bottom: 1px solid #e6eeeb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.brand strong {
+  display: block;
+  font-size: 17px;
+}
+
+.brand span {
+  display: block;
+  font-size: 12px;
+  color: #668079;
+  margin-top: 3px;
+}
+
+.flag {
+  font-size: 31px;
+}
+
+.language {
+  border: 1px solid #d5e4df;
+  background: #f2faf7;
+  color: #096b4f;
+  border-radius: 22px;
+  padding: 9px 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* =========================
+   HERO
+========================= */
+
+.hero {
+  background: linear-gradient(
+    135deg,
+    #075c43 0%,
+    #0b8061 55%,
+    #159e77 100%
+  );
+
+  color: #ffffff;
+  padding: 58px 7% 68px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  right: -90px;
+  top: -110px;
+}
+
+.heroContent {
+  max-width: 850px;
+  margin: auto;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.pill {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 8px 14px;
+  border-radius: 30px;
+  font-size: 13px;
+  margin-bottom: 17px;
+}
+
+.hero h1 {
+  font-size: 42px;
+  line-height: 1.13;
+  margin: 5px auto 15px;
+  max-width: 760px;
+}
+
+.hero p {
+  font-size: 17px;
+  line-height: 1.6;
+  opacity: 0.93;
+  margin: 0 auto 26px;
+}
+
+/* =========================
+   SEARCH
+========================= */
+
+.search {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 7px;
+  display: flex;
+  align-items: center;
+  max-width: 760px;
+  margin: auto;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
+}
+
+.search span {
+  font-size: 21px;
+  margin: 0 8px;
+}
+
+.search input {
+  border: 0;
+  outline: 0;
+  flex: 1;
+  font-size: 15px;
+  padding: 13px;
+  background: transparent;
+}
+
+.search button {
+  border: 0;
+  background: #f4a623;
+  color: #173042;
+  font-weight: 800;
+  padding: 13px 21px;
+  border-radius: 11px;
+  cursor: pointer;
+}
+
+.trust {
+  font-size: 11px;
+  opacity: 0.82;
+  margin-top: 14px;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.content {
+  max-width: 1080px;
+  margin: auto;
+  padding: 43px 7%;
+}
+
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  color: #0b8061;
+  font-weight: 800;
+}
+
+.sectionHead h2,
+.ask h2 {
+  margin: 6px 0 0;
+  font-size: 25px;
+}
+
+.count {
+  font-size: 12px;
+  color: #7a8d88;
+}
+
+/* =========================
+   SERVICE CARDS
+========================= */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.card {
+  border: 1px solid #e2ebe8;
+  background: #ffffff;
+  border-radius: 17px;
+  padding: 18px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 4px 12px rgba(20, 70, 55, 0.04);
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 9px 22px rgba(20, 70, 55, 0.1);
+  border-color: #b9ddd2;
+}
+
+.icon {
+  font-size: 31px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #eef8f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardText {
+  flex: 1;
+}
+
+.card h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: #173b31;
+}
+
+.card p {
+  margin: 0;
+  font-size: 11px;
+  color: #71817d;
+  line-height: 1.45;
+}
+
+.arrow {
+  color: #0b8061;
+  font-weight: bold;
+}
+
+/* =========================
+   AI SECTION
+========================= */
+
+.ask {
+  margin-top: 34px;
+  background: linear-gradient(
+    110deg,
+    #fff7e6,
+    #ffffff
+  );
+
+  border: 1px solid #f3dfb7;
+  border-radius: 20px;
+  padding: 22px;
+  display: flex;
+  align-items: center;
+  gap: 17px;
+}
+
+.askIcon {
+  font-size: 36px;
+}
+
+.ask > div:nth-child(2) {
+  flex: 1;
+}
+
+.ask h2 {
+  font-size: 20px;
+}
+
+.ask p {
+  margin: 7px 0 0;
+  color: #687873;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ask button {
+  background: #173b31;
+  color: #ffffff;
+  border: 0;
+  border-radius: 11px;
+  padding: 11px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* =========================
+   IMPORTANT NOTICE
+========================= */
+
+.notice {
+  margin-top: 16px;
+  background: #ffffff;
+  border-left: 4px solid #f4a623;
+  border-radius: 12px;
+  padding: 14px 17px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.notice strong {
+  font-size: 13px;
+}
+
+.notice p {
+  font-size: 11px;
+  color: #697a75;
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+  background: #102f28;
+  color: #dcebe6;
+  text-align: center;
+  padding: 30px 7%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+footer strong {
+  font-size: 16px;
+}
+
+footer span {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+footer small {
+  font-size: 10px;
+  opacity: 0.55;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 760px) {
+
+  .nav {
+    padding: 0 5%;
+    height: 68px;
+  }
+
+  .brand strong {
+    font-size: 14px;
+  }
+
+  .brand span {
+    font-size: 10px;
+  }
+
+  .flag {
+    font-size: 26px;
+  }
+
+  .hero {
+    padding: 42px 5% 50px;
+  }
+
+  .hero h1 {
+    font-size: 31px;
+  }
+
+  .hero p {
+    font-size: 14px;
+  }
+
+  .search input {
+    min-width: 0;
+  }
+
+  .search button {
+    padding: 12px 13px;
+  }
+
+  .content {
+    padding: 32px 5%;
+  }
+
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .card {
+    padding: 14px;
+    display: block;
+    position: relative;
+  }
+
+  .icon {
+    margin-bottom: 10px;
+  }
+
+  .arrow {
+    position: absolute;
+    right: 13px;
+    top: 15px;
+  }
+
+  .sectionHead h2 {
+    font-size: 21px;
+  }
+
+  .count {
+    display: none;
+  }
+
+  .ask {
+    display: block;
+  }
+
+  .askIcon {
+    margin-bottom: 8px;
+  }
+
+  .ask button {
+    margin-top: 14px;
+    width: 100%;
+  }
+}
+
+/* =========================
+   SMALL PHONES
+========================= */
+
+@media (max-width: 430px) {
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+
+  .search {
+    padding: 5px;
+  }
+
+  .search button {
+    font-size: 12px;
+  }
+
+  .search input {
+    font-size: 12px;
+  }
+
+  .trust {
+    line-height: 1.8;
+  }
+}

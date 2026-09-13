@@ -68,6 +68,7 @@ export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [asked, setAsked] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const visibleServices = services.filter((service) =>
     `${service.en} ${service.ur} ${service.textEn} ${service.textUr}`
@@ -75,16 +76,47 @@ export default function Home() {
       .includes(query.toLowerCase())
   );
 
-  function askQuestion() {
-    if (!question.trim()) return;
+  async function askQuestion() {
+    if (!question.trim() || loading) return;
 
-    setAsked(true);
+    setLoading(true);
+    setAsked(false);
+    setAnswer("");
 
-    setAnswer(
-      urdu
-        ? "شکریہ! آپ کا سوال موصول ہوگیا ہے۔ اگلے مرحلے میں Citizen Helper AI سرکاری ذرائع سے تصدیق شدہ معلومات فراہم کرے گا۔"
-        : "Thank you! Your question has been received. In the next phase, Citizen Helper AI will provide verified information using official government sources."
-    );
+    try {
+      const response = await fetch("/api/ask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: question.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error || "Unable to get an AI response."
+        );
+      }
+
+      setAnswer(data.answer || "No answer was returned.");
+      setAsked(true);
+    } catch (error) {
+      console.error(error);
+
+      setAnswer(
+        urdu
+          ? "معذرت، اس وقت AI سروس سے جواب حاصل نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔"
+          : "Sorry, I could not get a response from the AI service. Please try again."
+      );
+
+      setAsked(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function chooseExample(text: string) {
@@ -191,6 +223,7 @@ export default function Home() {
               key={service.en}
               onClick={() => {
                 setQuery(service.en);
+
                 setQuestion(
                   urdu
                     ? `${service.ur} کے بارے میں معلومات چاہیے۔`
@@ -236,8 +269,8 @@ export default function Home() {
 
             <p>
               {urdu
-                ? "اپنا سوال لکھیں۔ مستقبل میں AI آپ کو سرکاری ذرائع سے تصدیق شدہ معلومات فراہم کرے گا۔"
-                : "Ask your question in simple language. The AI will guide you using verified official information."}
+                ? "اپنا سوال لکھیں اور Citizen Helper AI سے رہنمائی حاصل کریں۔"
+                : "Ask your question in simple language and get guidance from Citizen Helper AI."}
             </p>
 
             {/* QUESTION BOX */}
@@ -254,17 +287,26 @@ export default function Home() {
                     : "Example: What documents are required for a passport?"
                 }
                 rows={4}
+                disabled={loading}
               />
 
               <button
                 className="askButton"
                 onClick={askQuestion}
+                disabled={loading || !question.trim()}
               >
-                {urdu ? "سوال پوچھیں" : "Ask Question"} →
+                {loading
+                  ? urdu
+                    ? "جواب تیار ہو رہا ہے..."
+                    : "Getting answer..."
+                  : urdu
+                    ? "سوال پوچھیں"
+                    : "Ask Question"}{" "}
+                {!loading && "→"}
               </button>
             </div>
 
-            {/* EXAMPLE QUESTIONS */}
+            {/* EXAMPLES */}
             <div className="examples">
               <span>
                 {urdu
@@ -281,6 +323,7 @@ export default function Home() {
                         urdu ? item.ur : item.en
                       )
                     }
+                    disabled={loading}
                   >
                     {urdu ? item.ur : item.en}
                   </button>
@@ -288,23 +331,22 @@ export default function Home() {
               </div>
             </div>
 
-            {/* TEMPORARY ANSWER */}
+            {/* AI ANSWER */}
             {asked && (
               <div className="answerBox">
                 <div className="answerTitle">
-                  🤖{" "}
-                  {urdu
-                    ? "Citizen Helper"
-                    : "Citizen Helper"}
+                  🤖 Citizen Helper AI
                 </div>
 
-                <p>{answer}</p>
+                <p className="aiAnswer">
+                  {answer}
+                </p>
 
                 <small>
                   ⚠️{" "}
                   {urdu
-                    ? "یہ عارضی جواب ہے۔ AI اور سرکاری ذرائع اگلے مرحلے میں منسلک کیے جائیں گے۔"
-                    : "This is a temporary response. AI and verified official sources will be connected in the next phase."}
+                    ? "اہم معلومات کے لیے متعلقہ سرکاری ذریعہ ضرور چیک کریں۔"
+                    : "For important matters, always verify information with the relevant official government source."}
                 </small>
               </div>
             )}

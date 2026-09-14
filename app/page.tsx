@@ -171,9 +171,9 @@ export default function Home() {
 
   const [query, setQuery] = useState("");
 
-  const [question, setQuestion] = useState(
-    services[0].questionEn
-  );
+  const [question, setQuestion] = useState<string>(
+  services[0].questionEn
+);
 
   const [answer, setAnswer] = useState("");
 

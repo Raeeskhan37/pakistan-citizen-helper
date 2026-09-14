@@ -64,7 +64,6 @@ const examples = [
 
 /* =========================================================
    MARKDOWN ANSWER RENDERER
-   Converts common AI markdown into readable UI
 ========================================================= */
 
 function renderMarkdown(text: string) {
@@ -174,7 +173,10 @@ function renderMarkdown(text: string) {
         );
       }
 
-      if (part.startsWith("http://") || part.startsWith("https://")) {
+      if (
+        part.startsWith("http://") ||
+        part.startsWith("https://")
+      ) {
         return (
           <a
             key={index}
@@ -206,6 +208,7 @@ function renderMarkdown(text: string) {
     }
 
     /* TABLE */
+
     if (line.includes("|")) {
       const cells = line
         .split("|")
@@ -234,6 +237,7 @@ function renderMarkdown(text: string) {
     }
 
     /* BULLET */
+
     if (/^[-*•]\s+/.test(line)) {
       flushNumbered();
 
@@ -245,6 +249,7 @@ function renderMarkdown(text: string) {
     }
 
     /* NUMBERED LIST */
+
     if (/^\d+[\.\)]\s+/.test(line)) {
       flushBullets();
 
@@ -258,7 +263,8 @@ function renderMarkdown(text: string) {
     flushBullets();
     flushNumbered();
 
-    /* H1 / H2 / H3 */
+    /* HEADINGS */
+
     if (line.startsWith("### ")) {
       elements.push(
         <h4
@@ -299,6 +305,7 @@ function renderMarkdown(text: string) {
     }
 
     /* NORMAL PARAGRAPH */
+
     elements.push(
       <p
         className="answerParagraph"
@@ -319,11 +326,23 @@ function renderMarkdown(text: string) {
   return elements;
 }
 
+/* =========================================================
+   TYPES FOR API RESPONSE
+========================================================= */
+
+type SourceInfo = {
+  department?: string;
+  title?: string;
+  url?: string;
+  lastVerified?: string;
+};
+
 export default function Home() {
   const [urdu, setUrdu] = useState(false);
   const [query, setQuery] = useState("");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [source, setSource] = useState<SourceInfo | null>(null);
   const [asked, setAsked] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -339,6 +358,7 @@ export default function Home() {
     setLoading(true);
     setAsked(false);
     setAnswer("");
+    setSource(null);
 
     try {
       const response = await fetch("/api/ask", {
@@ -363,6 +383,8 @@ export default function Home() {
         data.answer || "No answer was returned."
       );
 
+      setSource(data.source || null);
+
       setAsked(true);
 
       setTimeout(() => {
@@ -375,6 +397,8 @@ export default function Home() {
       }, 100);
     } catch (error) {
       console.error(error);
+
+      setSource(null);
 
       setAnswer(
         urdu
@@ -392,6 +416,7 @@ export default function Home() {
     setQuestion(text);
     setAsked(false);
     setAnswer("");
+    setSource(null);
   }
 
   return (
@@ -575,6 +600,7 @@ export default function Home() {
                 onChange={(e) => {
                   setQuestion(e.target.value);
                   setAsked(false);
+                  setSource(null);
                 }}
                 placeholder={
                   urdu
@@ -714,6 +740,54 @@ export default function Home() {
                 <div className="answerContent">
                   {renderMarkdown(answer)}
                 </div>
+
+                {/* OFFICIAL SOURCE */}
+
+                {source?.url && (
+                  <div className="officialSourceBox">
+                    <div className="officialSourceIcon">
+                      🔗
+                    </div>
+
+                    <div className="officialSourceContent">
+                      <strong>
+                        {urdu
+                          ? "سرکاری ذریعہ"
+                          : "Official Source"}
+                      </strong>
+
+                      {source.department && (
+                        <span>
+                          {source.department}
+                        </span>
+                      )}
+
+                      {source.title && (
+                        <span>
+                          {source.title}
+                        </span>
+                      )}
+
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {urdu
+                          ? "🔗 سرکاری ویب سائٹ کھولیں"
+                          : "🔗 Open Official Government Source"}
+                      </a>
+
+                      {source.lastVerified && (
+                        <small>
+                          {urdu
+                            ? `آخری تصدیق: ${source.lastVerified}`
+                            : `Last verified: ${source.lastVerified}`}
+                        </small>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* VERIFICATION NOTICE */}
 

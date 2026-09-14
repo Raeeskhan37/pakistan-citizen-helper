@@ -1,552 +1,358 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import Groq from "groq-sdk";
 
-export async function POST(request: Request) {
+export const runtime = "nodejs";
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const groqApiKey = process.env.GROQ_API_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey || !groqApiKey) {
+  console.error("Missing required environment variables.");
+}
+
+const supabase = createClient(
+  supabaseUrl || "",
+  supabaseAnonKey || ""
+);
+
+const groq = new Groq({
+  apiKey: groqApiKey || "",
+});
+
+function detectService(question: string): string | null {
+  const q = question.toLowerCase();
+
+  if (
+    q.includes("passport") ||
+    q.includes("پاسپورٹ")
+  ) {
+    return "Passport";
+  }
+
+  if (
+    q.includes("cnic") ||
+    q.includes("nicop") ||
+    q.includes("identity card") ||
+    q.includes("شناختی کارڈ") ||
+    q.includes("نادرا")
+  ) {
+    return "CNIC";
+  }
+
+  if (
+    q.includes("domicile") ||
+    q.includes("ڈومیسائل")
+  ) {
+    return "Domicile";
+  }
+
+  if (
+    q.includes("driving licence") ||
+    q.includes("driving license") ||
+    q.includes("ڈرائیونگ لائسنس")
+  ) {
+    return "Driving Licence";
+  }
+
+  if (
+    q.includes("scholarship") ||
+    q.includes("scholarships") ||
+    q.includes("اسکالرشپ")
+  ) {
+    return "Scholarships";
+  }
+
+  return null;
+}
+
+function isUrdu(question: string): boolean {
+  return /[\u0600-\u06FF]/.test(question);
+}
+
+function protectApplicantTerminology(text: string, urdu: boolean): string {
+  if (!urdu) {
+    return text;
+  }
+
+  // Prevent the model from changing "applicants" into "students".
+  text = text.replace(
+    /۱۸ سال سے کم عمر طلباء/g,
+    "۱۸ سال سے کم عمر درخواست گزاروں"
+  );
+
+  text = text.replace(
+    /18 سال سے کم عمر طلباء/g,
+    "۱۸ سال سے کم عمر درخواست گزاروں"
+  );
+
+  text = text.replace(
+    /کم عمر طلباء/g,
+    "کم عمر درخواست گزاروں"
+  );
+
+  text = text.replace(
+    /طلباء \(درخواست گزاروں\)/g,
+    "درخواست گزاروں"
+  );
+
+  return text;
+}
+
+export async function POST(request: NextRequest) {
   try {
-    // =========================================================
-    // 1. READ USER QUESTION
-    // =========================================================
-
     const body = await request.json();
-    const question = body?.question;
+    const question = String(body?.question || "").trim();
 
-    if (!question || typeof question !== "string") {
+    if (!question) {
       return NextResponse.json(
-        { error: "Please provide a question." },
+        {
+          error: "Please enter a question.",
+        },
         { status: 400 }
       );
     }
 
-    // =========================================================
-    // 2. ENVIRONMENT VARIABLES
-    // =========================================================
-
-    const groqKey = process.env.GROQ_API_KEY;
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_ANON_KEY;
-
-    if (!groqKey) {
-      return NextResponse.json(
-        { error: "AI service is not configured." },
-        { status: 500 }
-      );
-    }
-
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json(
-        { error: "Verified information service is not configured." },
-        { status: 500 }
-      );
-    }
-
-    // =========================================================
-    // 3. SUPABASE CONNECTION
-    // =========================================================
-
-    const supabase = createClient(
-      supabaseUrl,
-      supabaseKey
-    );
-
-    // =========================================================
-    // 4. DETECT RELEVANT SERVICE
-    // =========================================================
-
-    const lowerQuestion = question.toLowerCase();
-
-    const serviceNames: string[] = [];
-
-    if (
-      lowerQuestion.includes("passport") ||
-      lowerQuestion.includes("پاسپورٹ")
-    ) {
-      serviceNames.push("Passport");
-    }
-
-    if (
-      lowerQuestion.includes("cnic") ||
-      lowerQuestion.includes("nadra") ||
-      lowerQuestion.includes("national identity") ||
-      lowerQuestion.includes("شناختی") ||
-      lowerQuestion.includes("نادرا")
-    ) {
-      serviceNames.push("CNIC / NADRA");
-    }
-
-    if (
-      lowerQuestion.includes("domicile") ||
-      lowerQuestion.includes("ڈومیسائل")
-    ) {
-      serviceNames.push("Domicile");
-    }
-
-    if (
-      lowerQuestion.includes("driving licence") ||
-      lowerQuestion.includes("driving license") ||
-      lowerQuestion.includes("driver licence") ||
-      lowerQuestion.includes("driver license") ||
-      lowerQuestion.includes("ڈرائیونگ لائسنس")
-    ) {
-      serviceNames.push("Driving Licence");
-    }
-
-    if (
-      lowerQuestion.includes("scholarship") ||
-      lowerQuestion.includes("scholarships") ||
-      lowerQuestion.includes("اسکالرشپ")
-    ) {
-      serviceNames.push("Scholarships");
-    }
-
-    // =========================================================
-    // 5. GET VERIFIED INFORMATION
-    // =========================================================
-
-    let verifiedQuery = supabase
-      .from("verified_information")
-      .select(
-        `
-        service_name,
-        category,
-        title,
-        content,
-        service_name_urdu,
-        title_urdu,
-        content_urdu,
-        province,
-        official_department,
-        official_source_title,
-        official_source_url,
-        last_verified
-        `
-      )
-      .eq("active", true);
-
-    if (serviceNames.length > 0) {
-      verifiedQuery = verifiedQuery.in(
-        "service_name",
-        serviceNames
-      );
-    }
-
-    const {
-      data: verifiedInformation,
-      error: verifiedError,
-    } = await verifiedQuery;
-
-    if (verifiedError) {
-      console.error(
-        "Supabase error:",
-        verifiedError
-      );
+    if (!supabaseUrl || !supabaseAnonKey || !groqApiKey) {
+      console.error("Required environment variable is missing.");
 
       return NextResponse.json(
         {
-          error:
-            "Unable to access verified government information.",
+          error: "AI service configuration is incomplete.",
         },
         { status: 500 }
       );
     }
 
-    // =========================================================
-    // 6. NO VERIFIED INFORMATION
-    // =========================================================
+    const service = detectService(question);
+    const urdu = isUrdu(question);
 
-    if (
-      !verifiedInformation ||
-      verifiedInformation.length === 0
-    ) {
-      return NextResponse.json({
-        answer:
-          "I do not currently have verified information for this specific request in my government information database.\n\nI do not want to guess or provide potentially incorrect government requirements.\n\nPlease check the relevant official government department's website."
-      });
-    }
+    let verifiedContext = "";
+    let officialSourceUrl = "";
+    let officialSourceTitle = "";
+    let officialDepartment = "";
+    let lastVerified = "";
 
-    // =========================================================
-    // 7. BUILD VERIFIED CONTEXT
-    // =========================================================
+    if (service) {
+      const { data, error } = await supabase
+        .from("verified_information")
+        .select(
+          `
+          service_name,
+          category,
+          title,
+          content,
+          service_name_urdu,
+          title_urdu,
+          content_urdu,
+          province,
+          official_department,
+          official_source_title,
+          official_source_url,
+          last_verified
+          `
+        )
+        .eq("service_name", service)
+        .eq("active", true)
+        .order("category", { ascending: true });
 
-    const verifiedContext =
-      verifiedInformation
-        .map((item: any) => {
+      if (error) {
+        console.error("Supabase error:", error);
+
+        return NextResponse.json(
+          {
+            error: "Unable to retrieve verified information.",
+          },
+          { status: 500 }
+        );
+      }
+
+      if (data && data.length > 0) {
+        const contextParts = data.map((item) => {
+          const title = urdu
+            ? item.title_urdu || item.title
+            : item.title;
+
+          const content = urdu
+            ? item.content_urdu || item.content
+            : item.content;
+
           return `
-==================================================
-VERIFIED RECORD
-==================================================
-
-SERVICE:
-${item.service_name}
-
 CATEGORY:
 ${item.category}
 
 TITLE:
-${item.title}
+${title}
 
-VERIFIED ENGLISH INFORMATION:
-${item.content}
-
-VERIFIED URDU TITLE:
-${item.title_urdu || "Not available"}
-
-VERIFIED URDU INFORMATION:
-${item.content_urdu || "Not available"}
-
-PROVINCE / COVERAGE:
-${item.province || "Pakistan"}
+VERIFIED CONTENT:
+${content}
 
 OFFICIAL DEPARTMENT:
-${item.official_department || "Not specified"}
+${item.official_department || ""}
 
 OFFICIAL SOURCE TITLE:
-${item.official_source_title || "Not specified"}
+${item.official_source_title || ""}
 
 OFFICIAL SOURCE URL:
-${item.official_source_url || "Not specified"}
+${item.official_source_url || ""}
 
 LAST VERIFIED:
-${item.last_verified || "Not specified"}
-
-==================================================
-END VERIFIED RECORD
-==================================================
+${item.last_verified || ""}
 `;
-        })
-        .join("\n");
+        });
 
-    // =========================================================
-    // 8. STRICT VERIFIED-ONLY SYSTEM PROMPT
-    // =========================================================
+        verifiedContext = contextParts.join("\n----------------------\n");
 
-    const systemPrompt = `
-You are Pakistan Citizen Helper.
+        const first = data[0];
 
-Your role is ONLY to explain information that exists in the
-VERIFIED DATABASE supplied below.
-
-The VERIFIED DATABASE is the sole factual authority.
-
-You are NOT a government officer.
-You are NOT a government website.
-You must NEVER use your own general knowledge as an additional
-source.
-
-==================================================
-ABSOLUTE FACTUAL RESTRICTION
-==================================================
-
-Every factual statement in your answer must be directly
-supported by the VERIFIED DATABASE.
-
-If a fact is not present in the database:
-
-DO NOT provide it.
-
-Do not guess.
-
-Do not assume.
-
-Do not infer.
-
-Do not complete missing information from memory.
-
-Do not use common knowledge to fill gaps.
-
-==================================================
-MEANING PRESERVATION — CRITICAL
-==================================================
-
-You MUST preserve the exact meaning of the verified information.
-
-Do NOT change:
-
-- age groups
-- applicant categories
-- eligibility conditions
-- document names
-- government department names
-- requirements
-- exceptions
-- circumstances
-- dates
-- processing times
-- fees
-- deadlines
-- locations
-- levels of certainty
-
-Examples:
-
-If the database says:
-
-"applicants under 18 years"
-
-DO NOT change this to:
-
-"students under 18 years"
-
-because not every applicant under 18 is necessarily a student.
-
-If the database says:
-
-"may be required"
-
-DO NOT change it to:
-
-"is required".
-
-If the database says:
-
-"depending on circumstances"
-
-DO NOT remove that condition.
-
-If the database says:
-
-"additional documents may be required"
-
-DO NOT invent or suggest which additional documents those
-might be.
-
-==================================================
-NO INVENTED EXAMPLES
-==================================================
-
-Never introduce examples that are not explicitly present in
-the verified information.
-
-For example, if the database says:
-
-"required parental or legal-guardian documentation"
-
-do NOT write:
-
-"such as birth certificate or guardianship papers"
-
-unless those exact examples are explicitly present in the
-database.
-
-==================================================
-NO PARAPHRASING THAT CHANGES FACTS
-==================================================
-
-Simple language is allowed.
-
-However, simplification must NOT change the factual meaning.
-
-You may shorten a sentence while preserving its meaning.
-
-You may organize information into bullet points.
-
-You may translate the verified information.
-
-You may NOT add new facts.
-
-==================================================
-URDU LANGUAGE RULE
-==================================================
-
-If the user asks in Urdu:
-
-Answer in clear Urdu script.
-
-Do NOT use Hindi/Devanagari.
-
-Preserve the original meaning of the verified Urdu or English
-information.
-
-Do not introduce new Urdu examples or interpretations.
-
-IMPORTANT:
-
-"applicant" means درخواست گزار.
-
-Do NOT translate "applicant" as طالب علم unless the verified
-information specifically says طالب علم/student.
-
-==================================================
-ENGLISH LANGUAGE RULE
-==================================================
-
-If the user asks in English:
-
-Answer in clear, simple English.
-
-==================================================
-QUESTION SCOPE
-==================================================
-
-Answer only the question asked.
-
-Do not provide unrelated government information.
-
-If the user asks about something not contained in the verified
-database, say clearly that the database does not currently
-contain verified information for that specific request.
-
-==================================================
-OFFICIAL SOURCE RULE
-==================================================
-
-At the end of the answer include:
-
-### Official Source
-
-Department: [exact verified department]
-
-Source: [exact verified source title]
-
-Last verified: [exact verified date]
-
-If OFFICIAL SOURCE URL is available, you MUST include it.
-
-Use the exact URL supplied by the database.
-
-Format it as:
-
-[Official source](EXACT_URL)
-
-Never create, modify, shorten, or guess a government URL.
-
-==================================================
-SOURCE INFORMATION MUST NOT BE CHANGED
-==================================================
-
-Do not change:
-
-- department name
-- source title
-- URL
-- verification date
-
-Copy these values from the verified database.
-
-==================================================
-FINAL SELF-CHECK
-==================================================
-
-Before producing the answer, silently check:
-
-1. Is every factual claim supported by the database?
-2. Did I add any example not present in the database?
-3. Did I change any age group?
-4. Did I change "applicant" into "student" or another category?
-5. Did I change "may" into "must" or "is required"?
-6. Did I remove any important condition?
-7. Did I invent a document, fee, procedure, location, date,
-   deadline, or requirement?
-8. Did I change the official department, source, URL, or date?
-
-If any answer is YES, remove or correct that statement before
-responding.
-
-==================================================
-VERIFIED DATABASE
-==================================================
-
-${verifiedContext}
-
-==================================================
-END VERIFIED DATABASE
-==================================================
-`;
-
-    // =========================================================
-    // 9. CALL GROQ
-    // =========================================================
-
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${groqKey}`,
-        },
-
-        body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt,
-            },
-            {
-              role: "user",
-              content: question,
-            },
-          ],
-
-          // Deterministic output is preferred for
-          // government-information responses.
-          temperature: 0,
-
-          max_tokens: 1000,
-        }),
+        officialSourceUrl = first.official_source_url || "";
+        officialSourceTitle = first.official_source_title || "";
+        officialDepartment = first.official_department || "";
+        lastVerified = first.last_verified || "";
       }
-    );
-
-    // =========================================================
-    // 10. GROQ ERROR HANDLING
-    // =========================================================
-
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      console.error(
-        "Groq API error:",
-        errorText
-      );
-
-      return NextResponse.json(
-        {
-          error:
-            "The AI service could not process your request.",
-        },
-        { status: 500 }
-      );
     }
 
-    // =========================================================
-    // 11. READ RESPONSE
-    // =========================================================
+    const languageInstruction = urdu
+      ? `
+LANGUAGE:
+Answer in clear, natural Urdu.
 
-    const data = await response.json();
+IMPORTANT URDU TERMINOLOGY:
+- "Applicant" means "درخواست گزار".
+- Never translate "applicant" as "طالب علم" or "طلباء".
+- "Minor" means "نابالغ" or "۱۸ سال سے کم عمر".
+- Do not introduce the word "طالب علم" unless the verified source itself specifically refers to students.
+- Preserve the exact meaning of age groups and applicant categories.
+`
+      : `
+LANGUAGE:
+Answer in clear, simple English.
+`;
 
-    const answer =
-      data?.choices?.[0]?.message?.content;
+    const systemPrompt = `
+You are Pakistan Citizen Helper AI.
+
+Your job is to provide accurate public-service information for Pakistan.
+
+TRUST RULE:
+Use ONLY the verified information supplied below.
+
+Do NOT use your own general knowledge to add facts.
+
+Do NOT invent:
+- documents
+- fees
+- dates
+- processing times
+- eligibility rules
+- government procedures
+- offices
+- requirements
+- examples presented as facts
+
+If the verified information says something "may be required", preserve that uncertainty.
+Do NOT change "may be required" into "is required".
+
+Do NOT change applicant categories.
+
+Do NOT change age groups.
+
+Do NOT change the meaning of the verified information.
+
+${languageInstruction}
+
+VERY IMPORTANT:
+If the verified information says:
+
+"For ages under 18 / Minor"
+
+the answer must NOT say:
+
+"students under 18"
+
+It must refer to:
+
+"applicants under 18"
+or the appropriate Urdu equivalent:
+"۱۸ سال سے کم عمر درخواست گزار"
+
+The user is asking for public-service guidance, not educational advice.
+
+ANSWER STYLE:
+- Start directly with the answer.
+- Use clear headings.
+- Use numbered lists where appropriate.
+- Keep the language easy for ordinary citizens.
+- Do not unnecessarily repeat the question.
+- Do not claim information that is not present in the verified information.
+
+OFFICIAL SOURCE:
+If an official source URL is supplied, include it at the end of the answer.
+Do not replace or modify the URL.
+
+Before finalizing your answer, silently check:
+1. Did I use only verified information?
+2. Did I preserve the original meaning?
+3. Did I preserve age groups?
+4. Did I preserve applicant categories?
+5. Did I preserve "may be required" wording?
+6. Did I avoid inventing facts?
+7. Did I include the official source when available?
+
+VERIFIED INFORMATION:
+${verifiedContext || "No service-specific verified information was found."}
+`;
+
+    const completion = await groq.chat.completions.create({
+      model: "openai/gpt-oss-120b",
+      temperature: 0,
+      max_tokens: 1200,
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        {
+          role: "user",
+          content: question,
+        },
+      ],
+    });
+
+    let answer =
+      completion.choices?.[0]?.message?.content?.trim() || "";
 
     if (!answer) {
       return NextResponse.json(
         {
-          error:
-            "The AI service returned an empty response.",
+          error: "AI returned an empty response.",
         },
         { status: 500 }
       );
     }
 
-    // =========================================================
-    // 12. RETURN FINAL ANSWER
-    // =========================================================
+    // Final deterministic terminology protection.
+    answer = protectApplicantTerminology(answer, urdu);
 
+    // Add official source separately so the frontend can render
+    // a guaranteed clickable source instead of depending on the AI
+    // to format the URL correctly.
     return NextResponse.json({
       answer,
+      source: {
+        department: officialDepartment,
+        title: officialSourceTitle,
+        url: officialSourceUrl,
+        lastVerified: lastVerified,
+      },
     });
-
-  } catch (error) {
-    console.error(
-      "API error:",
-      error
-    );
+  } catch (error: any) {
+    console.error("API /api/ask error:", error);
 
     return NextResponse.json(
       {
-        error:
-          "Something went wrong while processing your question.",
+        error: "AI service is temporarily unavailable.",
       },
       { status: 500 }
     );

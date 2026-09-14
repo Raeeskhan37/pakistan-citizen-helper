@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-/* =========================================================
-   SERVICES
-========================================================= */
+type ExampleQuestion = {
+  en: string;
+  ur: string;
+};
 
 const services = [
   {
@@ -13,10 +14,8 @@ const services = [
     ur: "شناختی کارڈ / نادرا",
     textEn: "Documents, renewal and general guidance",
     textUr: "دستاویزات، تجدید اور عمومی رہنمائی",
-
     questionEn: "How can I renew my CNIC?",
     questionUr: "میں اپنا شناختی کارڈ کیسے تجدید کروا سکتا ہوں؟",
-
     examples: [
       {
         en: "How can I renew my CNIC?",
@@ -32,17 +31,14 @@ const services = [
       },
     ],
   },
-
   {
     icon: "🛂",
     en: "Passport",
     ur: "پاسپورٹ",
     textEn: "Application and renewal guidance",
     textUr: "درخواست اور تجدید کی رہنمائی",
-
     questionEn: "What documents are required for a passport?",
     questionUr: "پاسپورٹ کے لیے کون سے کاغذات ضروری ہیں؟",
-
     examples: [
       {
         en: "What documents are required for a passport?",
@@ -58,392 +54,99 @@ const services = [
       },
     ],
   },
-
   {
     icon: "🚗",
     en: "Driving Licence",
     ur: "ڈرائیونگ لائسنس",
-    textEn: "General licence information",
-    textUr: "لائسنس سے متعلق عمومی معلومات",
-
+    textEn: "Licence application, renewal and requirements",
+    textUr: "لائسنس کے حصول، تجدید اور ضروریات",
     questionEn: "How can I apply for a driving licence?",
-    questionUr:
-      "میں ڈرائیونگ لائسنس کے لیے کیسے درخواست دے سکتا ہوں؟",
-
+    questionUr: "میں ڈرائیونگ لائسنس کے لیے کیسے درخواست دے سکتا ہوں؟",
     examples: [
       {
         en: "How can I apply for a driving licence?",
         ur: "میں ڈرائیونگ لائسنس کے لیے کیسے درخواست دے سکتا ہوں؟",
       },
       {
-        en: "How can I renew my driving licence?",
-        ur: "میں اپنا ڈرائیونگ لائسنس کیسے تجدید کروا سکتا ہوں؟",
-      },
-      {
         en: "What documents are required for a driving licence?",
         ur: "ڈرائیونگ لائسنس کے لیے کون سے کاغذات ضروری ہیں؟",
       },
+      {
+        en: "How can I renew my driving licence?",
+        ur: "میں اپنا ڈرائیونگ لائسنس کیسے تجدید کروا سکتا ہوں؟",
+      },
     ],
   },
-
   {
     icon: "🏠",
     en: "Domicile",
     ur: "ڈومیسائل",
-    textEn: "Requirements and application guidance",
-    textUr: "ضروریات اور درخواست کی رہنمائی",
-
-    questionEn: "How can I apply for a domicile?",
-    questionUr:
-      "میں ڈومیسائل کے لیے کیسے درخواست دے سکتا ہوں؟",
-
+    textEn: "Application and document guidance",
+    textUr: "درخواست اور دستاویزات کی رہنمائی",
+    questionEn: "How can I apply for a domicile certificate?",
+    questionUr: "میں ڈومیسائل سرٹیفکیٹ کے لیے کیسے درخواست دے سکتا ہوں؟",
     examples: [
       {
-        en: "How can I apply for a domicile?",
-        ur: "میں ڈومیسائل کے لیے کیسے درخواست دے سکتا ہوں؟",
+        en: "How can I apply for a domicile certificate?",
+        ur: "میں ڈومیسائل سرٹیفکیٹ کے لیے کیسے درخواست دے سکتا ہوں؟",
       },
       {
-        en: "What documents are required for a domicile?",
+        en: "What documents are required for domicile?",
         ur: "ڈومیسائل کے لیے کون سے کاغذات ضروری ہیں؟",
       },
       {
-        en: "How long does a domicile application take?",
+        en: "How long does it take to get a domicile?",
         ur: "ڈومیسائل بننے میں کتنا وقت لگتا ہے؟",
       },
     ],
   },
-
   {
     icon: "🎓",
     en: "Scholarships",
     ur: "اسکالرشپس",
-    textEn: "Find eligibility and official information",
-    textUr: "اہلیت اور سرکاری معلومات تلاش کریں",
-
-    questionEn:
-      "What scholarships are available for Pakistani students?",
-    questionUr:
-      "پاکستانی طلباء کے لیے کون سی اسکالرشپس دستیاب ہیں؟",
-
+    textEn: "Scholarship eligibility and application guidance",
+    textUr: "اسکالرشپ کی اہلیت اور درخواست کی رہنمائی",
+    questionEn: "What scholarships are available for students?",
+    questionUr: "طلباء کے لیے کون سی اسکالرشپس دستیاب ہیں؟",
     examples: [
       {
-        en: "What scholarships are available for Pakistani students?",
-        ur: "پاکستانی طلباء کے لیے کون سی اسکالرشپس دستیاب ہیں؟",
-      },
-      {
-        en: "What are the eligibility requirements for scholarships?",
-        ur: "اسکالرشپ کے لیے اہلیت کے تقاضے کیا ہیں؟",
+        en: "What scholarships are available for students?",
+        ur: "طلباء کے لیے کون سی اسکالرشپس دستیاب ہیں؟",
       },
       {
         en: "How can I apply for a scholarship?",
         ur: "میں اسکالرشپ کے لیے کیسے درخواست دے سکتا ہوں؟",
       },
+      {
+        en: "What documents are required for a scholarship?",
+        ur: "اسکالرشپ کے لیے کون سے کاغذات ضروری ہیں؟",
+      },
     ],
   },
-
   {
-    icon: "🔎",
+    icon: "🏛️",
     en: "Other Services",
-    ur: "دیگر سروسز",
-    textEn: "Ask about another public service",
-    textUr: "کسی دوسری سرکاری سروس کے بارے میں پوچھیں",
-
-    questionEn:
-      "I need information about a government service.",
-    questionUr:
-      "مجھے ایک سرکاری سروس کے بارے میں معلومات چاہیے۔",
-
+    ur: "دیگر سرکاری خدمات",
+    textEn: "General information about government services",
+    textUr: "دیگر سرکاری خدمات کے بارے میں عمومی معلومات",
+    questionEn: "How can I find information about a government service?",
+    questionUr: "میں کسی سرکاری سروس کے بارے میں معلومات کیسے حاصل کر سکتا ہوں؟",
     examples: [
       {
-        en: "How can I apply for a government service?",
-        ur: "میں کسی سرکاری سروس کے لیے کیسے درخواست دے سکتا ہوں؟",
+        en: "How can I find information about a government service?",
+        ur: "میں کسی سرکاری سروس کے بارے میں معلومات کیسے حاصل کر سکتا ہوں؟",
       },
       {
-        en: "What documents are required?",
-        ur: "کون سے کاغذات ضروری ہیں؟",
+        en: "What documents are usually required for government services?",
+        ur: "سرکاری خدمات کے لیے عام طور پر کون سے کاغذات درکار ہوتے ہیں؟",
       },
       {
-        en: "Where can I find the official information?",
+        en: "Where can I find official government information?",
         ur: "مجھے سرکاری معلومات کہاں سے مل سکتی ہیں؟",
       },
     ],
   },
-];
-
-/* =========================================================
-   MARKDOWN ANSWER RENDERER
-========================================================= */
-
-function renderMarkdown(text: string) {
-  const lines = text.split("\n");
-  const elements: React.ReactNode[] = [];
-
-  let bulletItems: string[] = [];
-  let numberedItems: string[] = [];
-  let tableRows: string[][] = [];
-  let insideTable = false;
-
-  function flushBullets() {
-    if (bulletItems.length > 0) {
-      elements.push(
-        <ul
-          className="answerList"
-          key={`bullets-${elements.length}`}
-        >
-          {bulletItems.map((item, index) => (
-            <li key={index}>{formatInline(item)}</li>
-          ))}
-        </ul>
-      );
-
-      bulletItems = [];
-    }
-  }
-
-  function flushNumbered() {
-    if (numberedItems.length > 0) {
-      elements.push(
-        <ol
-          className="answerNumberedList"
-          key={`numbers-${elements.length}`}
-        >
-          {numberedItems.map((item, index) => (
-            <li key={index}>{formatInline(item)}</li>
-          ))}
-        </ol>
-      );
-
-      numberedItems = [];
-    }
-  }
-
-  function flushTable() {
-    if (tableRows.length >= 2) {
-      const header = tableRows[0];
-      const rows = tableRows.slice(1);
-
-      elements.push(
-        <div
-          className="answerTableWrapper"
-          key={`table-${elements.length}`}
-        >
-          <table className="answerTable">
-            <thead>
-              <tr>
-                {header.map((cell, index) => (
-                  <th key={index}>{formatInline(cell)}</th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody>
-              {rows.map((row, rowIndex) => (
-                <tr key={rowIndex}>
-                  {header.map((_, cellIndex) => (
-                    <td key={cellIndex}>
-                      {formatInline(row[cellIndex] || "")}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-
-    tableRows = [];
-    insideTable = false;
-  }
-
-  function formatInline(value: string) {
-    const parts = value.split(
-      /(\*\*.*?\*\*|\[.*?\]\(.*?\)|https?:\/\/[^\s]+)/
-    );
-
-    return parts.map((part, index) => {
-      if (!part) return null;
-
-      if (
-        part.startsWith("**") &&
-        part.endsWith("**")
-      ) {
-        return (
-          <strong key={index}>
-            {part.slice(2, -2)}
-          </strong>
-        );
-      }
-
-      const markdownLink = part.match(
-        /^\[(.*?)\]\((.*?)\)$/
-      );
-
-      if (markdownLink) {
-        return (
-          <a
-            key={index}
-            href={markdownLink[2]}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {markdownLink[1]}
-          </a>
-        );
-      }
-
-      if (
-        part.startsWith("http://") ||
-        part.startsWith("https://")
-      ) {
-        return (
-          <a
-            key={index}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Official source
-          </a>
-        );
-      }
-
-      return <span key={index}>{part}</span>;
-    });
-  }
-
-  lines.forEach((rawLine, index) => {
-    const line = rawLine.trim();
-
-    if (!line) {
-      flushBullets();
-      flushNumbered();
-
-      if (insideTable) {
-        flushTable();
-      }
-
-      return;
-    }
-
-    if (line.includes("|")) {
-      const cells = line
-        .split("|")
-        .map((cell) => cell.trim())
-        .filter(Boolean);
-
-      const isSeparator = cells.every((cell) =>
-        /^:?-{3,}:?$/.test(cell)
-      );
-
-      if (isSeparator) {
-        insideTable = true;
-        return;
-      }
-
-      if (!insideTable && tableRows.length === 0) {
-        insideTable = true;
-      }
-
-      tableRows.push(cells);
-      return;
-    }
-
-    if (insideTable) {
-      flushTable();
-    }
-
-    if (/^[-*•]\s+/.test(line)) {
-      flushNumbered();
-
-      bulletItems.push(
-        line.replace(/^[-*•]\s+/, "")
-      );
-
-      return;
-    }
-
-    if (/^\d+[\.\)]\s+/.test(line)) {
-      flushBullets();
-
-      numberedItems.push(
-        line.replace(/^\d+[\.\)]\s+/, "")
-      );
-
-      return;
-    }
-
-    flushBullets();
-    flushNumbered();
-
-    if (line.startsWith("### ")) {
-      elements.push(
-        <h4
-          className="answerHeading small"
-          key={`h-${index}`}
-        >
-          {formatInline(
-            line.replace(/^###\s+/, "")
-          )}
-        </h4>
-      );
-
-      return;
-    }
-
-    if (line.startsWith("## ")) {
-      elements.push(
-        <h3
-          className="answerHeading"
-          key={`h-${index}`}
-        >
-          {formatInline(
-            line.replace(/^##\s+/, "")
-          )}
-        </h3>
-      );
-
-      return;
-    }
-
-    if (line.startsWith("# ")) {
-      elements.push(
-        <h2
-          className="answerHeading large"
-          key={`h-${index}`}
-        >
-          {formatInline(
-            line.replace(/^#\s+/, "")
-          )}
-        </h2>
-      );
-
-      return;
-    }
-
-    elements.push(
-      <p
-        className="answerParagraph"
-        key={`p-${index}`}
-      >
-        {formatInline(line)}
-      </p>
-    );
-  });
-
-  flushBullets();
-  flushNumbered();
-
-  if (insideTable) {
-    flushTable();
-  }
-
-  return elements;
-}
-
-/* =========================================================
-   TYPES
-========================================================= */
+] as const;
 
 type Service = (typeof services)[number];
 
@@ -456,16 +159,15 @@ type SourceInfo = {
 
 type ApiResponse = {
   answer?: string;
-  source?: SourceInfo;
+  source?: SourceInfo | null;
   error?: string;
 };
 
-/* =========================================================
-   MAIN COMPONENT
-========================================================= */
-
 export default function Home() {
   const [urdu, setUrdu] = useState(false);
+
+  const [selectedService, setSelectedService] =
+    useState<Service>(services[0]);
 
   const [query, setQuery] = useState("");
 
@@ -475,19 +177,17 @@ export default function Home() {
 
   const [answer, setAnswer] = useState("");
 
-  const [source, setSource] =
-    useState<SourceInfo | null>(null);
-
-  const [asked, setAsked] = useState(false);
+  const [source, setSource] = useState<SourceInfo | null>(null);
 
   const [loading, setLoading] = useState(false);
 
-  const [selectedService, setSelectedService] =
-    useState<Service>(services[0]);
+  const [asked, setAsked] = useState(false);
 
-  /* =======================================================
-     SERVICE SELECTION
-  ======================================================= */
+  /*
+   * ---------------------------------------------------------
+   * Select a service
+   * ---------------------------------------------------------
+   */
 
   function selectService(service: Service) {
     setSelectedService(service);
@@ -495,9 +195,7 @@ export default function Home() {
     setQuery(service.en);
 
     setQuestion(
-      urdu
-        ? service.questionUr
-        : service.questionEn
+      urdu ? service.questionUr : service.questionEn
     );
 
     setAsked(false);
@@ -505,752 +203,621 @@ export default function Home() {
     setSource(null);
 
     setTimeout(() => {
-      document
-        .getElementById("ask")
-        ?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+      document.getElementById("ask")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 50);
   }
 
-  /* =======================================================
-     SERVICE-SPECIFIC EXAMPLES
-  ======================================================= */
+  /*
+   * ---------------------------------------------------------
+   * Change language
+   * ---------------------------------------------------------
+   */
 
-  function getServiceExamples(service: Service) {
-    return service.examples;
+  function toggleLanguage() {
+    const newUrdu = !urdu;
+
+    setUrdu(newUrdu);
+
+    setQuestion(
+      newUrdu
+        ? selectedService.questionUr
+        : selectedService.questionEn
+    );
   }
 
-  /* =======================================================
-     SERVICE SEARCH
-  ======================================================= */
+  /*
+   * ---------------------------------------------------------
+   * Choose an example question
+   * ---------------------------------------------------------
+   */
 
-  const visibleServices = services.filter(
-    (service) => {
-      const searchableText =
-        `${service.en} ${service.ur} ${service.textEn} ${service.textUr}`.toLowerCase();
+  function chooseExample(value: string) {
+    setQuestion(value);
+    setAsked(false);
+    setAnswer("");
+    setSource(null);
 
-      return searchableText.includes(
-        query.toLowerCase()
-      );
-    }
-  );
+    setTimeout(() => {
+      document.getElementById("ask")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 50);
+  }
 
-  /* =======================================================
-     ASK QUESTION
-  ======================================================= */
+  /*
+   * ---------------------------------------------------------
+   * Ask AI
+   * ---------------------------------------------------------
+   */
 
   async function askQuestion() {
-    if (!question.trim() || loading) return;
+    if (!question.trim() || loading) {
+      return;
+    }
 
     setLoading(true);
-    setAsked(false);
+    setAsked(true);
     setAnswer("");
     setSource(null);
 
     try {
       const response = await fetch("/api/ask", {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
           question: question.trim(),
+          service: selectedService.en,
+          language: urdu ? "Urdu" : "English",
         }),
       });
 
-      const data: ApiResponse =
-        await response.json();
+      const data: ApiResponse = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data?.error ||
-            "Unable to get an AI response."
+          data.error || "Unable to get an answer."
         );
       }
 
-      setAnswer(
-        data.answer ||
-          "No answer was returned."
-      );
-
-      if (
-        data.source &&
-        data.source.url
-      ) {
-        setSource({
-          department:
-            data.source.department,
-
-          title:
-            data.source.title,
-
-          url:
-            data.source.url,
-
-          lastVerified:
-            data.source.lastVerified,
-        });
-      } else {
-        setSource(null);
-      }
-
-      setAsked(true);
-
-      setTimeout(() => {
-        document
-          .getElementById(
-            "answer-result"
-          )
-          ?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-      }, 100);
+      setAnswer(data.answer || "");
+      setSource(data.source || null);
     } catch (error) {
       console.error(error);
 
-      setSource(null);
-
       setAnswer(
         urdu
-          ? "معذرت، اس وقت AI سروس سے جواب حاصل نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔"
-          : "Sorry, I could not get a response from the AI service. Please try again."
+          ? "معذرت، اس وقت جواب حاصل نہیں کیا جا سکا۔ براہ کرم دوبارہ کوشش کریں۔"
+          : "Sorry, we could not get an answer at this time. Please try again."
       );
 
-      setAsked(true);
+      setSource(null);
     } finally {
       setLoading(false);
     }
   }
 
-  /* =======================================================
-     CHOOSE EXAMPLE
-  ======================================================= */
+  /*
+   * ---------------------------------------------------------
+   * Search services
+   * ---------------------------------------------------------
+   */
 
-  function chooseExample(text: string) {
-    setQuestion(text);
+  const visibleServices = services.filter((service) => {
+    const searchableText =
+      `${service.en} ${service.ur} ${service.textEn} ${service.textUr}`.toLowerCase();
 
-    setAsked(false);
-    setAnswer("");
-    setSource(null);
-  }
-
-  /* =======================================================
-     LANGUAGE TOGGLE
-  ======================================================= */
-
-  function toggleLanguage() {
-    const nextUrdu = !urdu;
-
-    setUrdu(nextUrdu);
-
-    setQuestion(
-      nextUrdu
-        ? selectedService.questionUr
-        : selectedService.questionEn
+    return searchableText.includes(
+      query.toLowerCase()
     );
-  }
+  });
+
+  /*
+   * ---------------------------------------------------------
+   * Keyboard shortcut
+   * ---------------------------------------------------------
+   */
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        event.key === "Enter" &&
+        (event.ctrlKey || event.metaKey)
+      ) {
+        event.preventDefault();
+        askQuestion();
+      }
+    }
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  });
 
   return (
-    <main>
-
+    <main
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 text-slate-800"
+      dir={urdu ? "rtl" : "ltr"}
+    >
       {/* =====================================================
-          NAVIGATION
-      ===================================================== */}
+          HEADER
+      ====================================================== */}
 
-      <nav className="nav">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <button
+            onClick={() => {
+              setQuestion(
+                urdu
+                  ? services[0].questionUr
+                  : services[0].questionEn
+              );
+              setSelectedService(services[0]);
+              setQuery("");
+              setAsked(false);
+              setAnswer("");
+              setSource(null);
 
-        <div className="brand">
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
+            }}
+            className="flex items-center gap-3"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-green-600 to-blue-600 text-2xl shadow-md">
+              🇵🇰
+            </div>
 
-          <div className="flag">
-            🇵🇰
-          </div>
+            <div className="text-left">
+              <h1 className="text-lg font-extrabold leading-tight text-slate-900 sm:text-xl">
+                Pakistan Citizen Helper
+              </h1>
 
-          <div>
-            <strong>
-              Pakistan Citizen Helper
-            </strong>
+              <p className="text-xs text-slate-500">
+                {urdu
+                  ? "پاکستانی شہریوں کے لیے آسان رہنمائی"
+                  : "Simple guidance for Pakistani citizens"}
+              </p>
+            </div>
+          </button>
 
-            <span>
-              پاکستان سٹیزن ہیلپر
-            </span>
-          </div>
-
+          <button
+            onClick={toggleLanguage}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold shadow-sm transition hover:bg-slate-50"
+          >
+            {urdu ? "English" : "اردو"}
+          </button>
         </div>
-
-        <button
-          className="language"
-          onClick={toggleLanguage}
-        >
-          {urdu
-            ? "English"
-            : "اردو"}
-        </button>
-
-      </nav>
+      </header>
 
       {/* =====================================================
           HERO
-      ===================================================== */}
+      ====================================================== */}
 
-      <section className="hero">
-
-        <div className="heroContent">
-
-          <div className="pill">
-            🇵🇰{" "}
-            {urdu
-              ? "شہریوں کے لیے آسان معلومات"
-              : "Simple information for citizens"}
-          </div>
-
-          <h1>
-            {urdu
-              ? "اپنا سرکاری کام آسانی سے سمجھیں"
-              : "Understand your government service, simply."}
-          </h1>
-
-          <p>
-            {urdu
-              ? "مطلوبہ کاغذات، مراحل اور سرکاری ذرائع تلاش کریں — ایک آسان جگہ پر۔"
-              : "Find documents, steps and official sources in one simple place."}
-          </p>
-
-          <div className="search">
-
-            <span>
-              🔎
-            </span>
-
-            <input
-              value={query}
-              onChange={(e) =>
-                setQuery(e.target.value)
-              }
-              placeholder={
-                urdu
-                  ? "مثلاً شناختی کارڈ، پاسپورٹ، ڈومیسائل..."
-                  : "Search CNIC, passport, domicile..."
-              }
-            />
-
-            <button>
+      <section className="relative overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 pb-10 pt-12 text-center sm:px-6 sm:pt-16 lg:px-8">
+          <div className="mx-auto max-w-4xl">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
+              🇵🇰{" "}
               {urdu
-                ? "تلاش"
-                : "Search"}
-            </button>
+                ? "سرکاری خدمات کی آسان رہنمائی"
+                : "Easy guidance for government services"}
+            </div>
 
+            <h2 className="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+              {urdu
+                ? "پاکستانی شہریوں کے لیے مدد"
+                : "Your Guide to Pakistan's Government Services"}
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              {urdu
+                ? "نادرا، پاسپورٹ، ڈرائیونگ لائسنس، ڈومیسائل، اسکالرشپس اور دیگر سرکاری خدمات کے بارے میں آسان معلومات حاصل کریں۔"
+                : "Get simple guidance about CNIC, passports, driving licences, domicile, scholarships and other government services."}
+            </p>
           </div>
-
-          <div className="trust">
-            ✓ Official sources preferred
-            &nbsp; • &nbsp;
-            ✓ English + Urdu
-            &nbsp; • &nbsp;
-            ✓ Mobile friendly
-          </div>
-
         </div>
-
       </section>
 
       {/* =====================================================
           SERVICES
-      ===================================================== */}
+      ====================================================== */}
 
-      <section className="content">
-
-        <div className="sectionHead">
-
+      <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-
-            <span className="eyebrow">
+            <h3 className="text-2xl font-bold text-slate-900">
               {urdu
-                ? "مقبول سروسز"
-                : "POPULAR SERVICES"}
-            </span>
+                ? "سرکاری خدمات منتخب کریں"
+                : "Choose a Government Service"}
+            </h3>
 
-            <h2>
+            <p className="mt-1 text-sm text-slate-500">
               {urdu
-                ? "آپ کس کام میں مدد چاہتے ہیں؟"
-                : "What do you need help with?"}
-            </h2>
-
-          </div>
-
-          <span className="count">
-            {visibleServices.length}{" "}
-            {urdu
-              ? "سروسز"
-              : "services"}
-          </span>
-
-        </div>
-
-        <div className="grid">
-
-          {visibleServices.map(
-            (service) => (
-
-              <button
-                className="card"
-                key={service.en}
-                onClick={() =>
-                  selectService(service)
-                }
-              >
-
-                <div className="icon">
-                  {service.icon}
-                </div>
-
-                <div className="cardText">
-
-                  <h3>
-                    {urdu
-                      ? service.ur
-                      : service.en}
-                  </h3>
-
-                  <p>
-                    {urdu
-                      ? service.textUr
-                      : service.textEn}
-                  </p>
-
-                </div>
-
-                <span className="arrow">
-                  →
-                </span>
-
-              </button>
-
-            )
-          )}
-
-        </div>
-
-        {/* =====================================================
-            ASK CITIZEN HELPER
-        ===================================================== */}
-
-        <section
-          className="ask"
-          id="ask"
-        >
-
-          <div className="askIcon">
-            🤖
-          </div>
-
-          <div className="askContent">
-
-            <span className="eyebrow">
-              CITIZEN HELPER AI
-            </span>
-
-            <h2>
-              {urdu
-                ? "اپنا سوال عام زبان میں پوچھیں"
-                : "Ask Citizen Helper"}
-            </h2>
-
-            <p>
-              {urdu
-                ? "اپنا سوال لکھیں اور Citizen Helper AI سے آسان رہنمائی حاصل کریں۔"
-                : "Ask your question in simple language and get clear guidance from Citizen Helper AI."}
+                ? "اپنی مطلوبہ سروس منتخب کریں"
+                : "Select a service to get started"}
             </p>
+          </div>
 
-            {/* =================================================
-                SELECTED SERVICE INDICATOR
-            ================================================= */}
+          <div className="relative w-full sm:w-72">
+            <input
+              value={query}
+              onChange={(event) =>
+                setQuery(event.target.value)
+              }
+              placeholder={
+                urdu
+                  ? "سروس تلاش کریں..."
+                  : "Search services..."
+              }
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+        </div>
 
-            <div className="selectedService">
-              <span>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleServices.map((service) => {
+            const selected =
+              selectedService.en === service.en;
+
+            return (
+              <button
+                key={service.en}
+                onClick={() => selectService(service)}
+                className={`group rounded-2xl border p-5 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg ${
+                  selected
+                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-100"
+                    : "border-slate-200 bg-white hover:border-blue-300"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-2xl group-hover:bg-white">
+                    {service.icon}
+                  </div>
+
+                  {selected && (
+                    <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white">
+                      {urdu ? "منتخب" : "Selected"}
+                    </span>
+                  )}
+                </div>
+
+                <h4 className="mt-4 text-lg font-bold text-slate-900">
+                  {urdu ? service.ur : service.en}
+                </h4>
+
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {urdu
+                    ? service.textUr
+                    : service.textEn}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+
+        {visibleServices.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+            <div className="text-4xl">🔎</div>
+
+            <p className="mt-3 font-semibold text-slate-700">
+              {urdu
+                ? "کوئی سروس نہیں ملی۔"
+                : "No service found."}
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* =====================================================
+          ASK SECTION
+      ====================================================== */}
+
+      <section
+        id="ask"
+        className="mx-auto max-w-5xl scroll-mt-24 px-4 py-8 sm:px-6 lg:px-8"
+      >
+        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
+          {/* Selected service heading */}
+
+          <div className="border-b border-slate-200 bg-gradient-to-r from-blue-50 to-green-50 px-5 py-5 sm:px-7">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-2xl shadow-sm">
                 {selectedService.icon}
-              </span>
+              </div>
 
-              <strong>
-                {urdu
-                  ? selectedService.ur
-                  : selectedService.en}
-              </strong>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                  {urdu
+                    ? "منتخب سروس"
+                    : "Selected Service"}
+                </p>
+
+                <h3 className="text-xl font-extrabold text-slate-900">
+                  {urdu
+                    ? selectedService.ur
+                    : selectedService.en}
+                </h3>
+              </div>
             </div>
+          </div>
 
-            {/* =================================================
-                QUESTION BOX
-            ================================================= */}
+          {/* Question */}
 
-            <div className="questionBox">
+          <div className="p-5 sm:p-7">
+            <label
+              htmlFor="question"
+              className="mb-3 block text-sm font-bold text-slate-700"
+            >
+              {urdu
+                ? "اپنا سوال لکھیں"
+                : "Ask your question"}
+            </label>
 
-              <textarea
-                value={question}
-                onChange={(e) => {
-                  setQuestion(
-                    e.target.value
-                  );
+            <textarea
+              id="question"
+              value={question}
+              onChange={(event) =>
+                setQuestion(event.target.value)
+              }
+              rows={5}
+              dir={urdu ? "rtl" : "ltr"}
+              placeholder={
+                urdu
+                  ? "اپنا سوال یہاں لکھیں..."
+                  : "Type your question here..."
+              }
+              className="w-full resize-none rounded-2xl border border-slate-300 bg-slate-50 p-4 text-base leading-7 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
+            />
 
-                  setAsked(false);
-                  setSource(null);
-                }}
-                placeholder={
-                  urdu
-                    ? "مثلاً پاسپورٹ بنوانے کے لیے کون سے کاغذات چاہئیں؟"
-                    : "Example: What documents are required for a passport?"
-                }
-                rows={4}
-                disabled={loading}
-              />
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-slate-400">
+                {urdu
+                  ? "Ctrl + Enter سے بھی سوال پوچھ سکتے ہیں۔"
+                  : "You can also press Ctrl + Enter to ask."}
+              </p>
 
               <button
-                className="askButton"
                 onClick={askQuestion}
-                disabled={
-                  loading ||
-                  !question.trim()
-                }
+                disabled={loading || !question.trim()}
+                className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 font-bold text-white shadow-md transition hover:from-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
-
                 {loading
                   ? urdu
                     ? "جواب تیار ہو رہا ہے..."
                     : "Getting answer..."
                   : urdu
-                    ? "سوال پوچھیں"
-                    : "Ask Question"}
-
-                {!loading &&
-                  " →"}
-
+                  ? "جواب حاصل کریں"
+                  : "Get Answer"}
               </button>
-
             </div>
 
             {/* =================================================
-                LOADING
-            ================================================= */}
+                SERVICE-SPECIFIC EXAMPLES
+            ================================================== */}
 
-            {loading && (
+            <div className="mt-8">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-lg">💡</span>
 
-              <div className="loadingBox">
-
-                <div className="loadingIcon">
-                  🤖
-                </div>
-
-                <div>
-
-                  <strong>
-                    {urdu
-                      ? "Citizen Helper جواب تیار کر رہا ہے"
-                      : "Citizen Helper is preparing your answer"}
-                  </strong>
-
-                  <div className="loadingDots">
-
-                    <span></span>
-                    <span></span>
-                    <span></span>
-
-                  </div>
-
-                </div>
-
+                <h4 className="font-bold text-slate-800">
+                  {urdu
+                    ? "مثالی سوالات"
+                    : "Example Questions"}
+                </h4>
               </div>
 
-            )}
-
-            {/* =================================================
-                SERVICE-SPECIFIC EXAMPLES
-            ================================================= */}
-
-            <div className="examples">
-
-              <span>
-                {urdu
-                  ? "مثالی سوالات:"
-                  : "Try an example:"}
-              </span>
-
-              <div className="exampleList">
-
-                {getServiceExamples(
-                  selectedService
-                ).map(
-                  (item) => (
-
+              <div className="grid gap-3">
+                {selectedService.examples.map(
+                  (item: ExampleQuestion) => (
                     <button
                       key={item.en}
                       onClick={() =>
                         chooseExample(
-                          urdu
-                            ? item.ur
-                            : item.en
+                          urdu ? item.ur : item.en
                         )
                       }
                       disabled={loading}
+                      className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm leading-6 text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {urdu
-                        ? item.ur
-                        : item.en}
+                      {urdu ? item.ur : item.en}
                     </button>
-
                   )
                 )}
-
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
+      {/* =====================================================
+          ANSWER
+      ====================================================== */}
+
+      {asked && (
+        <section className="mx-auto max-w-5xl px-4 pb-10 sm:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
+            <div className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-7">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-xl">
+                  🤖
+                </div>
+
+                <div>
+                  <h3 className="font-extrabold text-slate-900">
+                    {urdu
+                      ? "پاکستان سٹیزن ہیلپر کا جواب"
+                      : "Pakistan Citizen Helper Answer"}
+                  </h3>
+
+                  <p className="text-xs text-slate-500">
+                    {urdu
+                      ? "دستیاب تصدیق شدہ معلومات کی بنیاد پر"
+                      : "Based on available verified information"}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* =================================================
-                AI ANSWER
-            ================================================= */}
+            <div className="p-5 sm:p-7">
+              {loading ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
 
-            {asked && (
-
-              <section
-                className="answerBox"
-                id="answer-result"
-              >
-
-                <div className="answerHeader">
-
-                  <div className="answerHeaderLeft">
-
-                    <div className="answerRobot">
-                      🤖
-                    </div>
-
-                    <div>
-
-                      <strong>
-                        Citizen Helper AI
-                      </strong>
-
-                      <span>
-                        {urdu
-                          ? "آپ کے سوال کا جواب"
-                          : "Response to your question"}
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                  <div className="answerBadge">
-                    AI
-                  </div>
-
-                </div>
-
-                <div className="questionSummary">
-
-                  <span>
-                    {urdu
-                      ? "آپ کا سوال"
-                      : "Your question"}
-                  </span>
-
-                  <p>
-                    {question}
-                  </p>
-
-                </div>
-
-                <div className="answerContent">
-                  {renderMarkdown(answer)}
-                </div>
-
-                {/* =================================================
-                    OFFICIAL SOURCE
-                ================================================= */}
-
-                {source?.url ? (
-
-                  <div className="officialSourceBox">
-
-                    <div className="officialSourceIcon">
-                      🔗
-                    </div>
-
-                    <div className="officialSourceContent">
-
-                      <strong>
-                        {urdu
-                          ? "سرکاری ذریعہ"
-                          : "Official Source"}
-                      </strong>
-
-                      {source.department && (
-                        <span>
-                          {source.department}
-                        </span>
-                      )}
-
-                      {source.title && (
-                        <span>
-                          {source.title}
-                        </span>
-                      )}
-
-                      <a
-                        href={source.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {urdu
-                          ? "🔗 سرکاری ویب سائٹ کھولیں"
-                          : "🔗 Open Official Government Source"}
-                      </a>
-
-                      {source.lastVerified && (
-                        <small>
-                          {urdu
-                            ? `آخری تصدیق: ${source.lastVerified}`
-                            : `Last verified: ${source.lastVerified}`}
-                        </small>
-                      )}
-
-                    </div>
-
-                  </div>
-
-                ) : (
-
-                  <div className="officialSourceBox">
-
-                    <div className="officialSourceIcon">
-                      🔎
-                    </div>
-
-                    <div className="officialSourceContent">
-
-                      <strong>
-                        {urdu
-                          ? "سرکاری ذریعہ"
-                          : "Official Source"}
-                      </strong>
-
-                      <span>
-                        {urdu
-                          ? "اس سوال کے لیے الگ سرکاری ذریعہ دستیاب نہیں ہے۔"
-                          : "A verified official source was not returned for this question."}
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                )}
-
-                {/* =================================================
-                    VERIFICATION NOTICE
-                ================================================= */}
-
-                <div className="verificationBox">
-
-                  <div className="verificationIcon">
-                    ⚠️
-                  </div>
-
-                  <div>
-
-                    <strong>
+                    <span className="font-semibold text-slate-600">
                       {urdu
-                        ? "اہم: معلومات کی تصدیق کریں"
-                        : "Important: Verify before acting"}
-                    </strong>
-
-                    <p>
-                      {urdu
-                        ? "سرکاری فیس، دستاویزات، اوقات اور طریقہ کار میں تبدیلی ہو سکتی ہے۔ اہم کام کرنے سے پہلے متعلقہ سرکاری ادارے کے تازہ ترین ذرائع سے تصدیق کریں۔"
-                        : "Government fees, documents, timings and procedures may change. Before taking important action, verify the latest information from the relevant official government source."}
-                    </p>
-
+                        ? "معلومات تلاش کی جا رہی ہیں..."
+                        : "Searching verified information..."}
+                    </span>
                   </div>
 
+                  <div className="space-y-3">
+                    <div className="h-4 animate-pulse rounded bg-slate-100" />
+                    <div className="h-4 animate-pulse rounded bg-slate-100" />
+                    <div className="h-4 w-4/5 animate-pulse rounded bg-slate-100" />
+                  </div>
                 </div>
+              ) : (
+                <>
+                  <div
+                    dir={urdu ? "rtl" : "ltr"}
+                    className="whitespace-pre-wrap text-[15px] leading-8 text-slate-700"
+                  >
+                    {answer}
+                  </div>
 
-                <div className="answerFooter">
+                  {/* =================================================
+                      OFFICIAL SOURCE
+                  ================================================== */}
 
-                  <span>
-                    🇵🇰{" "}
-                    {urdu
-                      ? "پاکستان سٹیزن ہیلپر"
-                      : "Pakistan Citizen Helper"}
-                  </span>
+                  {source?.url && (
+                    <div className="mt-8 rounded-2xl border border-green-200 bg-green-50 p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="text-2xl">✅</div>
 
-                  <span>
-                    {urdu
-                      ? "سرکاری معلومات کو ترجیح دی جاتی ہے"
-                      : "Official sources are preferred"}
-                  </span>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-extrabold text-green-900">
+                            {urdu
+                              ? "سرکاری ذریعہ"
+                              : "Official Source"}
+                          </h4>
 
-                </div>
+                          {source.department && (
+                            <p className="mt-1 text-sm font-semibold text-green-800">
+                              {source.department}
+                            </p>
+                          )}
 
-              </section>
+                          {source.title && (
+                            <p className="mt-1 text-sm text-green-700">
+                              {source.title}
+                            </p>
+                          )}
 
-            )}
+                          {source.lastVerified && (
+                            <p className="mt-2 text-xs text-green-700">
+                              {urdu
+                                ? `آخری تصدیق: ${source.lastVerified}`
+                                : `Last verified: ${source.lastVerified}`}
+                            </p>
+                          )}
 
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-green-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-800"
+                          >
+                            {urdu
+                              ? "سرکاری ویب سائٹ کھولیں"
+                              : "Open Official Website"}
+                            <span>↗</span>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!source?.url && answer && (
+                    <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-sm leading-6 text-amber-800">
+                        {urdu
+                          ? "نوٹ: اس جواب کے لیے کوئی مخصوص سرکاری ذریعہ دستیاب نہیں ہے۔ اہم معلومات کے لیے متعلقہ سرکاری ادارے سے تصدیق کریں۔"
+                          : "Note: A specific official source was not available for this answer. Please verify important information with the relevant government department."}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-
         </section>
+      )}
 
-        {/* =====================================================
-            NOTICE
-        ===================================================== */}
+      {/* =====================================================
+          TRUST / DISCLAIMER
+      ====================================================== */}
 
-        <section className="notice">
+      <section className="mx-auto max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">🔐</span>
 
-          <div>
-            ⚠️
+            <div>
+              <h4 className="font-bold text-blue-900">
+                {urdu
+                  ? "اہم معلومات"
+                  : "Important Information"}
+              </h4>
+
+              <p className="mt-2 text-sm leading-6 text-blue-800">
+                {urdu
+                  ? "یہ ایپ سرکاری معلومات کو آسان انداز میں سمجھنے میں مدد دیتی ہے۔ فیس، قواعد، دستاویزات یا آخری تاریخ جیسے اہم معاملات میں متعلقہ سرکاری ادارے کی ویب سائٹ سے تصدیق ضرور کریں۔"
+                  : "This app helps explain government information in simple language. For important matters such as fees, rules, documents or deadlines, always verify the information with the relevant official government department."}
+              </p>
+            </div>
           </div>
-
-          <div>
-
-            <strong>
-              {urdu
-                ? "اہم نوٹ"
-                : "Important note"}
-            </strong>
-
-            <p>
-              {urdu
-                ? "یہ ایپ سرکاری ادارہ نہیں ہے۔ ہمیشہ تازہ معلومات کے لیے متعلقہ سرکاری ذریعہ چیک کریں۔"
-                : "This app is not a government department. Always check the relevant official source for current information."}
-            </p>
-
-          </div>
-
-        </section>
-
+        </div>
       </section>
 
       {/* =====================================================
           FOOTER
-      ===================================================== */}
+      ====================================================== */}
 
-      <footer>
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-6 text-center sm:flex-row sm:px-6 lg:px-8">
+          <div>
+            <p className="font-bold text-slate-800">
+              Pakistan Citizen Helper 🇵🇰
+            </p>
 
-        <strong>
-          Pakistan Citizen Helper 🇵🇰
-        </strong>
+            <p className="mt-1 text-xs text-slate-500">
+              {urdu
+                ? "آسان، واضح اور ذمہ دارانہ شہری رہنمائی"
+                : "Simple, clear and responsible citizen guidance"}
+            </p>
+          </div>
 
-        <span>
-          Understand → Prepare → Check the official source
-        </span>
-
-        <small>
-          V1 • Bilingual public-service information assistant
-        </small>
-
+          <p className="text-xs text-slate-400">
+            Developed by Raees Khan
+          </p>
+        </div>
       </footer>
-
     </main>
   );
 }

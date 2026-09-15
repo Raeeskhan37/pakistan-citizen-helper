@@ -38,7 +38,7 @@ function normalize(value: unknown): string {
   return String(value ?? "")
     .toLowerCase()
     .normalize("NFKC")
-    .replace(/[^\p{L}\p{N}\s/.-]/gu, " ")
+    .replace(/[^\w\s/.-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -112,13 +112,6 @@ function questionTokens(question: string): string[] {
   );
 }
 
-/*
-  Generic service aliases.
-
-  These are not individual service rules.
-  They simply help the system understand common ways
-  citizens refer to the same government service.
-*/
 const SERVICE_ALIASES: Record<string, string[]> = {
   "CNIC / NADRA": [
     "cnic",
@@ -215,9 +208,6 @@ function detectServiceFromQuestion(
   let bestService: string | null = null;
   let bestScore = 0;
 
-  /*
-    First use aliases.
-  */
   for (const [service, aliases] of Object.entries(
     SERVICE_ALIASES
   )) {
@@ -239,10 +229,6 @@ function detectServiceFromQuestion(
     }
   }
 
-  /*
-    Then compare against services actually present
-    in Supabase. This makes the system expandable.
-  */
   const uniqueServices = Array.from(
     new Set(
       records
@@ -374,18 +360,12 @@ function scoreRecord(
 
   let score = 0;
 
-  /*
-    General word matching.
-  */
   for (const token of tokens) {
     if (recordText.includes(token)) {
       score += 3;
     }
   }
 
-  /*
-    Strong title match.
-  */
   const title = normalize(
     `${record.title ?? ""} ${record.title_urdu ?? ""}`
   );
@@ -396,9 +376,6 @@ function scoreRecord(
     }
   }
 
-  /*
-    Category match.
-  */
   const category = normalize(record.category);
 
   for (const token of tokens) {
@@ -425,18 +402,6 @@ function selectRecords(
   const jurisdiction =
     detectJurisdiction(question);
 
-  /*
-    IMPORTANT:
-    If the question clearly identifies another service,
-    it overrides the UI dropdown.
-
-    Example:
-    UI = CNIC
-    Question = "What scholarships are available?"
-
-    Result:
-    Scholarships records are selected.
-  */
   let serviceToUse =
     detectedService ||
     requestedService ||
@@ -487,9 +452,6 @@ function selectRecords(
     }
   }
 
-  /*
-    Jurisdiction-specific filtering.
-  */
   if (jurisdiction) {
     const jurisdictionRecords =
       working.filter((record) => {
@@ -512,9 +474,6 @@ function selectRecords(
     }
   }
 
-  /*
-    Rank records according to the actual question.
-  */
   const scored = working
     .map((record) => ({
       record,
@@ -522,9 +481,6 @@ function selectRecords(
     }))
     .sort((a, b) => b.score - a.score);
 
-  /*
-    Keep enough records for broad questions.
-  */
   if (scored.length <= 30) {
     return {
       records: scored.map((x) => x.record),
@@ -637,10 +593,6 @@ export async function POST(
   request: NextRequest
 ) {
   try {
-    // ========================================================
-    // ENVIRONMENT
-    // ========================================================
-
     if (
       !SUPABASE_URL ||
       !SUPABASE_ANON_KEY ||
@@ -654,10 +606,6 @@ export async function POST(
         { status: 500 }
       );
     }
-
-    // ========================================================
-    // REQUEST
-    // ========================================================
 
     const body = await request.json();
 
@@ -687,13 +635,6 @@ export async function POST(
       isUrdu(question)
         ? "Urdu"
         : "English";
-
-    // ========================================================
-    // GET ALL VERIFIED ACTIVE RECORDS
-    //
-    // IMPORTANT:
-    // There is NO service_name filter here.
-    // ========================================================
 
     const supabaseUrl =
       `${SUPABASE_URL}/rest/v1/verified_information` +
@@ -747,10 +688,6 @@ export async function POST(
       });
     }
 
-    // ========================================================
-    // INTELLIGENT SERVICE + JURISDICTION SELECTION
-    // ========================================================
-
     const selected =
       selectRecords(
         question,
@@ -770,19 +707,11 @@ export async function POST(
       });
     }
 
-    // ========================================================
-    // BUILD VERIFIED CONTEXT
-    // ========================================================
-
     const verifiedContext =
       buildVerifiedContext(
         relevantRecords,
         language
       );
-
-    // ========================================================
-    // OFFICIAL SOURCE
-    // ========================================================
 
     const sourceRecord =
       relevantRecords.find(
@@ -811,10 +740,6 @@ export async function POST(
               "",
           }
         : null;
-
-    // ========================================================
-    // GROQ SYSTEM PROMPT
-    // ========================================================
 
     const systemPrompt = `
 You are Pakistan Citizen Helper.
@@ -978,10 +903,6 @@ ${language}
 Answer ONLY from the verified records.
 `;
 
-    // ========================================================
-    // GROQ
-    // ========================================================
-
     const groqResponse = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -1063,3 +984,24 @@ Answer ONLY from the verified records.
     );
   }
 }
+
+Now do only these steps
+
+1. Open GitHub → "pakistan-citizen-helper".
+2. Open "app/api/ask/route.ts".
+3. Select all existing code and delete it.
+4. Paste the complete code above.
+5. Commit to "main".
+6. Commit message:
+   "Fix Unicode regex build error"
+7. Go to Vercel and wait for the new deployment.
+
+The important change is this:
+
+.replace(/[^\w\s/.-]/g, " ")
+
+instead of the previous:
+
+.replace(/[^\p{L}\p{N}\s/.-]/gu, " ")
+
+Don't change your Vercel environment variables or Supabase settings.

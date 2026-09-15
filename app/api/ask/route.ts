@@ -1,283 +1,676 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import Groq from "groq-sdk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-const groqApiKey = process.env.GROQ_API_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey || !groqApiKey) {
-  console.error("Missing required environment variables.");
-}
+const GROQ_MODEL = "openai/gpt-oss-120b";
 
-const supabase = createClient(
-  supabaseUrl || "",
-  supabaseAnonKey || ""
-);
+type VerifiedRecord = {
+  id?: number;
+  service_name?: string | null;
+  category?: string | null;
+  title?: string | null;
+  content?: string | null;
+  service_name_urdu?: string | null;
+  title_urdu?: string | null;
+  content_urdu?: string | null;
+  province?: string | null;
+  official_department?: string | null;
+  official_source_title?: string | null;
+  official_source_url?: string | null;
+  last_verified?: string | null;
+  active?: boolean | null;
+};
 
-const groq = new Groq({
-  apiKey: groqApiKey || "",
-});
+type SourceInfo = {
+  department?: string;
+  title?: string;
+  url?: string;
+  lastVerified?: string;
+  province?: string;
+};
 
-/* =========================================================
-   TEXT HELPERS
-   ========================================================= */
-
-function normalize(value: string): string {
-  return value
+function normalize(value: unknown): string {
+  return String(value ?? "")
     .toLowerCase()
-    .trim()
-    .replace(/\s+/g, " ");
+    .normalize("NFKC")
+    .replace(/[^\p{L}\p{N}\s/.-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function isUrdu(
+function isUrdu(text: string): boolean {
+  return /[\u0600-\u06FF]/.test(text);
+}
+
+function tokenize(text: string): string[] {
+  return normalize(text)
+    .split(/\s+/)
+    .filter((word) => word.length >= 2);
+}
+
+const STOP_WORDS = new Set([
+  "the",
+  "is",
+  "are",
+  "was",
+  "were",
+  "how",
+  "what",
+  "where",
+  "when",
+  "which",
+  "can",
+  "may",
+  "for",
+  "from",
+  "with",
+  "about",
+  "please",
+  "tell",
+  "me",
+  "give",
+  "get",
+  "my",
+  "i",
+  "do",
+  "does",
+  "a",
+  "an",
+  "of",
+  "to",
+  "in",
+  "on",
+  "and",
+  "or",
+  "کے",
+  "کی",
+  "کا",
+  "کو",
+  "میں",
+  "سے",
+  "اور",
+  "ہے",
+  "ہیں",
+  "کیا",
+  "کہاں",
+  "کیسے",
+  "مجھے",
+  "لیے",
+  "بارے",
+  "میرا",
+  "میری",
+]);
+
+function questionTokens(question: string): string[] {
+  return tokenize(question).filter(
+    (word) => !STOP_WORDS.has(word)
+  );
+}
+
+/*
+  Generic service aliases.
+
+  These are not individual service rules.
+  They simply help the system understand common ways
+  citizens refer to the same government service.
+*/
+const SERVICE_ALIASES: Record<string, string[]> = {
+  "CNIC / NADRA": [
+    "cnic",
+    "nic",
+    "identity card",
+    "شناختی کارڈ",
+    "شناختی",
+    "nadra",
+    "نادرا",
+  ],
+
+  Passport: [
+    "passport",
+    "پاسپورٹ",
+  ],
+
+  "Driving Licence": [
+    "driving licence",
+    "driving license",
+    "driving",
+    "licence",
+    "license",
+    "ڈرائیونگ لائسنس",
+    "لائسنس",
+  ],
+
+  Domicile: [
+    "domicile",
+    "ڈومیسائل",
+  ],
+
+  Scholarships: [
+    "scholarship",
+    "scholarships",
+    "stipend",
+    "financial aid",
+    "student scholarship",
+    "وظیفہ",
+    "وظائف",
+    "اسکالرشپ",
+  ],
+
+  "Protector of Emigrants": [
+    "protector",
+    "protector of emigrants",
+    "emigration",
+    "emigrant",
+    "overseas employment",
+    "work visa",
+    "employment visa",
+    "پروٹیکٹر",
+    "ایمیگریشن",
+    "بیرون ملک ملازمت",
+  ],
+
+  "Other Services": [
+    "birth certificate",
+    "death certificate",
+    "marriage certificate",
+    "divorce certificate",
+    "character certificate",
+    "police verification",
+    "vehicle registration",
+    "token tax",
+    "income tax",
+    "fbr",
+    "tax",
+    "crc",
+    "form b",
+    "family registration",
+    "fard",
+    "birth",
+    "death",
+    "marriage",
+    "divorce",
+    "character certificate",
+    "پیدائش",
+    "وفات",
+    "شادی",
+    "طلاق",
+    "کردار سرٹیفکیٹ",
+    "پولیس ویریفکیشن",
+    "گاڑی رجسٹریشن",
+    "ٹیکس",
+  ],
+};
+
+function detectServiceFromQuestion(
   question: string,
-  requestedLanguage: string
-): boolean {
-  if (
-    requestedLanguage &&
-    requestedLanguage.toLowerCase() === "urdu"
-  ) {
-    return true;
-  }
-
-  return /[\u0600-\u06FF]/.test(question);
-}
-
-/* =========================================================
-   SERVICE MATCHING
-   =========================================================
-   
-   The database is the source of truth.
-
-   We do NOT hard-code individual services.
-
-   Example:
-   User/frontend:
-      "CNIC / NADRA"
-
-   Database:
-      "CNIC / NADRA"
-
-   Or:
-      "Driving Licence"
-
-   Database:
-      "Driving Licence"
-
-   New services added later will automatically work.
-   ========================================================= */
-
-function serviceMatches(
-  databaseService: string,
-  requestedService: string
-): boolean {
-  const db = normalize(databaseService);
-  const requested = normalize(requestedService);
-
-  if (!db || !requested) {
-    return false;
-  }
-
-  if (db === requested) {
-    return true;
-  }
-
-  /*
-   * Flexible matching for harmless variations.
-   */
-
-  const dbCompact = db
-    .replace(/\//g, "")
-    .replace(/\s+/g, "");
-
-  const requestedCompact = requested
-    .replace(/\//g, "")
-    .replace(/\s+/g, "");
-
-  if (dbCompact === requestedCompact) {
-    return true;
-  }
-
-  return false;
-}
-
-/* =========================================================
-   QUESTION RELEVANCE
-   =========================================================
-   
-   We use the question to identify relevant records inside
-   the already-selected service.
-
-   We intentionally keep this simple and safe.
-   If no category appears relevant, ALL verified records
-   for the service are supplied to Groq.
-
-   This prevents missing important information.
-   ========================================================= */
-
-function scoreRecord(
-  record: any,
-  question: string
-): number {
+  records: VerifiedRecord[]
+): string | null {
   const q = normalize(question);
 
-  const text = normalize(
-    [
-      record.category,
-      record.title,
-      record.content,
-      record.title_urdu,
-      record.content_urdu,
-    ]
-      .filter(Boolean)
-      .join(" ")
-  );
+  let bestService: string | null = null;
+  let bestScore = 0;
 
-  let score = 0;
+  /*
+    First use aliases.
+  */
+  for (const [service, aliases] of Object.entries(
+    SERVICE_ALIASES
+  )) {
+    let score = 0;
 
-  const keywords = [
-    "fee",
-    "fees",
-    "cost",
-    "price",
-    "charges",
-    "فیس",
-    "فیس کتنی",
-    "کتنی فیس",
-    "خرچہ",
-    "اخراجات",
+    for (const alias of aliases) {
+      const a = normalize(alias);
 
-    "document",
-    "documents",
-    "required",
-    "requirements",
-    "کاغذات",
-    "دستاویز",
-    "دستاویزات",
-    "ضروری",
+      if (!a) continue;
 
-    "eligibility",
-    "eligible",
-    "qualification",
-    "اہلیت",
-    "مستحق",
+      if (q.includes(a)) {
+        score += a.length >= 8 ? 15 : 10;
+      }
+    }
 
-    "apply",
-    "application",
-    "process",
-    "procedure",
-    "steps",
-    "درخواست",
-    "درخواست کیسے",
-    "طریقہ",
-    "عمل",
-
-    "renew",
-    "renewal",
-    "renew",
-    "تجدید",
-    "دوبارہ",
-
-    "time",
-    "duration",
-    "processing",
-    "days",
-    "کتنا وقت",
-    "مدت",
-
-    "where",
-    "office",
-    "location",
-    "کہاں",
-    "دفتر",
-
-    "protector",
-    "emigration",
-    "employment",
-    "visa",
-    "work visa",
-    "protector of emigrants",
-    "پروٹیکٹر",
-    "پروٹیکٹر آف ایمیگرنٹس",
-    "امیگریشن",
-    "ملازمت",
-    "ورک ویزا",
-    "بیرون ملک ملازمت",
-  ];
-
-  for (const keyword of keywords) {
-    if (q.includes(keyword) && text.includes(keyword)) {
-      score += 2;
+    if (score > bestScore) {
+      bestScore = score;
+      bestService = service;
     }
   }
 
   /*
-   * Exact category/title word overlap.
-   */
+    Then compare against services actually present
+    in Supabase. This makes the system expandable.
+  */
+  const uniqueServices = Array.from(
+    new Set(
+      records
+        .map((record) => record.service_name)
+        .filter(Boolean)
+    )
+  ) as string[];
 
-  const questionWords = q
-    .split(/\s+/)
-    .filter((word) => word.length >= 3);
+  for (const service of uniqueServices) {
+    const aliases = SERVICE_ALIASES[service] || [];
 
-  for (const word of questionWords) {
-    if (text.includes(word)) {
-      score += 1;
+    let score = 0;
+
+    if (q.includes(normalize(service))) {
+      score += 30;
+    }
+
+    for (const alias of aliases) {
+      if (q.includes(normalize(alias))) {
+        score += 15;
+      }
+    }
+
+    const serviceWords = tokenize(service);
+
+    for (const word of serviceWords) {
+      if (q.includes(word)) {
+        score += 5;
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestService = service;
+    }
+  }
+
+  return bestScore >= 10 ? bestService : null;
+}
+
+function detectJurisdiction(
+  question: string
+): string | null {
+  const q = normalize(question);
+
+  const jurisdictions = [
+    {
+      name: "Punjab",
+      terms: ["punjab", "پنجاب"],
+    },
+    {
+      name: "Sindh",
+      terms: ["sindh", "sind", "سندھ"],
+    },
+    {
+      name: "Khyber Pakhtunkhwa",
+      terms: [
+        "khyber pakhtunkhwa",
+        "kpk",
+        "kp",
+        "خیبر پختونخوا",
+        "خیبرپختونخوا",
+      ],
+    },
+    {
+      name: "Islamabad Capital Territory",
+      terms: [
+        "islamabad",
+        "ict",
+        "اسلام آباد",
+        "اسلامباد",
+      ],
+    },
+    {
+      name: "Balochistan",
+      terms: ["balochistan", "بلوچستان"],
+    },
+    {
+      name: "Azad Jammu and Kashmir",
+      terms: [
+        "ajk",
+        "azad kashmir",
+        "آزاد کشمیر",
+        "آزاد جموں و کشمیر",
+      ],
+    },
+    {
+      name: "Gilgit-Baltistan",
+      terms: [
+        "gilgit",
+        "gilgit baltistan",
+        "گلگت",
+        "گلگت بلتستان",
+      ],
+    },
+  ];
+
+  for (const jurisdiction of jurisdictions) {
+    for (const term of jurisdiction.terms) {
+      if (q.includes(normalize(term))) {
+        return jurisdiction.name;
+      }
+    }
+  }
+
+  return null;
+}
+
+function scoreRecord(
+  question: string,
+  record: VerifiedRecord
+): number {
+  const q = normalize(question);
+
+  const recordText = normalize(
+    [
+      record.service_name,
+      record.service_name_urdu,
+      record.category,
+      record.title,
+      record.title_urdu,
+      record.content,
+      record.content_urdu,
+      record.province,
+    ].join(" ")
+  );
+
+  const tokens = questionTokens(q);
+
+  let score = 0;
+
+  /*
+    General word matching.
+  */
+  for (const token of tokens) {
+    if (recordText.includes(token)) {
+      score += 3;
+    }
+  }
+
+  /*
+    Strong title match.
+  */
+  const title = normalize(
+    `${record.title ?? ""} ${record.title_urdu ?? ""}`
+  );
+
+  for (const token of tokens) {
+    if (title.includes(token)) {
+      score += 7;
+    }
+  }
+
+  /*
+    Category match.
+  */
+  const category = normalize(record.category);
+
+  for (const token of tokens) {
+    if (category.includes(token)) {
+      score += 5;
     }
   }
 
   return score;
 }
 
-/* =========================================================
-   URDU TERMINOLOGY PROTECTION
-   ========================================================= */
+function selectRecords(
+  question: string,
+  requestedService: string,
+  records: VerifiedRecord[]
+): {
+  records: VerifiedRecord[];
+  detectedService: string | null;
+  jurisdiction: string | null;
+} {
+  const detectedService =
+    detectServiceFromQuestion(question, records);
 
-function protectUrduTerminology(
-  text: string
-): string {
-  return text
-    .replace(
-      /۱۸ سال سے کم عمر طلباء/g,
-      "۱۸ سال سے کم عمر درخواست گزاروں"
-    )
-    .replace(
-      /18 سال سے کم عمر طلباء/g,
-      "۱۸ سال سے کم عمر درخواست گزاروں"
-    )
-    .replace(
-      /کم عمر طلباء/g,
-      "کم عمر درخواست گزاروں"
-    )
-    .replace(
-      /طلباء \(درخواست گزاروں\)/g,
-      "درخواست گزاروں"
-    );
+  const jurisdiction =
+    detectJurisdiction(question);
+
+  /*
+    IMPORTANT:
+    If the question clearly identifies another service,
+    it overrides the UI dropdown.
+
+    Example:
+    UI = CNIC
+    Question = "What scholarships are available?"
+
+    Result:
+    Scholarships records are selected.
+  */
+  let serviceToUse =
+    detectedService ||
+    requestedService ||
+    null;
+
+  let working = [...records];
+
+  if (serviceToUse) {
+    const serviceNormalized =
+      normalize(serviceToUse);
+
+    const serviceRecords = working.filter((record) => {
+      const databaseService =
+        normalize(record.service_name);
+
+      const databaseUrduService =
+        normalize(record.service_name_urdu);
+
+      if (
+        databaseService === serviceNormalized ||
+        databaseUrduService === serviceNormalized
+      ) {
+        return true;
+      }
+
+      if (
+        databaseService.includes(serviceNormalized) ||
+        serviceNormalized.includes(databaseService)
+      ) {
+        return true;
+      }
+
+      const aliases =
+        SERVICE_ALIASES[serviceToUse] || [];
+
+      return aliases.some((alias) => {
+        const a = normalize(alias);
+
+        return (
+          databaseService.includes(a) ||
+          databaseUrduService.includes(a)
+        );
+      });
+    });
+
+    if (serviceRecords.length > 0) {
+      working = serviceRecords;
+    }
+  }
+
+  /*
+    Jurisdiction-specific filtering.
+  */
+  if (jurisdiction) {
+    const jurisdictionRecords =
+      working.filter((record) => {
+        const province =
+          normalize(record.province);
+
+        return (
+          province.includes(
+            normalize(jurisdiction)
+          ) ||
+          normalize(jurisdiction).includes(
+            province
+          ) ||
+          province === "pakistan"
+        );
+      });
+
+    if (jurisdictionRecords.length > 0) {
+      working = jurisdictionRecords;
+    }
+  }
+
+  /*
+    Rank records according to the actual question.
+  */
+  const scored = working
+    .map((record) => ({
+      record,
+      score: scoreRecord(question, record),
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  /*
+    Keep enough records for broad questions.
+  */
+  if (scored.length <= 30) {
+    return {
+      records: scored.map((x) => x.record),
+      detectedService,
+      jurisdiction,
+    };
+  }
+
+  const useful = scored.filter(
+    (x) => x.score > 0
+  );
+
+  return {
+    records:
+      useful.length > 0
+        ? useful.slice(0, 30).map((x) => x.record)
+        : scored.slice(0, 30).map((x) => x.record),
+    detectedService,
+    jurisdiction,
+  };
 }
 
-/* =========================================================
-   POST /api/ask
-   ========================================================= */
+function buildVerifiedContext(
+  records: VerifiedRecord[],
+  language: "English" | "Urdu"
+): string {
+  return records
+    .map((record, index) => {
+      const title =
+        language === "Urdu"
+          ? record.title_urdu ||
+            record.title ||
+            ""
+          : record.title ||
+            record.title_urdu ||
+            "";
+
+      const content =
+        language === "Urdu"
+          ? record.content_urdu ||
+            record.content ||
+            ""
+          : record.content ||
+            record.content_urdu ||
+            "";
+
+      return `
+==============================
+VERIFIED RECORD ${index + 1}
+==============================
+
+Service:
+${record.service_name || ""}
+
+Service Urdu:
+${record.service_name_urdu || ""}
+
+Category:
+${record.category || ""}
+
+Jurisdiction:
+${record.province || ""}
+
+Title:
+${title}
+
+Verified Information:
+${content}
+
+Official Department:
+${record.official_department || ""}
+
+Official Source:
+${record.official_source_title || ""}
+
+Official URL:
+${record.official_source_url || ""}
+
+Last Verified:
+${record.last_verified || ""}
+`;
+    })
+    .join("\n");
+}
+
+function noVerifiedInformation(
+  language: "English" | "Urdu"
+): string {
+  if (language === "Urdu") {
+    return "معذرت، اس سوال کے بارے میں ہمارے تصدیق شدہ سرکاری ریکارڈ میں فی الحال کافی معلومات موجود نہیں ہیں۔ براہ کرم سروس یا متعلقہ صوبہ/علاقہ واضح کریں۔";
+  }
+
+  return "Sorry, sufficient verified government information is currently not available for this question. Please specify the service or relevant province/jurisdiction.";
+}
+
+function protectUrdu(text: string): string {
+  return text
+    .replace(/شناختی کارڈ/gi, "شناختی کارڈ")
+    .replace(/ڈرائیونگ لائسنس/gi, "ڈرائیونگ لائسنس")
+    .replace(/پاسپورٹ/gi, "پاسپورٹ")
+    .replace(/ڈومیسائل/gi, "ڈومیسائل")
+    .replace(/اسکالرشپ/gi, "اسکالرشپ")
+    .replace(
+      /پروٹیکٹر/gi,
+      "پروٹیکٹر آف ایمیگرنٹس"
+    );
+}
 
 export async function POST(
   request: NextRequest
 ) {
   try {
+    // ========================================================
+    // ENVIRONMENT
+    // ========================================================
+
+    if (
+      !SUPABASE_URL ||
+      !SUPABASE_ANON_KEY ||
+      !GROQ_API_KEY
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Server configuration is incomplete. Check the Vercel environment variables.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // ========================================================
+    // REQUEST
+    // ========================================================
+
     const body = await request.json();
 
     const question = String(
-      body?.question || ""
+      body.question ?? ""
     ).trim();
 
     const requestedService = String(
-      body?.service || ""
+      body.service ?? ""
     ).trim();
 
     const requestedLanguage = String(
-      body?.language || ""
+      body.language ?? ""
     ).trim();
 
     if (!question) {
@@ -289,540 +682,373 @@ export async function POST(
       );
     }
 
-    if (
-      !supabaseUrl ||
-      !supabaseAnonKey ||
-      !groqApiKey
-    ) {
-      console.error(
-        "Missing Supabase or Groq environment variables."
-      );
+    const language: "English" | "Urdu" =
+      requestedLanguage.toLowerCase() === "urdu" ||
+      isUrdu(question)
+        ? "Urdu"
+        : "English";
 
-      return NextResponse.json(
-        {
-          error:
-            "AI service configuration is incomplete.",
+    // ========================================================
+    // GET ALL VERIFIED ACTIVE RECORDS
+    //
+    // IMPORTANT:
+    // There is NO service_name filter here.
+    // ========================================================
+
+    const supabaseUrl =
+      `${SUPABASE_URL}/rest/v1/verified_information` +
+      `?select=*&active=eq.true`;
+
+    const supabaseResponse = await fetch(
+      supabaseUrl,
+      {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization:
+            `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type":
+            "application/json",
         },
-        { status: 500 }
-      );
-    }
-
-    const urdu = isUrdu(
-      question,
-      requestedLanguage
+        cache: "no-store",
+      }
     );
 
-    /*
-     * =====================================================
-     * GET ALL ACTIVE VERIFIED INFORMATION
-     * =====================================================
-     *
-     * No service is hard-coded here.
-     *
-     * This means new services can be added to Supabase
-     * without changing this API.
-     */
+    if (!supabaseResponse.ok) {
+      const errorText =
+        await supabaseResponse.text();
 
-    const {
-      data: allRecords,
-      error: supabaseError,
-    } = await supabase
-      .from("verified_information")
-      .select(
-        `
-        id,
-        service_name,
-        category,
-        title,
-        content,
-        service_name_urdu,
-        title_urdu,
-        content_urdu,
-        province,
-        official_department,
-        official_source_title,
-        official_source_url,
-        last_verified,
-        active
-        `
-      )
-      .eq("active", true)
-      .order("category", {
-        ascending: true,
-      });
-
-    if (supabaseError) {
       console.error(
         "Supabase error:",
-        supabaseError
+        errorText
       );
 
       return NextResponse.json(
         {
           error:
-            "Unable to retrieve verified information.",
+            "Unable to retrieve verified information from Supabase.",
         },
         { status: 500 }
       );
     }
 
-    const records = allRecords || [];
-
-    console.log(
-      "Total active verified records:",
-      records.length
-    );
-
-    /*
-     * =====================================================
-     * FIND SERVICE RECORDS
-     * =====================================================
-     */
-
-    let serviceRecords = records;
-
-    if (requestedService) {
-      serviceRecords = records.filter(
-        (record: any) =>
-          serviceMatches(
-            String(record.service_name || ""),
-            requestedService
-          )
-      );
-    }
-
-    /*
-     * If the frontend did not provide a service or no exact
-     * service was found, search the question against the
-     * service names.
-     */
+    const allRecords =
+      (await supabaseResponse.json()) as VerifiedRecord[];
 
     if (
-      serviceRecords.length === 0 &&
-      !requestedService
+      !Array.isArray(allRecords) ||
+      allRecords.length === 0
     ) {
-      const questionText =
-        normalize(question);
-
-      serviceRecords = records.filter(
-        (record: any) => {
-          const serviceName =
-            normalize(
-              String(
-                record.service_name || ""
-              )
-            );
-
-          const serviceUrdu =
-            normalize(
-              String(
-                record.service_name_urdu || ""
-              )
-            );
-
-          return (
-            questionText.includes(serviceName) ||
-            (serviceUrdu &&
-              questionText.includes(
-                serviceUrdu
-              ))
-          );
-        }
-      );
-    }
-
-    console.log(
-      "Requested service:",
-      requestedService
-    );
-
-    console.log(
-      "Service records found:",
-      serviceRecords.length
-    );
-
-    /*
-     * =====================================================
-     * NO VERIFIED DATA
-     * =====================================================
-     */
-
-    if (serviceRecords.length === 0) {
       return NextResponse.json({
-        answer: urdu
-          ? "معذرت، اس سروس کے بارے میں اس وقت کوئی تصدیق شدہ معلومات دستیاب نہیں ہے۔"
-          : "Sorry, no verified information is currently available for this service.",
+        answer: noVerifiedInformation(
+          language
+        ),
         source: null,
       });
     }
 
-    /*
-     * =====================================================
-     * SELECT RELEVANT RECORDS
-     * =====================================================
-     *
-     * We keep all records available as a safety net.
-     *
-     * Relevant records are placed first.
-     */
+    // ========================================================
+    // INTELLIGENT SERVICE + JURISDICTION SELECTION
+    // ========================================================
 
-    const scoredRecords =
-      serviceRecords.map(
-        (record: any) => ({
-          record,
-          score: scoreRecord(
-            record,
-            question
-          ),
-        })
+    const selected =
+      selectRecords(
+        question,
+        requestedService,
+        allRecords
       );
-
-    scoredRecords.sort(
-      (a, b) => b.score - a.score
-    );
-
-    /*
-     * Keep ALL verified records.
-
-     * This is deliberate.
-
-     * For public-service questions, it is safer to give
-     * Groq the complete verified service information than
-     * accidentally exclude an important condition.
-     */
 
     const relevantRecords =
-      scoredRecords.map(
-        (item) => item.record
-      );
+      selected.records;
 
-    /*
-     * =====================================================
-     * BUILD VERIFIED CONTEXT
-     * =====================================================
-     */
+    if (relevantRecords.length === 0) {
+      return NextResponse.json({
+        answer: noVerifiedInformation(
+          language
+        ),
+        source: null,
+      });
+    }
+
+    // ========================================================
+    // BUILD VERIFIED CONTEXT
+    // ========================================================
 
     const verifiedContext =
-      relevantRecords
-        .map((item: any) => {
-          const title = urdu
-            ? item.title_urdu ||
-              item.title
-            : item.title;
+      buildVerifiedContext(
+        relevantRecords,
+        language
+      );
 
-          const content = urdu
-            ? item.content_urdu ||
-              item.content
-            : item.content;
-
-          return `
-SERVICE:
-${item.service_name || ""}
-
-CATEGORY:
-${item.category || ""}
-
-TITLE:
-${title || ""}
-
-VERIFIED CONTENT:
-${content || ""}
-
-OFFICIAL DEPARTMENT:
-${item.official_department || ""}
-
-OFFICIAL SOURCE TITLE:
-${item.official_source_title || ""}
-
-OFFICIAL SOURCE URL:
-${item.official_source_url || ""}
-
-LAST VERIFIED:
-${item.last_verified || ""}
-`;
-        })
-        .join(
-          "\n========================================\n"
-        );
-
-    /*
-     * =====================================================
-     * OFFICIAL SOURCE
-     * =====================================================
-     */
+    // ========================================================
+    // OFFICIAL SOURCE
+    // ========================================================
 
     const sourceRecord =
       relevantRecords.find(
-        (item: any) =>
-          item.official_source_url
-      ) ||
-      relevantRecords[0];
+        (record) =>
+          record.official_source_url
+      ) || relevantRecords[0];
 
-    const officialDepartment =
-      sourceRecord?.official_department ||
-      "";
+    const source: SourceInfo | null =
+      sourceRecord
+        ? {
+            department:
+              sourceRecord.official_department ||
+              "",
+            title:
+              sourceRecord.official_source_title ||
+              sourceRecord.title ||
+              "",
+            url:
+              sourceRecord.official_source_url ||
+              "",
+            lastVerified:
+              sourceRecord.last_verified ||
+              "",
+            province:
+              sourceRecord.province ||
+              "",
+          }
+        : null;
 
-    const officialSourceTitle =
-      sourceRecord?.official_source_title ||
-      "";
-
-    const officialSourceUrl =
-      sourceRecord?.official_source_url ||
-      "";
-
-    const lastVerified =
-      sourceRecord?.last_verified ||
-      "";
-
-    /*
-     * =====================================================
-     * LANGUAGE
-     * =====================================================
-     */
-
-    const languageInstruction = urdu
-      ? `
-Answer in clear, natural Urdu using Urdu script.
-
-Use these terms:
-
-Applicant = درخواست گزار
-
-Applicants = درخواست گزاروں
-
-Minor = نابالغ
-
-Under 18 = ۱۸ سال سے کم عمر
-
-Never translate applicant as:
-طالب علم
-or
-طلباء
-
-Only use طالب علم / طلباء when the verified information
-specifically refers to students.
-`
-      : `
-Answer in clear, simple English.
-`;
-
-    /*
-     * =====================================================
-     * SYSTEM PROMPT
-     * =====================================================
-     */
+    // ========================================================
+    // GROQ SYSTEM PROMPT
+    // ========================================================
 
     const systemPrompt = `
-You are Pakistan Citizen Helper AI.
+You are Pakistan Citizen Helper.
 
-You provide public-service information for citizens of
-Pakistan.
+You provide simple, practical and trustworthy information
+about Pakistani government and public services.
 
 ============================================================
-ABSOLUTE TRUST RULE
+MOST IMPORTANT RULE
 ============================================================
 
-Use ONLY the verified information supplied below.
+ONLY use information contained in the VERIFIED RECORDS.
 
-The information below comes from the application's
-verified-information database.
+Never invent or guess:
 
-Do NOT use your own general knowledge to add facts.
-
-Do NOT invent:
-
-- documents
 - fees
+- documents
+- eligibility
+- deadlines
+- scholarship amounts
 - processing times
-- dates
-- eligibility requirements
-- procedures
 - offices
 - addresses
-- deadlines
+- procedures
+- age limits
 - government rules
-- exceptions
-- contact information
+- websites
+- application requirements
 
-If the verified information does not contain an answer,
-say that the available verified information does not specify
-that detail.
+If information is missing, explicitly say that the
+verified information does not contain it.
 
 ============================================================
-IMPORTANT
+SERVICE RULE
 ============================================================
 
-The citizen may ask about:
+The application automatically identifies the most likely
+service from the user's question.
 
+Do not answer using a different service simply because
+the UI selected a different service.
+
+For example:
+
+If UI service = CNIC
+but question = "What scholarships are available?"
+
+Answer using SCHOLARSHIP records.
+
+============================================================
+JURISDICTION RULE
+============================================================
+
+If a question mentions Punjab, Sindh, Khyber Pakhtunkhwa,
+Islamabad, Balochistan, AJK or Gilgit-Baltistan, use only
+the applicable jurisdiction information where possible.
+
+Do not combine provincial rules.
+
+If rules differ by jurisdiction and the user did not specify
+a jurisdiction, clearly tell the user that the requirements
+vary and identify the jurisdictions covered by the verified
+information.
+
+============================================================
+SCHOLARSHIP RULE
+============================================================
+
+For scholarships, only state:
+
+- scholarship name
 - eligibility
-- required documents
-- application procedure
-- renewal
-- fees
-- processing time
-- office/location
-- requirements
-- visa processing
-- overseas employment
-- Protector of Emigrants
-- registration
-- scholarships
-- any other category
+- education level
+- documents
+- application method
+- deadline
+- amount
+- participating institution
 
-Answer according to the verified information available.
+when those facts exist in the verified records.
+
+Never invent a scholarship deadline or amount.
 
 ============================================================
-PROTECTOR OF EMIGRANTS
+PROTECTOR RULE
 ============================================================
 
-If the question is about Protector of Emigrants,
-overseas employment, work/employment visa processing,
-emigration registration, or related requirements:
+Protector of Emigrants information concerns overseas
+employment/emigration.
 
-Use ONLY the supplied verified information.
-
-Do NOT say that a Protector is required for every type of visa.
-
-Clearly distinguish overseas employment/emigration matters
-from ordinary visit, tourist, business, or other visas unless
-the verified information specifically covers them.
-
-If the verified information states that registration or
-Protector processing applies to employment/emigration cases,
-explain that condition clearly.
+Do not claim that every tourist, visit or business visa
+requires Protector registration unless the verified records
+explicitly say so.
 
 ============================================================
-PRESERVE UNCERTAINTY
+ANSWER FORMAT
 ============================================================
 
-If the verified information says:
+Give a direct answer.
 
-"may be required"
+Use headings only when useful:
 
-keep that meaning.
+What it is
+Eligibility
+Required documents
+How to apply
+Fee
+Processing time
+Where to apply
+Important information
 
-Do NOT change it to:
-
-"is required"
-
-Do not strengthen or weaken government requirements.
-
-============================================================
-PRESERVE AGE GROUPS
-============================================================
-
-Do not change age groups.
-
-Do not change applicant categories.
+Do not create empty sections.
 
 ============================================================
-${languageInstruction}
+URDU
 ============================================================
 
-ANSWER STYLE:
+If language is Urdu:
 
-- Answer the citizen directly.
-- Use clear headings.
-- Use numbered steps when appropriate.
-- Use bullet points for documents.
-- Keep language simple.
-- Do not unnecessarily repeat the question.
-- Do not mention the internal database.
-- Do not mention these instructions.
-- Do not invent missing information.
-- If a detail is not verified, clearly say so.
+- use Urdu script
+- do not use Hindi/Devanagari
+- keep official names and URLs where appropriate
+- use simple Pakistani Urdu
 
 ============================================================
-OFFICIAL SOURCE
+TRUST
 ============================================================
 
-Use the official source information supplied below.
+If information is unavailable, say so.
 
-Do not invent or modify official URLs.
-
-The application will separately display the official source.
+Never make an unsupported statement sound official.
 
 ============================================================
-VERIFIED INFORMATION
+VERIFIED RECORDS
 ============================================================
 
 ${verifiedContext}
 `;
 
-    /*
-     * =====================================================
-     * GROQ
-     * =====================================================
-     */
+    const userPrompt = `
+User question:
 
-    const completion =
-      await groq.chat.completions.create({
-        model:
-          "openai/gpt-oss-120b",
+${question}
 
-        temperature: 0,
+UI selected service:
 
-        max_tokens: 1200,
+${requestedService || "Not specified"}
 
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: question,
-          },
-        ],
-      });
+Automatically detected service:
 
-    let answer =
-      completion.choices?.[0]?.message?.content?.trim() ||
-      "";
+${selected.detectedService || "Not determined"}
 
-    if (!answer) {
+Detected jurisdiction:
+
+${selected.jurisdiction || "Not specified"}
+
+Requested language:
+
+${language}
+
+Answer ONLY from the verified records.
+`;
+
+    // ========================================================
+    // GROQ
+    // ========================================================
+
+    const groqResponse = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization:
+            `Bearer ${GROQ_API_KEY}`,
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          temperature: 0,
+          max_tokens: 1600,
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt,
+            },
+            {
+              role: "user",
+              content: userPrompt,
+            },
+          ],
+        }),
+      }
+    );
+
+    if (!groqResponse.ok) {
+      const errorText =
+        await groqResponse.text();
+
+      console.error(
+        "Groq error:",
+        errorText
+      );
+
       return NextResponse.json(
         {
           error:
-            "AI returned an empty response.",
+            "AI service is temporarily unavailable. Please try again.",
         },
         { status: 500 }
       );
     }
 
-    /*
-     * Final Urdu terminology protection.
-     */
+    const groqData =
+      await groqResponse.json();
 
-    if (urdu) {
+    let answer =
+      groqData?.choices?.[0]?.message?.content?.trim() ||
+      "";
+
+    if (!answer) {
       answer =
-        protectUrduTerminology(answer);
+        noVerifiedInformation(language);
     }
 
-    /*
-     * =====================================================
-     * RETURN
-     * =====================================================
-     */
+    if (language === "Urdu") {
+      answer = protectUrdu(answer);
+    }
 
     return NextResponse.json({
       answer,
-
-      source: {
-        department:
-          officialDepartment,
-
-        title:
-          officialSourceTitle,
-
-        url:
-          officialSourceUrl,
-
-        lastVerified:
-          lastVerified,
-      },
+      source,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error(
       "API /api/ask error:",
       error
@@ -831,7 +1057,7 @@ ${verifiedContext}
     return NextResponse.json(
       {
         error:
-          "AI service is temporarily unavailable.",
+          "An unexpected error occurred. Please try again.",
       },
       { status: 500 }
     );

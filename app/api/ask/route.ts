@@ -984,24 +984,3 @@ Answer ONLY from the verified records.
     );
   }
 }
-
-Now do only these steps
-
-1. Open GitHub → "pakistan-citizen-helper".
-2. Open "app/api/ask/route.ts".
-3. Select all existing code and delete it.
-4. Paste the complete code above.
-5. Commit to "main".
-6. Commit message:
-   "Fix Unicode regex build error"
-7. Go to Vercel and wait for the new deployment.
-
-The important change is this:
-
-.replace(/[^\w\s/.-]/g, " ")
-
-instead of the previous:
-
-.replace(/[^\p{L}\p{N}\s/.-]/gu, " ")
-
-Don't change your Vercel environment variables or Supabase settings.

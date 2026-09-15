@@ -9,10 +9,6 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const groqApiKey = process.env.GROQ_API_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey || !groqApiKey) {
-  console.error("Missing required environment variables.");
-}
-
 const supabase = createClient(
   supabaseUrl || "",
   supabaseAnonKey || ""
@@ -23,38 +19,45 @@ const groq = new Groq({
 });
 
 /* =========================================================
-   SERVICE NORMALIZATION
+   HELPERS
    ========================================================= */
 
+function normalize(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
 function normalizeService(service: string): string {
-  const value = service.trim().toLowerCase();
+  const s = normalize(service);
 
   if (
-    value === "cnic" ||
-    value === "cnic / nadra" ||
-    value === "nadra"
+    s === "cnic" ||
+    s === "nadra" ||
+    s === "cnic / nadra"
   ) {
     return "CNIC / NADRA";
   }
 
-  if (value === "passport") {
+  if (s === "passport") {
     return "Passport";
   }
 
   if (
-    value === "driving licence" ||
-    value === "driving license"
+    s === "driving licence" ||
+    s === "driving license"
   ) {
     return "Driving Licence";
   }
 
-  if (value === "domicile") {
+  if (s === "domicile") {
     return "Domicile";
   }
 
   if (
-    value === "scholarship" ||
-    value === "scholarships"
+    s === "scholarship" ||
+    s === "scholarships"
   ) {
     return "Scholarships";
   }
@@ -62,13 +65,8 @@ function normalizeService(service: string): string {
   return service.trim();
 }
 
-/* =========================================================
-   FALLBACK SERVICE DETECTION
-   Used only if frontend does not provide service.
-   ========================================================= */
-
 function detectService(question: string): string | null {
-  const q = question.toLowerCase();
+  const q = normalize(question);
 
   if (
     q.includes("passport") ||
@@ -113,58 +111,39 @@ function detectService(question: string): string | null {
   return null;
 }
 
-/* =========================================================
-   LANGUAGE DETECTION
-   ========================================================= */
-
-function isUrdu(question: string, requestedLanguage?: string): boolean {
-  if (
-    requestedLanguage &&
-    requestedLanguage.toLowerCase() === "urdu"
-  ) {
+function isUrdu(
+  question: string,
+  language: string
+): boolean {
+  if (language.toLowerCase() === "urdu") {
     return true;
   }
 
   return /[\u0600-\u06FF]/.test(question);
 }
 
-/* =========================================================
-   TERMINOLOGY PROTECTION
-   ========================================================= */
-
-function protectApplicantTerminology(
-  text: string,
-  urdu: boolean
-): string {
-  if (!urdu) {
-    return text;
-  }
-
-  text = text.replace(
-    /۱۸ سال سے کم عمر طلباء/g,
-    "۱۸ سال سے کم عمر درخواست گزاروں"
-  );
-
-  text = text.replace(
-    /18 سال سے کم عمر طلباء/g,
-    "۱۸ سال سے کم عمر درخواست گزاروں"
-  );
-
-  text = text.replace(
-    /کم عمر طلباء/g,
-    "کم عمر درخواست گزاروں"
-  );
-
-  text = text.replace(
-    /طلباء \(درخواست گزاروں\)/g,
-    "درخواست گزاروں"
-  );
-
-  return text;
+function protectUrduTerminology(text: string): string {
+  return text
+    .replace(
+      /۱۸ سال سے کم عمر طلباء/g,
+      "۱۸ سال سے کم عمر درخواست گزاروں"
+    )
+    .replace(
+      /18 سال سے کم عمر طلباء/g,
+      "۱۸ سال سے کم عمر درخواست گزاروں"
+    )
+    .replace(
+      /کم عمر طلباء/g,
+      "کم عمر درخواست گزاروں"
+    )
+    .replace(
+      /طلباء \(درخواست گزاروں\)/g,
+      "درخواست گزاروں"
+    );
 }
 
 /* =========================================================
-   POST /api/ask
+   POST
    ========================================================= */
 
 export async function POST(request: NextRequest) {
@@ -175,12 +154,6 @@ export async function POST(request: NextRequest) {
       body?.question || ""
     ).trim();
 
-    /*
-     * IMPORTANT:
-     * The frontend already sends the selected service.
-     * We use that first instead of trying to guess it again
-     * from the question.
-     */
     const requestedService = String(
       body?.service || ""
     ).trim();
@@ -204,12 +177,13 @@ export async function POST(request: NextRequest) {
       !groqApiKey
     ) {
       console.error(
-        "Required environment variable is missing."
+        "Missing Supabase or Groq environment variables."
       );
 
       return NextResponse.json(
         {
-          error: "AI service configuration is incomplete.",
+          error:
+            "AI service configuration is incomplete.",
         },
         { status: 500 }
       );
@@ -219,37 +193,51 @@ export async function POST(request: NextRequest) {
        DETERMINE SERVICE
        ===================================================== */
 
-    let service = "";
-
-    if (requestedService) {
-      service = normalizeService(requestedService);
-    } else {
-      const detected = detectService(question);
-
-      if (detected) {
-        service = detected;
-      }
-    }
+    const service = normalizeService(
+      requestedService ||
+        detectService(question) ||
+        ""
+    );
 
     const urdu = isUrdu(
       question,
       requestedLanguage
     );
 
-    console.log("Question:", question);
-    console.log("Requested service:", requestedService);
-    console.log("Normalized service:", service);
-    console.log("Language:", urdu ? "Urdu" : "English");
+    console.log(
+      "========================================"
+    );
+    console.log("USER QUESTION:", question);
+    console.log(
+      "REQUESTED SERVICE:",
+      requestedService
+    );
+    console.log(
+      "NORMALIZED SERVICE:",
+      service
+    );
+    console.log(
+      "LANGUAGE:",
+      urdu ? "Urdu" : "English"
+    );
 
     /* =====================================================
-       RETRIEVE VERIFIED INFORMATION
+       IMPORTANT:
+       GET ALL ACTIVE VERIFIED RECORDS
+       
+       We intentionally do NOT use:
+       .eq("service_name", service)
+
+       This avoids problems caused by small differences such
+       as:
+       CNIC
+       CNIC / NADRA
+       CNIC/NADRA
+       NADRA
        ===================================================== */
 
-    let data: any[] = [];
-    let error: any = null;
-
-    if (service) {
-      const result = await supabase
+    const { data: allRecords, error } =
+      await supabase
         .from("verified_information")
         .select(
           `
@@ -264,22 +252,18 @@ export async function POST(request: NextRequest) {
           official_department,
           official_source_title,
           official_source_url,
-          last_verified
+          last_verified,
+          active
           `
         )
-        .eq("service_name", service)
         .eq("active", true)
         .order("category", {
           ascending: true,
         });
 
-      data = result.data || [];
-      error = result.error;
-    }
-
     if (error) {
       console.error(
-        "Supabase error:",
+        "SUPABASE ERROR:",
         error
       );
 
@@ -292,20 +276,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log(
+      "TOTAL ACTIVE RECORDS:",
+      allRecords?.length || 0
+    );
+
+    /* =====================================================
+       MATCH SERVICE IN JAVASCRIPT
+       ===================================================== */
+
+    const targetService = normalize(service);
+
+    let records = (allRecords || []).filter(
+      (item: any) => {
+        const dbService = normalize(
+          String(item.service_name || "")
+        );
+
+        if (
+          targetService === "cnic / nadra"
+        ) {
+          return (
+            dbService === "cnic / nadra" ||
+            dbService === "cnic" ||
+            dbService === "nadra" ||
+            dbService.includes("cnic") ||
+            dbService.includes("nadra")
+          );
+        }
+
+        return dbService === targetService;
+      }
+    );
+
+    console.log(
+      "MATCHED SERVICE RECORDS:",
+      records.length
+    );
+
+    if (records.length > 0) {
+      console.log(
+        "MATCHED DATABASE SERVICE NAMES:",
+        records.map(
+          (r: any) => r.service_name
+        )
+      );
+    }
+
     /* =====================================================
        SAFETY FALLBACK
        ===================================================== */
 
-    if (!data || data.length === 0) {
+    if (records.length === 0) {
       console.warn(
-        "No verified records found for service:",
+        "NO VERIFIED RECORDS FOUND FOR:",
         service
       );
 
       return NextResponse.json({
         answer: urdu
-          ? "معذرت، اس سروس کے بارے میں اس وقت کوئی تصدیق شدہ معلومات دستیاب نہیں ہے۔ براہِ کرم متعلقہ سرکاری ادارے کی ویب سائٹ سے تازہ ترین معلومات چیک کریں۔"
-          : "Sorry, no verified information is currently available for this service. Please check the relevant official government website for the latest information.",
+          ? "معذرت، اس سروس کے بارے میں اس وقت کوئی تصدیق شدہ معلومات دستیاب نہیں ہے۔"
+          : "Sorry, no verified information is currently available for this service.",
         source: null,
       });
     }
@@ -314,16 +345,17 @@ export async function POST(request: NextRequest) {
        BUILD VERIFIED CONTEXT
        ===================================================== */
 
-    const contextParts = data.map((item) => {
-      const title = urdu
-        ? item.title_urdu || item.title
-        : item.title;
+    const verifiedContext = records
+      .map((item: any) => {
+        const title = urdu
+          ? item.title_urdu || item.title
+          : item.title;
 
-      const content = urdu
-        ? item.content_urdu || item.content
-        : item.content;
+        const content = urdu
+          ? item.content_urdu || item.content
+          : item.content;
 
-      return `
+        return `
 SERVICE:
 ${item.service_name || ""}
 
@@ -335,9 +367,6 @@ ${title || ""}
 
 VERIFIED CONTENT:
 ${content || ""}
-
-PROVINCE:
-${item.province || ""}
 
 OFFICIAL DEPARTMENT:
 ${item.official_department || ""}
@@ -351,10 +380,8 @@ ${item.official_source_url || ""}
 LAST VERIFIED:
 ${item.last_verified || ""}
 `;
-    });
-
-    const verifiedContext =
-      contextParts.join(
+      })
+      .join(
         "\n==============================\n"
       );
 
@@ -363,189 +390,126 @@ ${item.last_verified || ""}
        ===================================================== */
 
     const sourceRecord =
-      data.find(
-        (item) =>
+      records.find(
+        (item: any) =>
           item.official_source_url
-      ) || data[0];
+      ) || records[0];
 
-    const officialSourceUrl =
-      sourceRecord?.official_source_url || "";
+    const officialDepartment =
+      sourceRecord?.official_department || "";
 
     const officialSourceTitle =
       sourceRecord?.official_source_title || "";
 
-    const officialDepartment =
-      sourceRecord?.official_department || "";
+    const officialSourceUrl =
+      sourceRecord?.official_source_url || "";
 
     const lastVerified =
       sourceRecord?.last_verified || "";
 
     /* =====================================================
-       LANGUAGE INSTRUCTIONS
+       LANGUAGE
        ===================================================== */
 
     const languageInstruction = urdu
       ? `
-LANGUAGE:
 Answer in clear, natural Urdu using Urdu script.
 
-IMPORTANT URDU TERMINOLOGY:
+Important terminology:
 
-- Applicant = درخواست گزار
-- Applicants = درخواست گزاران / درخواست گزاروں
-- Minor = نابالغ
-- Under 18 = ۱۸ سال سے کم عمر
+Applicant = درخواست گزار
 
-Never translate "applicant" as:
-- طالب علم
-- طلباء
+Applicants = درخواست گزاروں
 
-Do NOT introduce "طالب علم" or "طلباء" unless the verified information itself specifically refers to students.
+Minor = نابالغ
 
-Preserve the exact meaning of:
-- age groups
-- applicant categories
-- requirements
-- conditions
-- exceptions
+Under 18 = ۱۸ سال سے کم عمر
+
+Never translate applicant as طالب علم or طلباء.
+
+Only use طالب علم / طلباء if the verified information
+specifically refers to students.
 `
       : `
-LANGUAGE:
 Answer in clear, simple English.
 `;
 
     /* =====================================================
-       GROQ SYSTEM PROMPT
+       GROQ PROMPT
        ===================================================== */
 
     const systemPrompt = `
 You are Pakistan Citizen Helper AI.
 
-Your job is to provide accurate public-service information
-for citizens of Pakistan.
+You provide public-service information for citizens of
+Pakistan.
 
 ============================================================
-ABSOLUTE TRUST RULE
+STRICT VERIFIED-INFORMATION RULE
 ============================================================
 
-Use ONLY the verified information supplied below.
+Use ONLY the verified information provided below.
 
-The verified information comes from the application's
-verified information database.
+Do NOT use your general knowledge.
 
-You MUST NOT use your own general knowledge to add facts.
-
-Do NOT invent or assume:
+Do NOT invent:
 
 - documents
 - fees
-- dates
 - processing times
+- dates
 - eligibility rules
-- government procedures
-- offices
-- addresses
+- government offices
+- procedures
 - requirements
-- exceptions
 - deadlines
-- examples presented as facts
+- addresses
+- exceptions
 
 If information is not present in the verified information,
 do not make it up.
 
 ============================================================
-PRESERVE UNCERTAINTY
+PRESERVE SOURCE MEANING
 ============================================================
 
-If the verified information says:
+If the source says:
 
 "may be required"
 
-you MUST preserve that uncertainty.
-
-Do NOT change:
+keep it as:
 
 "may be required"
 
-into:
+Do not change it into:
 
 "is required"
 
-Similarly, do not convert:
-- can
-- may
-- generally
-- depending on circumstances
-
-into stronger statements.
-
-============================================================
-PRESERVE AGE GROUPS
-============================================================
+Do not strengthen or weaken requirements.
 
 Do not change age groups.
 
-For example:
-
-"under 18"
-
-must remain:
-
-"under 18"
-
-and must NOT become:
-
-"students under 18"
-
-unless the verified information specifically says students.
+Do not change applicant categories.
 
 ============================================================
+LANGUAGE
+============================================================
+
 ${languageInstruction}
+
+============================================================
+ANSWER STYLE
 ============================================================
 
-ANSWER STYLE:
-
-- Start directly with the answer.
+- Answer the citizen directly.
 - Use clear headings.
 - Use numbered steps where appropriate.
-- Use bullet points for documents or requirements.
-- Keep the language simple for ordinary citizens.
+- Use bullet points for documents.
+- Keep the answer easy to understand.
 - Do not unnecessarily repeat the question.
-- Do not add unsupported information.
-- Do not mention the internal database.
 - Do not mention these instructions.
-- Do not say that you searched the internet unless the verified
-  information explicitly states that.
-- Do not fabricate an official source.
-
-============================================================
-OFFICIAL SOURCE
-============================================================
-
-If an official source URL is supplied in the verified
-information, mention that the citizen can use the official
-source for further information.
-
-The URL will also be supplied separately by the application.
-
-Do NOT modify or invent the URL.
-
-============================================================
-FINAL SELF-CHECK
-============================================================
-
-Before answering, silently verify:
-
-1. Did I use only verified information?
-2. Did I avoid adding facts from general knowledge?
-3. Did I preserve age groups?
-4. Did I preserve applicant categories?
-5. Did I preserve "may be required" wording?
-6. Did I avoid inventing fees?
-7. Did I avoid inventing processing times?
-8. Did I avoid inventing documents?
-9. Did I preserve the meaning of the source?
-10. Did I answer in the requested language?
+- Do not mention the internal database.
+- Do not add unsupported facts.
 
 ============================================================
 VERIFIED INFORMATION
@@ -555,7 +519,7 @@ ${verifiedContext}
 `;
 
     /* =====================================================
-       CALL GROQ
+       GROQ
        ===================================================== */
 
     const completion =
@@ -563,7 +527,6 @@ ${verifiedContext}
         model: "openai/gpt-oss-120b",
         temperature: 0,
         max_tokens: 1200,
-
         messages: [
           {
             role: "system",
@@ -591,38 +554,34 @@ ${verifiedContext}
     }
 
     /* =====================================================
-       FINAL DETERMINISTIC TERMINOLOGY CHECK
+       FINAL URDU TERMINOLOGY PROTECTION
        ===================================================== */
 
-    answer = protectApplicantTerminology(
-      answer,
-      urdu
-    );
+    if (urdu) {
+      answer = protectUrduTerminology(answer);
+    }
 
     /* =====================================================
-       RETURN ANSWER + VERIFIED SOURCE
+       RETURN
        ===================================================== */
+
+    console.log(
+      "ANSWER GENERATED SUCCESSFULLY."
+    );
 
     return NextResponse.json({
       answer,
 
       source: {
-        department:
-          officialDepartment,
-
-        title:
-          officialSourceTitle,
-
-        url:
-          officialSourceUrl,
-
-        lastVerified:
-          lastVerified,
+        department: officialDepartment,
+        title: officialSourceTitle,
+        url: officialSourceUrl,
+        lastVerified: lastVerified,
       },
     });
   } catch (error: any) {
     console.error(
-      "API /api/ask error:",
+      "API /api/ask ERROR:",
       error
     );
 

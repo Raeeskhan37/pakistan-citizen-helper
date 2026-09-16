@@ -15,11 +15,27 @@ type ServiceRecord = {
   active?: boolean;
 };
 
+type RankedRecord = {
+  record: ServiceRecord;
+  score: number;
+};
+
 // ============================================================
 // TEXT NORMALIZATION
 // ============================================================
 
 function normalize(value: string = ""): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[^\p{L}\p{N}\s/.-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// ASCII-safe normalization used only for fallback comparisons.
+// This avoids relying on Unicode regex in older build targets.
+function normalizeAscii(value: string = ""): string {
   return value
     .toLowerCase()
     .normalize("NFKC")
@@ -29,74 +45,81 @@ function normalize(value: string = ""): string {
 }
 
 // ============================================================
-// SERVICE GROUPS
+// COMMON SERVICE GROUPS
 // ============================================================
 
 const SERVICE_GROUPS: Record<string, string[]> = {
   cnic: [
     "cnic",
     "smart cnic",
-    "cnic nadra",
     "nadra",
     "identity card",
     "national identity card",
     "nic",
     "pakid",
+    "family registration certificate",
+    "frc",
+    "crc",
+    "b form",
+    "juvenile card",
+    "nicop",
+    "poc",
   ],
 
-  passport: [
-    "passport",
-    "pakistani passport",
-    "passport office",
-    "immigration",
+  union_council: [
+    "union council",
+    "local government",
+    "birth certificate",
+    "death certificate",
+    "marriage certificate",
+    "divorce certificate",
+    "civil registration",
   ],
 
-  domicile: [
-    "domicile",
-    "domicile certificate",
-  ],
-
-  driving: [
-    "driving licence",
-    "driving license",
-    "license",
-    "licence",
-    "traffic police",
-  ],
-
-  scholarship: [
-    "scholarship",
-    "scholarships",
-    "student scholarship",
-    "education scholarship",
-  ],
-
-  jobs: [
-    "government job",
-    "government jobs",
-    "govt job",
-    "govt jobs",
-    "job",
-    "jobs",
-    "vacancy",
-    "vacancies",
+  excise: [
+    "excise",
+    "excise and taxation",
+    "vehicle registration",
+    "vehicle transfer",
+    "vehicle token tax",
+    "token tax",
+    "vehicle",
+    "motor vehicle",
   ],
 
   police: [
     "police",
-    "police clearance",
+    "police verification",
     "character certificate",
+    "police clearance",
     "fir",
     "first information report",
   ],
 
-  fbr: [
-    "fbr",
-    "tax",
-    "taxation",
-    "income tax",
-    "ntn",
-    "filer",
+  passport: [
+    "passport",
+    "passport office",
+    "immigration",
+    "pakistani passport",
+  ],
+
+  protector: [
+    "protector",
+    "protector of emigrants",
+    "overseas employment",
+    "emigration",
+    "emigrant",
+    "bureau of emigration",
+  ],
+
+  education: [
+    "scholarship",
+    "scholarships",
+    "education",
+    "student",
+    "university",
+    "college",
+    "education scholarship",
   ],
 
   land: [
@@ -107,202 +130,486 @@ const SERVICE_GROUPS: Record<string, string[]> = {
     "mutation",
     "intiqal",
     "fard",
-  ],
-};
-
-// ============================================================
-// EXACT TOPIC GROUPS
-// ============================================================
-
-const TOPIC_GROUPS: Record<string, string[]> = {
-  "cnic-new": [
-    "new cnic",
-    "apply for cnic",
-    "apply for a new cnic",
-    "first cnic",
-    "first time cnic",
-    "make cnic",
-    "get cnic",
+    "registry",
+    "ownership",
   ],
 
-  "cnic-renewal": [
-    "cnic renewal",
-    "renew cnic",
-    "renew my cnic",
-    "renewal of cnic",
-    "expired cnic",
-    "expiry cnic",
+  fbr: [
+    "fbr",
+    "tax",
+    "taxation",
+    "income tax",
+    "sales tax",
+    "ntn",
+    "filer",
+    "taxpayer",
+    "iris",
   ],
 
-  "cnic-modification": [
-    "cnic modification",
-    "modify cnic",
-    "modify my cnic",
-    "cnic correction",
-    "correct cnic",
-    "change information on cnic",
-    "change details on cnic",
-    "update cnic information",
-  ],
-
-  "cnic-father-name": [
-    "father name",
-    "father's name",
-    "fathers name",
-    "father name correction",
-    "correct father name",
-    "change father name",
-    "father name incorrect",
-    "father name wrong",
-  ],
-
-  "cnic-mother-name": [
-    "mother name",
-    "mother's name",
-    "mothers name",
-    "mother name correction",
-    "correct mother name",
-    "change mother name",
-    "mother name incorrect",
-    "mother name wrong",
-  ],
-
-  "cnic-dob": [
-    "date of birth",
-    "dob",
-    "birth date",
-    "date of birth correction",
-    "correct date of birth",
-    "change date of birth",
-    "dob correction",
-    "dob wrong",
-    "date of birth wrong",
-  ],
-
-  "cnic-name": [
-    "name correction",
-    "correct my name",
-    "change my name",
-    "name is incorrect",
-    "name is wrong",
-    "name wrong on cnic",
-  ],
-
-  "cnic-address": [
-    "address correction",
-    "change address",
-    "change my address",
-    "update address",
-    "address modification",
-    "address is incorrect",
-    "address is wrong",
-    "wrong address",
-  ],
-
-  "cnic-lost": [
-    "lost cnic",
-    "cnic lost",
-    "lost my cnic",
-    "duplicate cnic",
-    "reprint cnic",
-    "cnic reprint",
-    "replace lost cnic",
-  ],
-
-  "cnic-fee": [
-    "cnic fee",
-    "cnic fees",
-    "modification fee",
-    "renewal fee",
-    "new cnic fee",
-    "how much cnic",
-    "cost of cnic",
-  ],
-
-  "cnic-processing-time": [
-    "processing time",
-    "how long",
-    "how many days",
-    "delivery time",
-    "cnic delivery",
-    "urgent cnic",
-    "executive cnic",
-    "normal cnic",
-  ],
-
-  "passport-new": [
-    "new passport",
-    "apply for passport",
-    "passport application",
-    "first passport",
-  ],
-
-  "domicile": [
+  domicile: [
     "domicile",
     "domicile certificate",
-    "apply domicile",
-    "domicile application",
   ],
 
-  "driving": [
-    "driving licence",
-    "driving license",
-    "learner licence",
-    "learner license",
-    "driving test",
-    "license renewal",
-  ],
-
-  "scholarship": [
-    "scholarship",
-    "scholarships",
-    "apply scholarship",
-    "scholarship application",
-  ],
-
-  "government-job": [
+  jobs: [
     "government job",
     "government jobs",
     "govt job",
-    "job application",
     "government vacancy",
+    "vacancy",
+    "vacancies",
+    "recruitment",
+    "public service",
+    "job",
   ],
 };
+
+// ============================================================
+// TOPIC / INTENT GROUPS
+// ============================================================
+
+const TOPIC_GROUPS: Record<string, string[]> = {
+  new: [
+    "new",
+    "first",
+    "first time",
+    "apply",
+    "application",
+    "obtain",
+    "get",
+    "make",
+  ],
+
+  renewal: [
+    "renew",
+    "renewal",
+    "renew my",
+    "expired",
+    "expiry",
+    "extension",
+  ],
+
+  modification: [
+    "modify",
+    "modification",
+    "change",
+    "changed",
+    "update",
+    "correction",
+    "correct",
+    "incorrect",
+    "wrong",
+    "amend",
+    "amendment",
+  ],
+
+  name: [
+    "name",
+    "full name",
+    "given name",
+    "surname",
+  ],
+
+  father_name: [
+    "father",
+    "father name",
+    "father's name",
+    "fathers name",
+    "paternal",
+  ],
+
+  mother_name: [
+    "mother",
+    "mother name",
+    "mother's name",
+    "mothers name",
+    "maternal",
+  ],
+
+  dob: [
+    "date of birth",
+    "dob",
+    "birth date",
+    "birthdate",
+    "age",
+  ],
+
+  address: [
+    "address",
+    "residential address",
+    "permanent address",
+    "present address",
+    "home address",
+  ],
+
+  lost: [
+    "lost",
+    "loss",
+    "missing",
+    "stolen",
+    "damaged",
+    "duplicate",
+    "reprint",
+    "replacement",
+  ],
+
+  fee: [
+    "fee",
+    "fees",
+    "cost",
+    "price",
+    "charges",
+    "how much",
+    "payment",
+  ],
+
+  processing_time: [
+    "processing time",
+    "how long",
+    "how many days",
+    "days",
+    "delivery time",
+    "delivery",
+    "urgent",
+    "normal",
+    "executive",
+    "fast",
+  ],
+
+  documents: [
+    "document",
+    "documents",
+    "required document",
+    "requirements",
+    "required",
+    "proof",
+    "evidence",
+    "papers",
+  ],
+
+  eligibility: [
+    "eligible",
+    "eligibility",
+    "who can",
+    "who is eligible",
+    "qualification",
+    "criteria",
+  ],
+
+  procedure: [
+    "how",
+    "procedure",
+    "process",
+    "steps",
+    "apply",
+    "application",
+    "method",
+  ],
+
+  online: [
+    "online",
+    "website",
+    "portal",
+    "pakid",
+    "digital",
+    "app",
+    "internet",
+  ],
+
+  office: [
+    "office",
+    "where",
+    "location",
+    "center",
+    "centre",
+    "branch",
+  ],
+
+  status: [
+    "status",
+    "track",
+    "tracking",
+    "check application",
+    "application status",
+  ],
+};
+
+// ============================================================
+// PROVINCES / JURISDICTIONS
+// ============================================================
+
+const JURISDICTIONS: Record<string, string[]> = {
+  Punjab: ["punjab"],
+  Sindh: ["sindh"],
+  Balochistan: ["balochistan"],
+  "Khyber Pakhtunkhwa": [
+    "khyber pakhtunkhwa",
+    "khyber-pakhtunkhwa",
+    "kpk",
+    "kp",
+  ],
+  Islamabad: [
+    "islamabad",
+    "ict",
+    "islamabad capital territory",
+  ],
+  "Gilgit-Baltistan": [
+    "gilgit",
+    "gilgit baltistan",
+    "gilgit-baltistan",
+    "gb",
+  ],
+  "Azad Jammu and Kashmir": [
+    "azad kashmir",
+    "ajk",
+    "azad jammu",
+  ],
+};
+
+// ============================================================
+// STOP WORDS
+// ============================================================
+
+const STOP_WORDS = new Set([
+  "the",
+  "a",
+  "an",
+  "is",
+  "are",
+  "am",
+  "was",
+  "were",
+  "be",
+  "been",
+  "being",
+  "to",
+  "of",
+  "for",
+  "in",
+  "on",
+  "at",
+  "with",
+  "and",
+  "or",
+  "my",
+  "me",
+  "i",
+  "you",
+  "your",
+  "can",
+  "could",
+  "would",
+  "should",
+  "please",
+  "how",
+  "what",
+  "where",
+  "when",
+  "why",
+  "do",
+  "does",
+  "did",
+  "this",
+  "that",
+  "it",
+  "about",
+]);
+
+// ============================================================
+// TOKENIZATION
+// ============================================================
+
+function getTokens(value: string): string[] {
+  return normalizeAscii(value)
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter(
+      (word) =>
+        word.length >= 3 &&
+        !STOP_WORDS.has(word)
+    );
+}
 
 // ============================================================
 // SERVICE DETECTION
 // ============================================================
-
-function normalizeServiceName(serviceName: string = ""): string {
-  const text = normalize(serviceName);
-
-  for (const [group, aliases] of Object.entries(SERVICE_GROUPS)) {
-    if (
-      aliases.some((alias) =>
-        text.includes(normalize(alias))
-      )
-    ) {
-      return group;
-    }
-  }
-
-  return text;
-}
 
 function detectServiceFromQuestion(
   question: string
 ): string | null {
   const text = normalize(question);
 
+  let bestService: string | null = null;
+  let bestScore = 0;
+
+  for (const [service, aliases] of Object.entries(
+    SERVICE_GROUPS
+  )) {
+    let score = 0;
+
+    for (const alias of aliases) {
+      const normalizedAlias =
+        normalize(alias);
+
+      if (!normalizedAlias) continue;
+
+      if (text.includes(normalizedAlias)) {
+        score += normalizedAlias.split(" ").length * 10;
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestService = service;
+    }
+  }
+
+  return bestService;
+}
+
+// ============================================================
+// SELECTED SERVICE FROM FRONTEND
+// ============================================================
+
+function detectSelectedService(body: any): string | null {
+  const possibleValues = [
+    body?.service,
+    body?.selectedService,
+    body?.serviceName,
+    body?.department,
+    body?.selectedDepartment,
+  ];
+
+  for (const value of possibleValues) {
+    if (
+      typeof value === "string" &&
+      value.trim()
+    ) {
+      const detected =
+        normalizeServiceFromRecordName(value);
+
+      if (detected) return detected;
+    }
+  }
+
+  return null;
+}
+
+function normalizeServiceFromRecordName(
+  value: string
+): string | null {
+  const text = normalize(value);
+
+  let best: string | null = null;
+  let bestScore = 0;
+
   for (const [group, aliases] of Object.entries(
     SERVICE_GROUPS
+  )) {
+    let score = 0;
+
+    for (const alias of aliases) {
+      if (
+        text.includes(normalize(alias))
+      ) {
+        score += normalize(alias).split(" ").length;
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = group;
+    }
+  }
+
+  return best;
+}
+
+// ============================================================
+// TOPIC / INTENT DETECTION
+// ============================================================
+
+function detectTopics(question: string): string[] {
+  const text = normalize(question);
+
+  const found: Array<{
+    topic: string;
+    score: number;
+  }> = [];
+
+  for (const [topic, aliases] of Object.entries(
+    TOPIC_GROUPS
+  )) {
+    let score = 0;
+
+    for (const alias of aliases) {
+      const normalizedAlias =
+        normalize(alias);
+
+      if (
+        normalizedAlias &&
+        text.includes(normalizedAlias)
+      ) {
+        score +=
+          normalizedAlias.split(" ").length * 3;
+      }
+    }
+
+    if (score > 0) {
+      found.push({
+        topic,
+        score,
+      });
+    }
+  }
+
+  return found
+    .sort((a, b) => b.score - a.score)
+    .map((item) => item.topic);
+}
+
+// ============================================================
+// JURISDICTION DETECTION
+// ============================================================
+
+function detectJurisdiction(
+  question: string,
+  body: any
+): string | null {
+  const bodyProvince =
+    typeof body?.province === "string"
+      ? body.province.trim()
+      : "";
+
+  if (bodyProvince) {
+    for (const [province, aliases] of Object.entries(
+      JURISDICTIONS
+    )) {
+      if (
+        aliases.some(
+          (alias) =>
+            normalize(alias) ===
+            normalize(bodyProvince)
+        )
+      ) {
+        return province;
+      }
+    }
+
+    return bodyProvince;
+  }
+
+  const text = normalize(question);
+
+  for (const [province, aliases] of Object.entries(
+    JURISDICTIONS
   )) {
     if (
       aliases.some((alias) =>
         text.includes(normalize(alias))
       )
     ) {
-      return group;
+      return province;
     }
   }
 
@@ -310,89 +617,61 @@ function detectServiceFromQuestion(
 }
 
 // ============================================================
-// TOPIC DETECTION
+// QUESTION INTENT TERMS
 // ============================================================
 
-function detectTopic(
+function getQuestionIntentTerms(
   question: string
-): string | null {
-  const text = normalize(question);
+): string[] {
+  const topics = detectTopics(question);
 
-  const priorityTopics = [
-    "cnic-father-name",
-    "cnic-mother-name",
-    "cnic-dob",
-    "cnic-address",
-    "cnic-name",
-    "cnic-lost",
-    "cnic-fee",
-    "cnic-processing-time",
-    "cnic-new",
-    "cnic-renewal",
-    "cnic-modification",
-    "passport-new",
-    "domicile",
-    "driving",
-    "scholarship",
-    "government-job",
-  ];
+  const terms = new Set<string>();
 
-  for (const topic of priorityTopics) {
-    const aliases = TOPIC_GROUPS[topic] || [];
+  for (const topic of topics) {
+    const aliases =
+      TOPIC_GROUPS[topic] || [];
 
-    if (
-      aliases.some((alias) =>
-        text.includes(normalize(alias))
-      )
-    ) {
-      return topic;
+    for (const alias of aliases) {
+      for (const token of getTokens(alias)) {
+        terms.add(token);
+      }
     }
   }
 
-  return null;
+  for (const token of getTokens(question)) {
+    terms.add(token);
+  }
+
+  return Array.from(terms);
 }
 
 // ============================================================
-// JURISDICTION
+// SERVICE MATCHING
 // ============================================================
 
-function detectJurisdiction(
-  question: string
-): string | null {
-  const text = normalize(question);
-
-  if (text.includes("punjab")) return "Punjab";
-  if (text.includes("sindh")) return "Sindh";
-  if (text.includes("balochistan")) return "Balochistan";
-
-  if (
-    text.includes("khyber pakhtunkhwa") ||
-    text.includes("kpk") ||
-    text.includes("kp")
-  ) {
-    return "Khyber Pakhtunkhwa";
-  }
-
-  if (text.includes("islamabad")) return "Islamabad";
-  if (text.includes("gilgit")) return "Gilgit-Baltistan";
-  if (text.includes("azad kashmir")) {
-    return "Azad Jammu and Kashmir";
-  }
-
-  return null;
-}
-
-// ============================================================
-// RECORD TOPIC MATCHING
-// ============================================================
-
-function recordMatchesTopic(
+function recordServiceMatches(
   record: ServiceRecord,
-  topic: string | null
+  service: string | null
 ): boolean {
-  if (!topic) return true;
+  if (!service) return true;
 
-  const searchable = normalize(
+  const recordService =
+    normalizeServiceFromRecordName(
+      record.service_name || ""
+    );
+
+  return recordService === service;
+}
+
+// ============================================================
+// TOPIC MATCHING
+// ============================================================
+
+function scoreTopicMatch(
+  record: ServiceRecord,
+  question: string
+): number {
+  const text = normalize(
     [
       record.service_name,
       record.category,
@@ -404,11 +683,57 @@ function recordMatchesTopic(
       .join(" ")
   );
 
-  const aliases = TOPIC_GROUPS[topic] || [];
+  const topics =
+    detectTopics(question);
 
-  return aliases.some((alias) =>
-    searchable.includes(normalize(alias))
-  );
+  let score = 0;
+
+  for (const topic of topics) {
+    const aliases =
+      TOPIC_GROUPS[topic] || [];
+
+    for (const alias of aliases) {
+      const normalizedAlias =
+        normalize(alias);
+
+      if (
+        normalizedAlias &&
+        text.includes(normalizedAlias)
+      ) {
+        score +=
+          normalizedAlias.split(" ").length * 10;
+      }
+    }
+  }
+
+  return score;
+}
+
+// ============================================================
+// DATE / FRESHNESS
+// ============================================================
+
+function freshnessScore(
+  lastVerified?: string
+): number {
+  if (!lastVerified) return 0;
+
+  const date =
+    new Date(lastVerified).getTime();
+
+  if (Number.isNaN(date)) return 0;
+
+  const ageDays =
+    (Date.now() - date) /
+    (1000 * 60 * 60 * 24);
+
+  if (ageDays < 0) return 20;
+  if (ageDays <= 30) return 20;
+  if (ageDays <= 90) return 15;
+  if (ageDays <= 180) return 10;
+  if (ageDays <= 365) return 5;
+
+  return 0;
 }
 
 // ============================================================
@@ -419,99 +744,273 @@ function scoreRecord(
   record: ServiceRecord,
   question: string,
   service: string | null,
-  topic: string | null,
   jurisdiction: string | null
 ): number {
   const q = normalize(question);
+  const qAscii = normalizeAscii(question);
 
-  const serviceName = normalizeServiceName(
-    record.service_name || ""
-  );
+  const serviceName =
+    normalize(record.service_name || "");
 
-  const category = normalize(
-    record.category || ""
-  );
+  const category =
+    normalize(record.category || "");
 
-  const title = normalize(
-    record.title || ""
-  );
+  const title =
+    normalize(record.title || "");
 
-  const content = normalize(
-    record.content_en || ""
-  );
+  const contentEn =
+    normalize(record.content_en || "");
+
+  const contentUr =
+    normalize(record.content_ur || "");
+
+  const allText = [
+    serviceName,
+    category,
+    title,
+    contentEn,
+    contentUr,
+  ].join(" ");
+
+  const allTextAscii =
+    normalizeAscii(allText);
 
   let score = 0;
 
-  if (service && serviceName === service) {
+  // ----------------------------------------------------------
+  // Service
+  // ----------------------------------------------------------
+
+  if (
+    service &&
+    recordServiceMatches(record, service)
+  ) {
+    score += 100;
+  }
+
+  // ----------------------------------------------------------
+  // Exact question phrase
+  // ----------------------------------------------------------
+
+  if (
+    q.length >= 8 &&
+    title.includes(q)
+  ) {
     score += 100;
   }
 
   if (
-    topic &&
-    recordMatchesTopic(record, topic)
+    q.length >= 8 &&
+    category.includes(q)
   ) {
-    score += 200;
+    score += 80;
   }
 
-  const words = q
-    .split(" ")
-    .filter((word) => word.length > 2);
+  // ----------------------------------------------------------
+  // Topic / intent
+  // ----------------------------------------------------------
+
+  score += scoreTopicMatch(
+    record,
+    question
+  );
+
+  // ----------------------------------------------------------
+  // Word overlap
+  // ----------------------------------------------------------
+
+  const words =
+    getQuestionIntentTerms(question);
 
   for (const word of words) {
-    if (category.includes(word)) score += 8;
-    if (title.includes(word)) score += 6;
-    if (content.includes(word)) score += 1;
-  }
+    if (category.includes(word)) {
+      score += 15;
+    }
 
-  if (jurisdiction) {
-    const province = normalize(
-      record.province || ""
-    );
+    if (title.includes(word)) {
+      score += 12;
+    }
 
-    if (
-      province === normalize(jurisdiction)
-    ) {
-      score += 50;
-    } else if (province === "pakistan") {
-      score += 20;
+    if (serviceName.includes(word)) {
+      score += 10;
+    }
+
+    if (allTextAscii.includes(word)) {
+      score += 2;
     }
   }
 
-  if (record.active !== false) {
+  // ----------------------------------------------------------
+  // Important specific intents
+  // ----------------------------------------------------------
+
+  const topics =
+    detectTopics(question);
+
+  if (
+    topics.includes("father_name") &&
+    /father/.test(allText)
+  ) {
+    score += 70;
+  }
+
+  if (
+    topics.includes("mother_name") &&
+    /mother/.test(allText)
+  ) {
+    score += 70;
+  }
+
+  if (
+    topics.includes("dob") &&
+    (
+      allText.includes("date of birth") ||
+      allTextAscii.includes("dob")
+    )
+  ) {
+    score += 70;
+  }
+
+  if (
+    topics.includes("address") &&
+    allText.includes("address")
+  ) {
+    score += 70;
+  }
+
+  if (
+    topics.includes("name") &&
+    allText.includes("name")
+  ) {
+    score += 50;
+  }
+
+  if (
+    topics.includes("fee") &&
+    (
+      allText.includes("fee") ||
+      allText.includes("fees") ||
+      allText.includes("cost")
+    )
+  ) {
+    score += 60;
+  }
+
+  if (
+    topics.includes("processing_time") &&
+    (
+      allText.includes("processing") ||
+      allText.includes("time") ||
+      allText.includes("days")
+    )
+  ) {
+    score += 60;
+  }
+
+  if (
+    topics.includes("documents") &&
+    (
+      allText.includes("document") ||
+      allText.includes("requirement")
+    )
+  ) {
+    score += 60;
+  }
+
+  // ----------------------------------------------------------
+  // Jurisdiction
+  // ----------------------------------------------------------
+
+  if (jurisdiction) {
+    const province =
+      normalize(record.province || "");
+
+    const wanted =
+      normalize(jurisdiction);
+
+    if (province === wanted) {
+      score += 60;
+    } else if (
+      province === "pakistan" ||
+      province === "federal"
+    ) {
+      score += 25;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // Official source
+  // ----------------------------------------------------------
+
+  if (record.official_source_url) {
+    score += 10;
+  }
+
+  if (record.official_department) {
     score += 5;
   }
+
+  // ----------------------------------------------------------
+  // Active record
+  // ----------------------------------------------------------
+
+  if (record.active !== false) {
+    score += 10;
+  }
+
+  // ----------------------------------------------------------
+  // Freshness
+  // ----------------------------------------------------------
+
+  score += freshnessScore(
+    record.last_verified
+  );
 
   return score;
 }
 
 // ============================================================
-// SELECT RECORDS
+// SELECT VERIFIED RECORDS
 // ============================================================
 
 function selectRecords(
   records: ServiceRecord[],
-  question: string
-): ServiceRecord[] {
-  const service =
+  question: string,
+  body: any
+): RankedRecord[] {
+  const detectedService =
     detectServiceFromQuestion(question);
 
-  const topic =
-    detectTopic(question);
+  const selectedService =
+    detectSelectedService(body);
+
+  const service =
+    selectedService ||
+    detectedService;
 
   const jurisdiction =
-    detectJurisdiction(question);
+    detectJurisdiction(
+      question,
+      body
+    );
 
-  let candidates = records.filter(
-    (record) => record.active !== false
-  );
+  let candidates =
+    records.filter(
+      (record) =>
+        record.active !== false
+    );
+
+  // ----------------------------------------------------------
+  // If UI supplied a service, strongly prefer it.
+  // ----------------------------------------------------------
 
   if (service) {
     const serviceCandidates =
-      candidates.filter(
-        (record) =>
-          normalizeServiceName(
-            record.service_name || ""
-          ) === service
+      candidates.filter((record) =>
+        recordServiceMatches(
+          record,
+          service
+        )
       );
 
     if (serviceCandidates.length > 0) {
@@ -519,34 +1018,52 @@ function selectRecords(
     }
   }
 
-  if (topic) {
-    const topicCandidates =
-      candidates.filter((record) =>
-        recordMatchesTopic(record, topic)
+  // ----------------------------------------------------------
+  // Score everything remaining.
+  // Do NOT hard-filter by topic.
+  //
+  // This is important:
+  // "modify my name" must still reach a broad
+  // "personal information correction" record.
+  // ----------------------------------------------------------
+
+  const ranked =
+    candidates
+      .map((record) => ({
+        record,
+        score: scoreRecord(
+          record,
+          question,
+          service,
+          jurisdiction
+        ),
+      }))
+      .sort(
+        (a, b) => b.score - a.score
       );
 
-    if (topicCandidates.length > 0) {
-      candidates = topicCandidates;
-    }
+  // ----------------------------------------------------------
+  // Remove clearly irrelevant records.
+  // ----------------------------------------------------------
+
+  const meaningful =
+    ranked.filter(
+      (item) => item.score >= 15
+    );
+
+  // If nothing passes the threshold, retain the strongest
+  // record only when a service was explicitly selected.
+  if (
+    meaningful.length === 0 &&
+    service &&
+    ranked.length > 0
+  ) {
+    return ranked.slice(0, 1);
   }
 
-  candidates = candidates
-    .map((record) => ({
-      record,
-      score: scoreRecord(
-        record,
-        question,
-        service,
-        topic,
-        jurisdiction
-      ),
-    }))
-    .sort(
-      (a, b) => b.score - a.score
-    )
-    .map((item) => item.record);
-
-  return candidates.slice(0, 5);
+  // Return enough context for multi-part questions,
+  // but avoid flooding Groq with unrelated records.
+  return meaningful.slice(0, 8);
 }
 
 // ============================================================
@@ -554,16 +1071,21 @@ function selectRecords(
 // ============================================================
 
 function buildVerifiedContext(
-  records: ServiceRecord[]
+  rankedRecords: RankedRecord[]
 ): string {
-  if (records.length === 0) {
-    return "No verified record was found.";
+  if (rankedRecords.length === 0) {
+    return "NO VERIFIED RECORDS FOUND.";
   }
 
-  return records
-    .map((record, index) => {
-      return `
+  return rankedRecords
+    .map(
+      ({ record }, index) => `
+==============================
 VERIFIED RECORD ${index + 1}
+==============================
+
+Record ID:
+${record.id ?? ""}
 
 Service:
 ${record.service_name || ""}
@@ -580,13 +1102,13 @@ ${record.content_en || ""}
 Verified Urdu Information:
 ${record.content_ur || ""}
 
-Province/Jurisdiction:
+Province / Jurisdiction:
 ${record.province || ""}
 
 Official Department:
 ${record.official_department || ""}
 
-Official Source:
+Official Source Title:
 ${record.official_source_title || ""}
 
 Official Source URL:
@@ -594,11 +1116,38 @@ ${record.official_source_url || ""}
 
 Last Verified:
 ${record.last_verified || ""}
-`;
-    })
-    .join(
-      "\n-----------------------------\n"
+
+Active:
+${record.active !== false ? "Yes" : "No"}
+`
+    )
+    .join("\n");
+}
+
+// ============================================================
+// SOURCE SELECTION
+// ============================================================
+
+function choosePrimarySource(
+  rankedRecords: RankedRecord[]
+): ServiceRecord | null {
+  if (rankedRecords.length === 0) {
+    return null;
+  }
+
+  const withSources =
+    rankedRecords.filter(
+      ({ record }) =>
+        Boolean(
+          record.official_source_url
+        )
     );
+
+  if (withSources.length > 0) {
+    return withSources[0].record;
+  }
+
+  return rankedRecords[0].record;
 }
 
 // ============================================================
@@ -609,7 +1158,8 @@ export async function POST(
   request: Request
 ) {
   try {
-    const body = await request.json();
+    const body =
+      await request.json();
 
     const question =
       typeof body.question === "string"
@@ -651,17 +1201,23 @@ export async function POST(
       !supabaseAnonKey ||
       !groqApiKey
     ) {
+      console.error(
+        "Missing required environment variables."
+      );
+
       return NextResponse.json(
         {
           answer:
-            "⚠️ Server configuration is incomplete. Check the Vercel environment variables.",
+            language === "ur"
+              ? "سرور کی ترتیب مکمل نہیں ہے۔ براہ کرم Vercel environment variables چیک کریں۔"
+              : "Server configuration is incomplete. Please check the Vercel environment variables.",
         },
         { status: 500 }
       );
     }
 
     // ========================================================
-    // GET VERIFIED INFORMATION FROM SUPABASE
+    // GET ACTIVE VERIFIED INFORMATION FROM SUPABASE
     // ========================================================
 
     const supabaseResponse =
@@ -694,7 +1250,7 @@ export async function POST(
         {
           answer:
             language === "ur"
-              ? "ویری فائیڈ معلومات حاصل کرنے میں مسئلہ پیش آیا۔"
+              ? "تصدیق شدہ معلومات حاصل کرنے میں مسئلہ پیش آیا۔"
               : "There was a problem retrieving verified information.",
         },
         { status: 500 }
@@ -704,96 +1260,249 @@ export async function POST(
     const records =
       (await supabaseResponse.json()) as ServiceRecord[];
 
-    // ========================================================
-    // SELECT RELEVANT VERIFIED RECORDS
-    // ========================================================
-
-    const selectedRecords =
-      selectRecords(
-        records,
-        question
-      );
-
     if (
-      selectedRecords.length === 0
+      !Array.isArray(records) ||
+      records.length === 0
     ) {
       return NextResponse.json({
         answer:
           language === "ur"
-            ? "اس سوال کے لیے ہمارے تصدیق شدہ ریکارڈ میں معلومات موجود نہیں ہیں۔"
-            : "The verified records do not contain information for this question.",
+            ? "اس وقت کوئی فعال تصدیق شدہ سرکاری معلومات دستیاب نہیں ہے۔"
+            : "No active verified government information is currently available.",
+        source: null,
+      });
+    }
+
+    // ========================================================
+    // SELECT RELEVANT VERIFIED RECORDS
+    // ========================================================
+
+    const rankedRecords =
+      selectRecords(
+        records,
+        question,
+        body
+      );
+
+    if (
+      rankedRecords.length === 0
+    ) {
+      return NextResponse.json({
+        answer:
+          language === "ur"
+            ? "اس سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ میں کافی معلومات موجود نہیں ہیں۔ براہ کرم متعلقہ سرکاری ذریعہ دیکھیں۔"
+            : "Our verified government records do not currently contain enough information to answer this specific question. Please check the relevant official source.",
         source: null,
       });
     }
 
     const verifiedContext =
       buildVerifiedContext(
-        selectedRecords
+        rankedRecords
       );
 
-    const detectedTopic =
-      detectTopic(question);
+    const primarySource =
+      choosePrimarySource(
+        rankedRecords
+      );
+
+    const selectedService =
+      detectSelectedService(body);
+
+    const detectedService =
+      detectServiceFromQuestion(
+        question
+      );
+
+    const detectedTopics =
+      detectTopics(question);
+
+    const jurisdiction =
+      detectJurisdiction(
+        question,
+        body
+      );
 
     // ========================================================
-    // STRICT AI PROMPT
+    // STRICT VERIFIED-INFORMATION PROMPT
     // ========================================================
 
     const systemPrompt = `
-You are Pakistan Citizen Helper.
+You are the Pakistan Citizen Helper,
+a government-services information assistant.
 
-Answer Pakistani government service questions using ONLY
-the verified information supplied below.
+Your job is to explain VERIFIED government-service
+information supplied to you from the application's
+verified Supabase database.
 
-IMPORTANT RULES:
+============================================================
+MOST IMPORTANT RULE
+============================================================
 
-1. Answer ONLY the exact subject asked by the user.
+You MUST answer using ONLY the verified records provided
+below.
 
-2. Do NOT give unrelated information.
+Do NOT use your general knowledge to fill missing facts.
 
-3. Do NOT mix different service topics.
+Do NOT invent or guess:
 
-4. If the user asks about father's name, answer only about
-   father's name.
+- fees
+- documents
+- requirements
+- procedures
+- processing times
+- eligibility rules
+- office locations
+- online application methods
+- government rules
+- dates
+- contact numbers
+- URLs
+- deadlines
 
-5. If the user asks about mother's name, answer only about
-   mother's name.
+If the supplied verified records do not contain the
+information required to answer the user's exact question,
+say clearly that the current verified records do not contain
+enough information.
 
-6. If the user asks about date of birth, answer only about
-   date of birth.
+============================================================
+ANSWER THE EXACT QUESTION
+============================================================
 
-7. If the user asks about address, answer only about address.
+Answer ONLY what the user is asking.
 
-8. If the user asks about fees, answer only about fees.
+Examples:
 
-9. If the user asks about processing time, answer only about
-   processing time.
+If the user asks:
+"How can I change my name on CNIC?"
 
-10. If the verified records do not contain enough information
-    for the exact question, say so clearly.
+Answer about name correction/modification only.
 
-11. Never invent documents, fees, dates, requirements or
-    procedures.
+If the user asks:
+"How can I change my father's name?"
 
-12. Do not guess.
+Answer about father's-name correction only.
 
-13. Keep the answer concise and practical.
+If the user asks:
+"What documents are required?"
 
-14. Mention the official source when appropriate.
+Give documents only if the verified records contain them.
 
-15. Answer in ${
+If the user asks:
+"What is the fee?"
+
+Give the fee only if a verified record contains the fee.
+
+If the user asks:
+"How long does it take?"
+
+Give processing time only if a verified record contains
+processing-time information.
+
+Do NOT add unrelated information just because it exists
+in another record.
+
+============================================================
+MULTIPLE RECORDS
+============================================================
+
+Several records may be supplied.
+
+Use multiple records ONLY when they clearly relate to the
+same question.
+
+Do not combine unrelated services or topics.
+
+A broad record may be used when it genuinely covers the
+specific question.
+
+============================================================
+AUTHENTICITY
+============================================================
+
+The records below are the application's verified records.
+
+Treat their supplied information as the source of truth.
+
+Prefer the record with the most relevant subject.
+
+When records contain different verification dates for the
+same subject, prefer the more recently verified record,
+provided it is relevant to the question.
+
+Never claim that information is "latest" merely because
+you are an AI.
+
+Use the supplied Last Verified date when useful.
+
+============================================================
+JURISDICTION
+============================================================
+
+The user's jurisdiction is relevant only where the
+government service actually depends on province/local
+authority.
+
+Do not introduce provincial information unnecessarily.
+
+============================================================
+LANGUAGE
+============================================================
+
+Answer in ${
       language === "ur"
         ? "Urdu"
         : "English"
     }.
 
-Detected topic:
+Keep the answer clear, practical and reasonably concise.
+
+Use bullets or numbered steps when they improve clarity.
+
+============================================================
+CURRENT REQUEST CONTEXT
+============================================================
+
+Selected service from application:
+${selectedService || "Not supplied"}
+
+Service detected from question:
+${detectedService || "Not detected"}
+
+Question topics/intents:
 ${
-  detectedTopic ||
-  "General service question"
+  detectedTopics.length > 0
+    ? detectedTopics.join(", ")
+    : "Not specifically detected"
 }
 
-Verified information:
+Relevant jurisdiction:
+${jurisdiction || "Not specified"}
+
+============================================================
+VERIFIED RECORDS
+============================================================
+
 ${verifiedContext}
+
+============================================================
+FINAL ANSWER RULE
+============================================================
+
+Answer the user's question directly.
+
+If the exact requested information is present:
+provide it clearly.
+
+If only partial information is present:
+provide only that verified portion and clearly identify
+what is not available.
+
+If the requested information is absent:
+say that the current verified records do not contain it.
+
+Never compensate for missing verified information by
+guessing.
 `;
 
     // ========================================================
@@ -815,9 +1524,9 @@ ${verifiedContext}
             model:
               "openai/gpt-oss-120b",
 
-            temperature: 0.1,
+            temperature: 0,
 
-            max_completion_tokens: 900,
+            max_completion_tokens: 1000,
 
             messages: [
               {
@@ -847,8 +1556,8 @@ ${verifiedContext}
         {
           answer:
             language === "ur"
-              ? "AI جواب تیار کرنے میں مسئلہ پیش آیا۔ براہ کرم دوبارہ کوشش کریں۔"
-              : "There was a problem generating the AI answer. Please try again.",
+              ? "جواب تیار کرنے میں مسئلہ پیش آیا۔ براہ کرم دوبارہ کوشش کریں۔"
+              : "There was a problem generating the answer. Please try again.",
         },
         { status: 500 }
       );
@@ -873,33 +1582,32 @@ ${verifiedContext}
     }
 
     // ========================================================
-    // SOURCE
+    // RETURN OFFICIAL SOURCE
     // ========================================================
-
-    const primarySource =
-      selectedRecords[0];
 
     return NextResponse.json({
       answer,
 
-      source: {
-        title:
-          primarySource.official_source_title ||
-          primarySource.title ||
-          "Official Government Source",
+      source: primarySource
+        ? {
+            title:
+              primarySource.official_source_title ||
+              primarySource.title ||
+              "Official Government Source",
 
-        url:
-          primarySource.official_source_url ||
-          "",
+            url:
+              primarySource.official_source_url ||
+              "",
 
-        department:
-          primarySource.official_department ||
-          "",
+            department:
+              primarySource.official_department ||
+              "",
 
-        last_verified:
-          primarySource.last_verified ||
-          "",
-      },
+            last_verified:
+              primarySource.last_verified ||
+              "",
+          }
+        : null,
     });
   } catch (error) {
     console.error(
@@ -916,4 +1624,3 @@ ${verifiedContext}
     );
   }
 }
-

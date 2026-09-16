@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Service = {
   id: string;
@@ -24,12 +24,24 @@ type SourceInfo = {
   title?: string;
   url?: string;
   lastVerified?: string;
+  liveVerified?: boolean;
+  checkedAt?: string;
+  province?: string;
 };
 
 type ApiResponse = {
   answer?: string;
   source?: SourceInfo | null;
   error?: string;
+};
+
+type Profile = {
+  name: string;
+  province: string;
+  language: "English" | "Urdu";
+  district?: string;
+  email?: string;
+  mobile?: string;
 };
 
 const departments: Department[] = [
@@ -550,44 +562,110 @@ const departments: Department[] = [
   },
 ];
 
+
 const languageOptions = [
-  { id: "English", label: "English", icon: "🇬🇧" },
-  { id: "Urdu", label: "اردو", icon: "🇵🇰" },
+  { id: "English" as const, label: "English", icon: "🇬🇧" },
+  { id: "Urdu" as const, label: "اردو", icon: "🇵🇰" },
 ];
 
+const PROVINCES = [
+  "Punjab",
+  "Khyber Pakhtunkhwa",
+  "Sindh",
+  "Balochistan",
+  "Islamabad Capital Territory",
+  "Azad Jammu & Kashmir",
+  "Gilgit-Baltistan",
+];
+
+const PROFILE_KEY = "pakistan_citizen_helper_profile_v2";
+
 export default function Home() {
-  const [selectedDepartment, setSelectedDepartment] = useState<Department>(
-    departments[0]
-  );
-
-  const [selectedService, setSelectedService] = useState<Service>(
-    departments[0].services[0]
-  );
-
-  const [question, setQuestion] = useState<string>(
-    departments[0].services[0].question
-  );
-
-  const [language, setLanguage] = useState("English");
+  const firstService = departments[0].services[0];
+  const [selectedDepartment, setSelectedDepartment] = useState<Department>(departments[0]);
+  const [selectedService, setSelectedService] = useState<Service>(firstService);
+  const [question, setQuestion] = useState(firstService.question);
+  const [language, setLanguage] = useState<"English" | "Urdu">("English");
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [draftProfile, setDraftProfile] = useState<Profile>({
+    name: "",
+    province: "",
+    language: "English",
+  });
   const [answer, setAnswer] = useState("");
   const [source, setSource] = useState<SourceInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectionNotice, setSelectionNotice] = useState("");
+  const questionRef = useRef<HTMLTextAreaElement | null>(null);
+  const askRef = useRef<HTMLElement | null>(null);
+  const servicesRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(PROFILE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Profile;
+        if (parsed.name && parsed.province && parsed.language) {
+          setProfile(parsed);
+          setLanguage(parsed.language);
+          return;
+        }
+      }
+    } catch {
+      // Ignore malformed local storage and show profile form.
+    }
+    setProfileOpen(true);
+  }, []);
+
+  useEffect(() => {
+    if (profile?.language) setLanguage(profile.language);
+  }, [profile]);
+
+  function saveProfile() {
+    const name = draftProfile.name.trim();
+    const province = draftProfile.province.trim();
+    if (!name || !province) return;
+
+    const saved: Profile = {
+      ...draftProfile,
+      name,
+      province,
+      language,
+    };
+    window.localStorage.setItem(PROFILE_KEY, JSON.stringify(saved));
+    setProfile(saved);
+    setLanguage(saved.language);
+    setProfileOpen(false);
+  }
+
+  function editProfile() {
+    setDraftProfile(profile || { name: "", province: "", language });
+    setProfileOpen(true);
+  }
+
+  function changeLanguage(next: "English" | "Urdu") {
+    setLanguage(next);
+    setProfile((current) => {
+      if (!current) return current;
+      const updated = { ...current, language: next };
+      window.localStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }
 
   function chooseDepartment(department: Department) {
     setSelectedDepartment(department);
-
-    const firstService = department.services[0];
-
-    setSelectedService(firstService);
-    setQuestion(firstService.question);
+    const first = department.services[0];
+    setSelectedService(first);
+    setQuestion(first.question);
     setAnswer("");
     setSource(null);
     setError("");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
+    setSelectionNotice(`${department.name} selected. Now choose a specific service.`);
+    requestAnimationFrame(() => {
+      servicesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
 
@@ -597,13 +675,22 @@ export default function Home() {
     setAnswer("");
     setSource(null);
     setError("");
+    setSelectionNotice(
+      language === "Urdu"
+        ? `آپ نے ${service.name} منتخب کیا ہے۔ اب اپنا سوال پوچھیں۔`
+        : `You selected ${service.name}. What would you like to know?`
+    );
+    requestAnimationFrame(() => {
+      askRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.setTimeout(() => questionRef.current?.focus(), 500);
+    });
   }
 
   async function askQuestion() {
     const trimmedQuestion = question.trim();
-
     if (!trimmedQuestion) {
-      setError("Please enter a question.");
+      setError(language === "Urdu" ? "براہ کرم سوال درج کریں۔" : "Please enter a question.");
+      questionRef.current?.focus();
       return;
     }
 
@@ -615,38 +702,35 @@ export default function Home() {
     try {
       const response = await fetch("/api/ask", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: trimmedQuestion,
           service: selectedService.name,
           language,
+          profile: profile
+            ? { name: profile.name, province: profile.province, district: profile.district || "" }
+            : null,
         }),
       });
 
       const data: ApiResponse = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Unable to process your question.");
-      }
-
+      if (!response.ok) throw new Error(data.error || "Unable to process your question.");
       setAnswer(data.answer || "No answer was returned.");
       setSource(data.source || null);
+      requestAnimationFrame(() => {
+        document.getElementById("answer-section")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again."
-      );
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
-  function handleQuestionKeyDown(
-    event: React.KeyboardEvent<HTMLTextAreaElement>
-  ) {
+  function handleQuestionKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       askQuestion();
@@ -655,66 +739,80 @@ export default function Home() {
 
   return (
     <main className={language === "Urdu" ? "urdu-mode" : ""}>
-      {/* NAVIGATION */}
       <nav className="top-nav">
         <div className="brand">
           <div className="brand-icon">🇵🇰</div>
-
           <div>
             <div className="brand-title">Pakistan Citizen Helper</div>
-            <div className="brand-subtitle">
-              Government Services Information Assistant
-            </div>
+            <div className="brand-subtitle">Government Services Information Assistant</div>
           </div>
         </div>
 
-        <div className="language-switch">
-          {languageOptions.map((item) => (
-            <button
-              key={item.id}
-              className={
-                language === item.id
-                  ? "language-button active"
-                  : "language-button"
-              }
-              onClick={() => setLanguage(item.id)}
-            >
-              {item.icon} {item.label}
-            </button>
-          ))}
+        <div className="nav-actions">
+          <div className="language-switch">
+            {languageOptions.map((item) => (
+              <button
+                key={item.id}
+                className={language === item.id ? "language-button active" : "language-button"}
+                onClick={() => changeLanguage(item.id)}
+              >
+                {item.icon} {item.label}
+              </button>
+            ))}
+          </div>
+          <button className="profile-button" onClick={editProfile}>
+            👤 {profile?.name || "Profile"}
+          </button>
         </div>
       </nav>
 
-      {/* HERO */}
       <section className="hero">
-        <div className="hero-badge">🇵🇰 PUBLIC SERVICE INFORMATION</div>
+        <div className="hero-copy">
+          <div className="hero-badge">🇵🇰 CITIZEN INFORMATION ASSISTANT</div>
+          <h1>Government services, <span>made easier.</span></h1>
+          <p>
+            Find clear, practical information about Pakistani government services,
+            requirements, documents, fees and procedures — with official sources.
+          </p>
+          <div className="trust-row">
+            <span>✓ Official sources</span>
+            <span>✓ Verified records</span>
+            <span>✓ English & Urdu</span>
+            <span>✓ Service-specific guidance</span>
+          </div>
+        </div>
 
-        <h1>
-          Pakistan Citizen
-          <span> Helper</span>
-        </h1>
-
-        <p>
-          Find verified information about Pakistani government services,
-          requirements, documents, fees and application procedures.
-        </p>
-
-        <div className="trust-line">
-          <span>✓ Official sources</span>
-          <span>✓ Verified information</span>
-          <span>✓ English & Urdu</span>
+        <div className="hero-panel">
+          <div className="hero-panel-top">
+            <span className="live-dot"></span>
+            <strong>How to use it</strong>
+          </div>
+          <div className="mini-step"><b>1</b><span>Choose a department</span></div>
+          <div className="mini-step"><b>2</b><span>Select your service</span></div>
+          <div className="mini-step"><b>3</b><span>Ask your question</span></div>
+          <div className="mini-step"><b>4</b><span>Check the official source</span></div>
         </div>
       </section>
 
-      {/* DEPARTMENT SELECTOR */}
-      <section className="department-section">
+      {profile && (
+        <section className="profile-strip">
+          <div>
+            <span className="eyebrow">YOUR PROFILE</span>
+            <strong>Welcome, {profile.name}</strong>
+            <small>
+              {profile.province} · Your province is used only when a service requires provincial or local jurisdiction.
+            </small>
+          </div>
+          <button onClick={editProfile}>Edit profile</button>
+        </section>
+      )}
+
+      <section className="department-section content-section">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">STEP 1</span>
-            <h2>Select a Government Department</h2>
-            <p>
-              Choose the department or major service area you need.
-            </p>
+            <span className="step-pill">STEP 1</span>
+            <h2>Choose a government department</h2>
+            <p>Start with the area that matches the service you need.</p>
           </div>
         </div>
 
@@ -722,1011 +820,232 @@ export default function Home() {
           {departments.map((department) => (
             <button
               key={department.id}
-              className={
-                selectedDepartment.id === department.id
-                  ? "department-card selected"
-                  : "department-card"
-              }
+              className={selectedDepartment.id === department.id ? "department-card selected" : "department-card"}
               onClick={() => chooseDepartment(department)}
             >
               <div className="department-icon">{department.icon}</div>
-
               <div className="department-content">
                 <h3>{department.name}</h3>
-
                 <p>{department.description}</p>
-
-                <div className="service-count">
-                  {department.services.length} services
-                </div>
+                <span>{department.services.length} services</span>
               </div>
-
               <div className="arrow">→</div>
             </button>
           ))}
         </div>
       </section>
 
-      {/* SERVICE LIST */}
-      <section className="service-section">
+      <section ref={servicesRef} className="service-section content-section" id="services">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">STEP 2</span>
-
-            <h2>
-              {selectedDepartment.icon} {selectedDepartment.name}
-            </h2>
-
-            <p>
-              Select the specific service you need.
-            </p>
+            <span className="step-pill">STEP 2</span>
+            <h2>{selectedDepartment.icon} {selectedDepartment.name}</h2>
+            <p>Select the specific service. We will take you directly to the question box.</p>
           </div>
+          <div className="service-location">Selected department</div>
         </div>
 
         <div className="service-grid">
           {selectedDepartment.services.map((service) => (
             <button
               key={service.id}
-              className={
-                selectedService.id === service.id
-                  ? "service-card selected"
-                  : "service-card"
-              }
+              className={selectedService.id === service.id ? "service-card selected" : "service-card"}
               onClick={() => chooseService(service)}
             >
               <div className="service-icon">{service.icon}</div>
-
               <div className="service-card-content">
                 <h3>{service.name}</h3>
                 <p>{service.description}</p>
+                <strong>Ask about this →</strong>
               </div>
-
-              <div className="service-arrow">›</div>
             </button>
           ))}
         </div>
       </section>
 
-      {/* ASK AI */}
-      <section className="ask-section">
+      {selectionNotice && (
+        <div className="selection-notice" role="status">
+          <span>✓</span>
+          <div>{selectionNotice}</div>
+        </div>
+      )}
+
+      <section ref={askRef} className="ask-section content-section" id="ask">
         <div className="ask-header">
           <div>
-            <span className="eyebrow">STEP 3</span>
-
-            <h2>
-              Ask About{" "}
-              <span>{selectedService.name}</span>
-            </h2>
-
+            <span className="step-pill dark">STEP 3</span>
+            <h2>What would you like to know?</h2>
             <p>
-              Ask your question in English or Urdu. The assistant will use
-              verified information available for this service.
+              Ask about <strong>{selectedService.name}</strong>. If the service
+              needs province or district information, we use it only for that purpose.
             </p>
           </div>
-
           <div className="selected-service-badge">
             {selectedService.icon} {selectedService.name}
           </div>
         </div>
 
+        <div className="question-label">Your question</div>
         <textarea
+          ref={questionRef}
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           onKeyDown={handleQuestionKeyDown}
-          placeholder={
-            language === "Urdu"
-              ? "اپنا سوال یہاں لکھیں..."
-              : "Ask your question here..."
-          }
+          placeholder={language === "Urdu" ? "اپنا سوال یہاں لکھیں..." : "For example: What documents do I need and how much does it cost?"}
           rows={5}
           className="question-box"
           dir={language === "Urdu" ? "rtl" : "ltr"}
         />
 
-        <div className="ask-actions">
-          <div className="hint">
-            Press Enter to ask • Shift + Enter for a new line
-          </div>
+        <div className="example-row">
+          <span>Try:</span>
+          <button onClick={() => setQuestion(selectedService.question)}>Use a common question</button>
+          <button onClick={() => setQuestion(language === "Urdu" ? "اس سروس کے لیے ضروری دستاویزات کیا ہیں؟" : "What documents are required?")}>Required documents</button>
+          <button onClick={() => setQuestion(language === "Urdu" ? "فیس اور پراسیسنگ کا وقت کیا ہے؟" : "What is the fee and processing time?")}>Fee & time</button>
+        </div>
 
-          <button
-            className="ask-button"
-            onClick={askQuestion}
-            disabled={loading}
-          >
-            {loading ? "⏳ Checking..." : "✨ Get Verified Answer"}
+        <div className="ask-actions">
+          <div className="hint">Enter to ask · Shift + Enter for a new line</div>
+          <button className="ask-button" onClick={askQuestion} disabled={loading}>
+            {loading ? "⏳ Checking official information..." : "✨ Get verified answer"}
           </button>
         </div>
 
-        {error && (
-          <div className="error-box">
-            ⚠️ {error}
-          </div>
-        )}
+        {error && <div className="error-box">⚠️ {error}</div>}
       </section>
 
-      {/* LOADING */}
       {loading && (
-        <section className="loading-section">
-          <div className="loading-spinner">⟳</div>
-
-          <h3>Checking verified information...</h3>
-
-          <p>
-            We are finding the most relevant information for:
-            <strong> {selectedService.name}</strong>
-          </p>
+        <section className="loading-section content-section">
+          <div className="loading-spinner"></div>
+          <div>
+            <h3>Checking trusted information…</h3>
+            <p>Searching approved official sources and your verified information.</p>
+          </div>
         </section>
       )}
 
-      {/* ANSWER */}
       {!loading && answer && (
-        <section className="answer-section">
+        <section id="answer-section" className="answer-section content-section">
           <div className="answer-header">
             <div>
-              <span className="eyebrow">VERIFIED INFORMATION</span>
-              <h2>Answer</h2>
+              <span className="step-pill">RESULT</span>
+              <h2>Your answer</h2>
             </div>
-
-            <div className="verified-badge">✓ Verified</div>
+            <div className={source?.liveVerified ? "verified-badge live" : "verified-badge"}>
+              {source?.liveVerified ? "✓ Live verified" : "✓ Verified record"}
+            </div>
           </div>
 
-          <div
-            className="answer-content"
-            dir={language === "Urdu" ? "rtl" : "ltr"}
-          >
+          <div className="answer-content" dir={language === "Urdu" ? "rtl" : "ltr"}>
             {answer.split("\n").map((line, index) => (
-              <p key={index}>
-                {line || "\u00A0"}
-              </p>
+              <p key={index}>{line || "\u00A0"}</p>
             ))}
           </div>
 
           {source && (
             <div className="source-card">
               <div className="source-icon">🔗</div>
-
               <div className="source-info">
-                <span>OFFICIAL SOURCE</span>
-
-                <strong>
-                  {source.title ||
-                    source.department ||
-                    "Official Government Source"}
-                </strong>
-
-                {source.department && (
-                  <small>{source.department}</small>
-                )}
-
-                {source.lastVerified && (
-                  <small>
-                    Last verified: {source.lastVerified}
-                  </small>
-                )}
+                <span>{source.liveVerified ? "LIVE OFFICIAL SOURCE" : "VERIFIED OFFICIAL SOURCE"}</span>
+                <strong>{source.title || source.department || "Official Government Source"}</strong>
+                {source.department && <small>{source.department}</small>}
+                {source.lastVerified && <small>Database verified: {source.lastVerified}</small>}
+                {source.liveVerified && source.checkedAt && <small>Live check: {source.checkedAt}</small>}
               </div>
-
               {source.url && (
-                <a
-                  href={source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="source-button"
-                >
-                  Visit Official Source ↗
+                <a href={source.url} target="_blank" rel="noopener noreferrer" className="source-button">
+                  Visit official source ↗
                 </a>
               )}
             </div>
           )}
 
           <div className="answer-warning">
-            <strong>Important:</strong> Government fees, requirements,
-            processing times and procedures can change. Always confirm
-            important information from the linked official source.
+            <strong>Important:</strong> Government information can change. Use the official source link for final confirmation before making an important application or payment.
           </div>
         </section>
       )}
 
-      {/* HOW IT WORKS */}
-      <section className="how-section">
+      <section className="how-section content-section">
         <div className="section-heading centered">
-          <span className="eyebrow">HOW IT WORKS</span>
-
-          <h2>Simple. Verified. Citizen-focused.</h2>
-
-          <p>
-            Pakistan Citizen Helper organizes government services by
-            department so citizens can find the right information quickly.
-          </p>
+          <span className="step-pill">SIMPLE PROCESS</span>
+          <h2>Clear information, without the confusion</h2>
+          <p>Pakistan Citizen Helper separates service selection from the actual question so you always know where you are.</p>
         </div>
-
         <div className="how-grid">
-          <div className="how-card">
-            <div>1</div>
-            <h3>Select Department</h3>
-            <p>
-              Choose NADRA, Police, Excise, Union Council, FBR or another
-              government service area.
-            </p>
-          </div>
-
-          <div className="how-card">
-            <div>2</div>
-            <h3>Select Service</h3>
-            <p>
-              Select the exact service such as CRC, vehicle transfer,
-              birth certificate or police clearance.
-            </p>
-          </div>
-
-          <div className="how-card">
-            <div>3</div>
-            <h3>Ask Your Question</h3>
-            <p>
-              Ask in English or Urdu and receive information based on
-              verified records.
-            </p>
-          </div>
-
-          <div className="how-card">
-            <div>4</div>
-            <h3>Check Official Source</h3>
-            <p>
-              Follow the official source link to confirm the latest
-              government information.
-            </p>
-          </div>
+          <div className="how-card"><b>1</b><h3>Choose</h3><p>Select the government department.</p></div>
+          <div className="how-card"><b>2</b><h3>Select</h3><p>Choose the exact service you need.</p></div>
+          <div className="how-card"><b>3</b><h3>Ask</h3><p>Your screen moves directly to the question box.</p></div>
+          <div className="how-card"><b>4</b><h3>Verify</h3><p>Review the official source before acting.</p></div>
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="footer">
         <div>
           <strong>🇵🇰 Pakistan Citizen Helper</strong>
-
-          <p>
-            A citizen-focused information assistant for Pakistani
-            government services.
-          </p>
+          <p>Citizen-focused information for Pakistani government services.</p>
         </div>
-
         <div className="footer-right">
-          <p>
-            Developed by <strong>Raees Khan</strong>
-          </p>
-
+          <p>Developed by <strong>Raees Khan</strong></p>
           <p>Assistant Director, NADRA</p>
         </div>
       </footer>
 
-      {/* PAGE STYLES */}
-      <style jsx>{`
-        * {
-          box-sizing: border-box;
-        }
-
-        main {
-          min-height: 100vh;
-          background:
-            radial-gradient(
-              circle at 10% 0%,
-              rgba(16, 185, 129, 0.11),
-              transparent 28%
-            ),
-            radial-gradient(
-              circle at 90% 10%,
-              rgba(59, 130, 246, 0.1),
-              transparent 30%
-            ),
-            #f7fafc;
-          color: #172033;
-          font-family:
-            Inter,
-            ui-sans-serif,
-            system-ui,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            sans-serif;
-        }
-
-        .top-nav {
-          min-height: 76px;
-          padding: 14px 6%;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 20px;
-          background: rgba(255, 255, 255, 0.94);
-          border-bottom: 1px solid #e7edf2;
-          position: sticky;
-          top: 0;
-          z-index: 20;
-          backdrop-filter: blur(15px);
-        }
-
-        .brand {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .brand-icon {
-          width: 46px;
-          height: 46px;
-          border-radius: 14px;
-          display: grid;
-          place-items: center;
-          background: linear-gradient(135deg, #0f766e, #059669);
-          font-size: 25px;
-          box-shadow: 0 8px 22px rgba(5, 150, 105, 0.2);
-        }
-
-        .brand-title {
-          font-size: 18px;
-          font-weight: 850;
-          color: #12352f;
-        }
-
-        .brand-subtitle {
-          margin-top: 2px;
-          font-size: 11px;
-          color: #718096;
-        }
-
-        .language-switch {
-          display: flex;
-          gap: 7px;
-        }
-
-        .language-button {
-          border: 1px solid #dce5ea;
-          background: white;
-          color: #52616f;
-          padding: 9px 13px;
-          border-radius: 11px;
-          cursor: pointer;
-          font-weight: 700;
-        }
-
-        .language-button.active {
-          background: #0f766e;
-          border-color: #0f766e;
-          color: white;
-        }
-
-        .hero {
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 76px 24px 58px;
-          text-align: center;
-        }
-
-        .hero-badge,
-        .eyebrow {
-          display: inline-block;
-          color: #047857;
-          font-size: 11px;
-          font-weight: 900;
-          letter-spacing: 0.12em;
-        }
-
-        .hero h1 {
-          margin: 15px 0 15px;
-          font-size: clamp(40px, 7vw, 72px);
-          line-height: 0.98;
-          letter-spacing: -0.05em;
-          color: #132a27;
-        }
-
-        .hero h1 span {
-          color: #059669;
-        }
-
-        .hero p {
-          max-width: 720px;
-          margin: 0 auto;
-          font-size: 18px;
-          line-height: 1.7;
-          color: #617080;
-        }
-
-        .trust-line {
-          display: flex;
-          justify-content: center;
-          flex-wrap: wrap;
-          gap: 12px 25px;
-          margin-top: 24px;
-          color: #3e635c;
-          font-size: 13px;
-          font-weight: 700;
-        }
-
-        .department-section,
-        .service-section,
-        .ask-section,
-        .answer-section,
-        .how-section {
-          max-width: 1180px;
-          margin: 0 auto;
-          padding: 35px 24px;
-        }
-
-        .section-heading {
-          margin-bottom: 22px;
-        }
-
-        .section-heading h2 {
-          margin: 7px 0 6px;
-          font-size: clamp(25px, 4vw, 34px);
-          color: #182b38;
-          letter-spacing: -0.025em;
-        }
-
-        .section-heading p {
-          margin: 0;
-          color: #708090;
-        }
-
-        .centered {
-          text-align: center;
-        }
-
-        .department-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 15px;
-        }
-
-        .department-card {
-          position: relative;
-          text-align: left;
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          min-height: 130px;
-          padding: 20px;
-          border: 1px solid #e0e8ed;
-          border-radius: 20px;
-          background: rgba(255, 255, 255, 0.95);
-          cursor: pointer;
-          transition: 0.22s ease;
-          box-shadow: 0 7px 22px rgba(25, 45, 60, 0.04);
-        }
-
-        .department-card:hover,
-        .department-card.selected {
-          transform: translateY(-3px);
-          border-color: #5fc6aa;
-          box-shadow: 0 13px 32px rgba(15, 118, 110, 0.11);
-        }
-
-        .department-icon {
-          flex: 0 0 auto;
-          width: 58px;
-          height: 58px;
-          border-radius: 17px;
-          display: grid;
-          place-items: center;
-          background: #ecfdf5;
-          font-size: 29px;
-        }
-
-        .department-content {
-          min-width: 0;
-        }
-
-        .department-content h3 {
-          margin: 0 0 6px;
-          font-size: 17px;
-          color: #18332e;
-        }
-
-        .department-content p {
-          margin: 0;
-          font-size: 13px;
-          line-height: 1.5;
-          color: #73818b;
-        }
-
-        .service-count {
-          margin-top: 9px;
-          font-size: 11px;
-          color: #059669;
-          font-weight: 800;
-        }
-
-        .arrow {
-          margin-left: auto;
-          font-size: 24px;
-          color: #9aabb4;
-        }
-
-        .service-section {
-          margin-top: 10px;
-        }
-
-        .service-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 12px;
-        }
-
-        .service-card {
-          min-height: 120px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          text-align: left;
-          padding: 16px;
-          background: white;
-          border: 1px solid #e1e8ed;
-          border-radius: 17px;
-          cursor: pointer;
-          transition: 0.2s ease;
-        }
-
-        .service-card:hover,
-        .service-card.selected {
-          border-color: #54b89e;
-          transform: translateY(-2px);
-          box-shadow: 0 10px 26px rgba(15, 118, 110, 0.09);
-        }
-
-        .service-icon {
-          width: 43px;
-          height: 43px;
-          flex: 0 0 auto;
-          display: grid;
-          place-items: center;
-          border-radius: 13px;
-          background: #f0fdf9;
-          font-size: 22px;
-        }
-
-        .service-card-content {
-          min-width: 0;
-        }
-
-        .service-card h3 {
-          margin: 0 0 5px;
-          font-size: 14px;
-          line-height: 1.35;
-          color: #20313d;
-        }
-
-        .service-card p {
-          margin: 0;
-          font-size: 11px;
-          line-height: 1.45;
-          color: #788792;
-        }
-
-        .service-arrow {
-          margin-left: auto;
-          color: #9aabb4;
-          font-size: 23px;
-        }
-
-        .ask-section {
-          margin-top: 30px;
-          padding: 30px;
-          border-radius: 26px;
-          background:
-            linear-gradient(
-              135deg,
-              rgba(236, 253, 245, 0.95),
-              rgba(239, 246, 255, 0.96)
-            );
-          border: 1px solid #d8ebe5;
-        }
-
-        .ask-header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 25px;
-        }
-
-        .ask-header h2 {
-          margin: 7px 0;
-          font-size: 30px;
-          color: #173a34;
-        }
-
-        .ask-header h2 span {
-          color: #059669;
-        }
-
-        .ask-header p {
-          margin: 0;
-          max-width: 700px;
-          color: #637570;
-          line-height: 1.6;
-        }
-
-        .selected-service-badge {
-          flex: 0 0 auto;
-          padding: 11px 15px;
-          border-radius: 13px;
-          background: white;
-          border: 1px solid #d4e7e1;
-          color: #176653;
-          font-size: 12px;
-          font-weight: 800;
-        }
-
-        .question-box {
-          width: 100%;
-          margin-top: 25px;
-          resize: vertical;
-          min-height: 130px;
-          border: 1px solid #cbded8;
-          border-radius: 17px;
-          background: white;
-          padding: 18px;
-          font-size: 16px;
-          line-height: 1.6;
-          color: #20343e;
-          outline: none;
-          font-family: inherit;
-        }
-
-        .question-box:focus {
-          border-color: #10a37f;
-          box-shadow: 0 0 0 4px rgba(16, 163, 127, 0.1);
-        }
-
-        .ask-actions {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 15px;
-          margin-top: 13px;
-        }
-
-        .hint {
-          font-size: 11px;
-          color: #71818a;
-        }
-
-        .ask-button {
-          border: none;
-          padding: 14px 22px;
-          border-radius: 13px;
-          background: linear-gradient(135deg, #047857, #059669);
-          color: white;
-          font-weight: 850;
-          cursor: pointer;
-          box-shadow: 0 9px 20px rgba(5, 150, 105, 0.2);
-        }
-
-        .ask-button:disabled {
-          opacity: 0.65;
-          cursor: not-allowed;
-        }
-
-        .error-box {
-          margin-top: 15px;
-          padding: 13px 16px;
-          border-radius: 12px;
-          background: #fff1f2;
-          border: 1px solid #fecdd3;
-          color: #9f1239;
-          font-size: 13px;
-        }
-
-        .loading-section {
-          max-width: 760px;
-          margin: 30px auto;
-          padding: 32px 24px;
-          text-align: center;
-          background: white;
-          border-radius: 22px;
-          border: 1px solid #e4ebef;
-        }
-
-        .loading-spinner {
-          width: 48px;
-          height: 48px;
-          margin: 0 auto 15px;
-          border: 4px solid #d9eee8;
-          border-top-color: #059669;
-          border-radius: 50%;
-          display: grid;
-          place-items: center;
-          font-size: 25px;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .loading-section h3 {
-          margin: 0 0 7px;
-          color: #1d3833;
-        }
-
-        .loading-section p {
-          margin: 0;
-          color: #71808a;
-          font-size: 13px;
-        }
-
-        .answer-section {
-          margin-top: 20px;
-          padding: 30px;
-          background: white;
-          border-radius: 25px;
-          border: 1px solid #dfe8ed;
-          box-shadow: 0 10px 35px rgba(30, 55, 70, 0.06);
-        }
-
-        .answer-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 20px;
-          border-bottom: 1px solid #e9eef1;
-          padding-bottom: 17px;
-        }
-
-        .answer-header h2 {
-          margin: 6px 0 0;
-          color: #17342f;
-        }
-
-        .verified-badge {
-          padding: 8px 12px;
-          border-radius: 999px;
-          background: #ecfdf5;
-          color: #047857;
-          font-size: 12px;
-          font-weight: 850;
-        }
-
-        .answer-content {
-          padding: 22px 4px;
-          color: #33444f;
-          font-size: 16px;
-          line-height: 1.85;
-        }
-
-        .answer-content p {
-          margin: 0 0 8px;
-        }
-
-        .source-card {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          padding: 17px;
-          border-radius: 17px;
-          background: #f7fbfa;
-          border: 1px solid #dcece7;
-        }
-
-        .source-icon {
-          width: 43px;
-          height: 43px;
-          display: grid;
-          place-items: center;
-          border-radius: 12px;
-          background: #e4f7f0;
-        }
-
-        .source-info {
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-          min-width: 0;
-        }
-
-        .source-info span {
-          font-size: 9px;
-          letter-spacing: 0.1em;
-          color: #059669;
-          font-weight: 900;
-        }
-
-        .source-info strong {
-          color: #25413b;
-          font-size: 13px;
-        }
-
-        .source-info small {
-          color: #71818a;
-          font-size: 10px;
-        }
-
-        .source-button {
-          margin-left: auto;
-          flex: 0 0 auto;
-          text-decoration: none;
-          padding: 10px 13px;
-          border-radius: 10px;
-          background: #0f766e;
-          color: white;
-          font-size: 11px;
-          font-weight: 800;
-        }
-
-        .answer-warning {
-          margin-top: 14px;
-          padding: 13px 15px;
-          border-radius: 12px;
-          background: #fffbeb;
-          border: 1px solid #fde68a;
-          color: #785d08;
-          font-size: 11px;
-          line-height: 1.6;
-        }
-
-        .how-section {
-          padding-top: 70px;
-          padding-bottom: 65px;
-        }
-
-        .how-grid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 15px;
-          margin-top: 30px;
-        }
-
-        .how-card {
-          padding: 22px;
-          background: white;
-          border: 1px solid #e3eaee;
-          border-radius: 18px;
-        }
-
-        .how-card > div {
-          width: 36px;
-          height: 36px;
-          display: grid;
-          place-items: center;
-          border-radius: 10px;
-          background: #ecfdf5;
-          color: #047857;
-          font-weight: 900;
-        }
-
-        .how-card h3 {
-          margin: 15px 0 7px;
-          font-size: 15px;
-        }
-
-        .how-card p {
-          margin: 0;
-          color: #71808b;
-          font-size: 12px;
-          line-height: 1.6;
-        }
-
-        .footer {
-          padding: 32px 6%;
-          display: flex;
-          justify-content: space-between;
-          gap: 30px;
-          background: #122b28;
-          color: white;
-        }
-
-        .footer strong {
-          color: white;
-        }
-
-        .footer p {
-          margin: 6px 0 0;
-          color: #abc0bb;
-          font-size: 11px;
-        }
-
-        .footer-right {
-          text-align: right;
-        }
-
-        .urdu-mode {
-          font-family:
-            "Noto Nastaliq Urdu",
-            "Noto Sans Arabic",
-            "Segoe UI",
-            sans-serif;
-        }
-
-        @media (max-width: 900px) {
-          .department-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .service-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-
-          .how-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 650px) {
-          .top-nav {
-            align-items: flex-start;
-            flex-direction: column;
-          }
-
-          .language-switch {
-            width: 100%;
-          }
-
-          .language-button {
-            flex: 1;
-          }
-
-          .hero {
-            padding-top: 48px;
-          }
-
-          .hero h1 {
-            font-size: 45px;
-          }
-
-          .hero p {
-            font-size: 15px;
-          }
-
-          .service-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .ask-section,
-          .answer-section {
-            padding: 20px;
-          }
-
-          .ask-header {
-            flex-direction: column;
-          }
-
-          .selected-service-badge {
-            width: 100%;
-          }
-
-          .ask-actions {
-            flex-direction: column;
-            align-items: stretch;
-          }
-
-          .ask-button {
-            width: 100%;
-          }
-
-          .source-card {
-            align-items: flex-start;
-            flex-wrap: wrap;
-          }
-
-          .source-button {
-            width: 100%;
-            margin-left: 0;
-            text-align: center;
-          }
-
-          .how-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .footer {
-            flex-direction: column;
-          }
-
-          .footer-right {
-            text-align: left;
-          }
-        }
-      `}</style>
+      {profileOpen && (
+        <div className="modal-backdrop">
+          <div className="profile-modal">
+            <div className="modal-icon">🇵🇰</div>
+            <span className="eyebrow">QUICK PROFILE</span>
+            <h2>Let's personalize your experience</h2>
+            <p>
+              We only need three things to start. Your province will <strong>not</strong> restrict federal services such as CNIC or passport.
+            </p>
+
+            <label>Name *</label>
+            <input
+              value={draftProfile.name}
+              onChange={(e) => setDraftProfile({ ...draftProfile, name: e.target.value })}
+              placeholder="Your name"
+              autoFocus
+            />
+
+            <label>Province / region *</label>
+            <select
+              value={draftProfile.province}
+              onChange={(e) => setDraftProfile({ ...draftProfile, province: e.target.value })}
+            >
+              <option value="">Select province / region</option>
+              {PROVINCES.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+
+            <label>Preferred language *</label>
+            <div className="modal-language">
+              {languageOptions.map((item) => (
+                <button
+                  key={item.id}
+                  className={language === item.id ? "modal-lang active" : "modal-lang"}
+                  onClick={() => {
+                    setLanguage(item.id);
+                    setDraftProfile({ ...draftProfile, language: item.id });
+                  }}
+                >
+                  {item.icon} {item.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              className="save-profile"
+              disabled={!draftProfile.name.trim() || !draftProfile.province}
+              onClick={saveProfile}
+            >
+              Save profile & continue →
+            </button>
+            {profile && <button className="cancel-profile" onClick={() => setProfileOpen(false)}>Cancel</button>}
+            <small className="privacy-note">Your profile is saved in this browser on this device. It is not required for every service.</small>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

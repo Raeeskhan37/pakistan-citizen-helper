@@ -28,7 +28,7 @@ function normalize(value: string = ""): string {
   return value
     .toLowerCase()
     .normalize("NFKC")
-    .replace(/[^\p{L}\p{N}\s/.-]/gu, " ")
+    .replace(/[^a-z0-9\s/.-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }

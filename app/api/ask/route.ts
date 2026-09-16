@@ -13,9 +13,11 @@ type VerifiedRecord = {
   service_name?: string | null;
   category?: string | null;
   title?: string | null;
-  content_en?: string | null;
-  content_ur?: string | null;
+  content?: string | null;
+  service_name_urdu?: string | null;
   province?: string | null;
+  title_urdu?: string | null;
+  content_urdu?: string | null;
   official_department?: string | null;
   official_source_title?: string | null;
   official_source_url?: string | null;
@@ -75,7 +77,7 @@ function detectService(q:string, requested:string):string|null {
 
 function detectJurisdiction(q:string):string|null {
   const text=normalize(q);
-  const data:[[string,string[]]]|any = [
+  const data: Array<[string,string[]]> = [
     ["Punjab",["punjab","پنجاب"]],["Sindh",["sindh","sind","سندھ"]],["Khyber Pakhtunkhwa",["khyber pakhtunkhwa","kpk","kp","خیبر پختونخوا","خیبرپختونخوا"]],["Islamabad Capital Territory",["islamabad","ict","اسلام آباد","اسلامباد"]],["Balochistan",["balochistan","بلوچستان"]],["Azad Jammu and Kashmir",["ajk","azad kashmir","آزاد کشمیر","آزاد جموں و کشمیر"]],["Gilgit-Baltistan",["gilgit","gilgit baltistan","گلگت","گلگت بلتستان"]]
   ];
   for(const [name,terms] of data) for(const t of terms) if(text.includes(normalize(t))) return name;
@@ -83,13 +85,16 @@ function detectJurisdiction(q:string):string|null {
 }
 
 function topicScore(topic:string|null,r:VerifiedRecord):number {
-  if(!topic)return 0; const title=normalize(r.title), cat=normalize(r.category), content=normalize(`${r.content_en||""} ${r.content_ur||""}`); let s=0;
-  for(const a of TOPICS[topic]||[]){const x=normalize(a);if(title.includes(x))s+=30;else if(cat.includes(x))s+=20;else if(content.includes(x))s+=8;} return s;
+  if(!topic)return 0;
+  const title=normalize(r.title), cat=normalize(r.category), content=normalize(`${r.content||""} ${r.content_urdu||""}`); let s=0;
+  for(const a of TOPICS[topic]||[]){const x=normalize(a);if(title.includes(x))s+=30;else if(cat.includes(x))s+=20;else if(content.includes(x))s+=8;}
+  return s;
 }
 
 function generalScore(q:string,r:VerifiedRecord):number {
-  const text=normalize(`${r.category||""} ${r.title||""} ${r.content_en||""} ${r.content_ur||""}`), title=normalize(r.title); let s=0;
-  for(const token of normalize(q).split(/\s+/).filter(x=>x.length>=2&&!STOP.has(x))){if(text.includes(token))s+=2;if(title.includes(token))s+=6;} return s;
+  const text=normalize(`${r.category||""} ${r.title||""} ${r.content||""} ${r.content_urdu||""}`), title=normalize(r.title); let s=0;
+  for(const token of normalize(q).split(/\s+/).filter(x=>x.length>=2&&!STOP.has(x))){if(text.includes(token))s+=2;if(title.includes(token))s+=6;}
+  return s;
 }
 
 function serviceMatch(r:VerifiedRecord,service:string):boolean {
@@ -108,7 +113,7 @@ function selectRecords(q:string,requested:string,records:VerifiedRecord[]) {
 }
 
 function context(records:VerifiedRecord[],language:"English"|"Urdu"):string {
-  return records.map((r,i)=>`RECORD ${i+1}\nService: ${r.service_name||""}\nCategory: ${r.category||""}\nJurisdiction: ${r.province||""}\nTitle: ${r.title||""}\nVerified Information: ${language==="Urdu"?(r.content_ur||r.content_en||""):(r.content_en||r.content_ur||"")}\nOfficial Department: ${r.official_department||""}\nOfficial Source: ${r.official_source_title||""}\nOfficial URL: ${r.official_source_url||""}\nLast Verified: ${r.last_verified||""}`).join("\n\n");
+  return records.map((r,i)=>`RECORD ${i+1}\nService: ${language==="Urdu"?(r.service_name_urdu||r.service_name||""):(r.service_name||"")}\nCategory: ${r.category||""}\nJurisdiction: ${r.province||""}\nTitle: ${language==="Urdu"?(r.title_urdu||r.title||""):(r.title||"")}\nVerified Information: ${language==="Urdu"?(r.content_urdu||r.content||""):(r.content||r.content_urdu||"")}\nOfficial Department: ${r.official_department||""}\nOfficial Source: ${r.official_source_title||""}\nOfficial URL: ${r.official_source_url||""}\nLast Verified: ${r.last_verified||""}`).join("\n\n");
 }
 
 function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت، اس مخصوص سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ میں کافی معلومات موجود نہیں ہیں۔":"Sorry, sufficient verified government information is not currently available for this specific question.";}
@@ -119,17 +124,30 @@ export async function POST(request:NextRequest){
     const body=await request.json(); const question=String(body.question??"").trim(); const requested=String(body.service??"").trim(); const langInput=String(body.language??"").trim();
     if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});
     const language: "English"|"Urdu" = langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
-    const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,category,title,content_en,content_ur,province,official_department,official_source_title,official_source_url,last_verified,active&active=eq.true&order=last_verified.desc`;
+
+    const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,category,title,content,service_name_urdu,province,title_urdu,content_urdu,official_department,official_source_title,official_source_url,last_verified,active&active=eq.true&order=last_verified.desc`;
     const db=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`},cache:"no-store"});
     if(!db.ok){console.error(await db.text());return NextResponse.json({error:"Unable to retrieve verified information from Supabase."},{status:500});}
-    const all=(await db.json()) as VerifiedRecord[]; if(!all.length)return NextResponse.json({answer:noInfo(language),source:null});
-    const selected=selectRecords(question,requested,all); if(!selected.records.length)return NextResponse.json({answer:noInfo(language),source:null});
+
+    const all=(await db.json()) as VerifiedRecord[];
+    if(!all.length)return NextResponse.json({answer:noInfo(language),source:null});
+
+    const selected=selectRecords(question,requested,all);
+    if(!selected.records.length)return NextResponse.json({answer:noInfo(language),source:null});
+
     const sourceRecord=selected.records.find(r=>r.official_source_url)||selected.records[0];
     const source={department:sourceRecord.official_department||"",title:sourceRecord.official_source_title||sourceRecord.title||"Official Government Source",url:sourceRecord.official_source_url||"",lastVerified:sourceRecord.last_verified||"",province:sourceRecord.province||""};
-    const system=`You are Pakistan Citizen Helper. Answer ONLY from the VERIFIED RECORDS below. Never invent or guess fees, documents, eligibility, processing times, deadlines, addresses, procedures or rules. Keep the answer focused on the exact question. Detected topic: ${selected.topic||"general"}. If the exact requested detail is absent, say so clearly. If the question is about age/date of birth, do not substitute general CNIC information for age/DOB-specific information. Use simple Pakistani Urdu when language is Urdu.\n\nVERIFIED RECORDS:\n${context(selected.records,language)}`;
+
+    const system=`You are Pakistan Citizen Helper. Answer ONLY from the VERIFIED RECORDS below. Never invent or guess facts. Use the actual information contained in the records. Keep the answer focused on the exact question. Detected topic: ${selected.topic||"general"}. If the question asks for a procedure and the record contains a procedure, explain that procedure clearly. If the question asks for a fee and the record contains fees, give the applicable fees. If the exact requested detail is absent, say so clearly. Do not say that fees, documents or procedure are unavailable when they are actually present in the supplied records. If the question is about age/date of birth, prioritize the Age / Date of Birth record over a generic CNIC record. Use simple Pakistani Urdu when language is Urdu.\n\nVERIFIED RECORDS:\n${context(selected.records,language)}`;
+
     const ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:GROQ_MODEL,temperature:0,max_tokens:1200,messages:[{role:"system",content:system},{role:"user",content:`Question: ${question}\nSelected service: ${selected.service||requested||"not specified"}\nJurisdiction: ${selected.jurisdiction||"not specified"}\nLanguage: ${language}`}]})});
     if(!ai.ok){console.error(await ai.text());return NextResponse.json({error:"AI service is temporarily unavailable. Please try again."},{status:500});}
-    const data=await ai.json(); const answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);
+
+    const data=await ai.json();
+    const answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);
     return NextResponse.json({answer,source});
-  }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}
+  }catch(error){
+    console.error("API /api/ask error:",error);
+    return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});
+  }
 }

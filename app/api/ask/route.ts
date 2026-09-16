@@ -3,11 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+// ============================================================
+// ENVIRONMENT
+// ============================================================
 
 const GROQ_MODEL = "openai/gpt-oss-120b";
+
+// ============================================================
+// TYPES
+// ============================================================
 
 type VerifiedRecord = {
   id?: number;
@@ -15,13 +19,17 @@ type VerifiedRecord = {
   category?: string | null;
   title?: string | null;
   content?: string | null;
+
   service_name_urdu?: string | null;
   title_urdu?: string | null;
   content_urdu?: string | null;
+
   province?: string | null;
+
   official_department?: string | null;
   official_source_title?: string | null;
   official_source_url?: string | null;
+
   last_verified?: string | null;
   active?: boolean | null;
 };
@@ -33,6 +41,10 @@ type SourceInfo = {
   lastVerified?: string;
   province?: string;
 };
+
+// ============================================================
+// NORMALIZATION
+// ============================================================
 
 function normalize(value: unknown): string {
   return String(value ?? "")
@@ -52,6 +64,10 @@ function tokenize(text: string): string[] {
     .split(/\s+/)
     .filter((word) => word.length >= 2);
 }
+
+// ============================================================
+// STOP WORDS
+// ============================================================
 
 const STOP_WORDS = new Set([
   "the",
@@ -87,6 +103,14 @@ const STOP_WORDS = new Set([
   "on",
   "and",
   "or",
+  "apply",
+  "application",
+  "need",
+  "required",
+  "requirements",
+  "document",
+  "documents",
+
   "کے",
   "کی",
   "کا",
@@ -104,27 +128,46 @@ const STOP_WORDS = new Set([
   "بارے",
   "میرا",
   "میری",
+  "درکار",
+  "ضروری",
 ]);
 
 function questionTokens(question: string): string[] {
-  return tokenize(question).filter(
-    (word) => !STOP_WORDS.has(word)
-  );
+  return tokenize(question).filter((word) => !STOP_WORDS.has(word));
 }
 
-const SERVICE_ALIASES: Record<string, string[]> = {
-  "CNIC / NADRA": [
+// ============================================================
+// SERVICE GROUPS
+// ============================================================
+//
+// IMPORTANT:
+// Database names and UI names do not always match exactly.
+//
+// Example:
+// UI       = CNIC / Smart CNIC
+// Database = CNIC / NADRA
+//
+// These aliases allow both to map to the same service family.
+// ============================================================
+
+const SERVICE_GROUPS: Record<string, string[]> = {
+  CNIC: [
     "cnic",
     "nic",
+    "smart cnic",
+    "cnic nadra",
+    "cnic smart cnic",
+    "cnic nadra services",
     "identity card",
+    "national identity card",
     "شناختی کارڈ",
-    "شناختی",
-    "nadra",
-    "نادرا",
+    "قومی شناختی کارڈ",
+    "نادرا شناختی کارڈ",
   ],
 
   Passport: [
     "passport",
+    "passport services",
     "پاسپورٹ",
   ],
 
@@ -140,7 +183,9 @@ const SERVICE_ALIASES: Record<string, string[]> = {
 
   Domicile: [
     "domicile",
+    "domicile certificate",
     "ڈومیسائل",
+    "ڈومیسائل سرٹیفکیٹ",
   ],
 
   Scholarships: [
@@ -149,6 +194,7 @@ const SERVICE_ALIASES: Record<string, string[]> = {
     "stipend",
     "financial aid",
     "student scholarship",
+    "education scholarship",
     "وظیفہ",
     "وظائف",
     "اسکالرشپ",
@@ -157,47 +203,211 @@ const SERVICE_ALIASES: Record<string, string[]> = {
   "Protector of Emigrants": [
     "protector",
     "protector of emigrants",
+    "protector emigrants",
     "emigration",
     "emigrant",
     "overseas employment",
     "work visa",
     "employment visa",
     "پروٹیکٹر",
+    "پروٹیکٹر آف ایمیگرنٹس",
     "ایمیگریشن",
     "بیرون ملک ملازمت",
   ],
 
-  "Other Services": [
+  "Union Council / Local Government": [
+    "union council",
+    "local government",
     "birth certificate",
     "death certificate",
     "marriage certificate",
     "divorce certificate",
-    "character certificate",
-    "police verification",
-    "vehicle registration",
-    "token tax",
-    "income tax",
-    "fbr",
-    "tax",
-    "crc",
-    "form b",
-    "family registration",
-    "fard",
     "birth",
     "death",
     "marriage",
     "divorce",
-    "character certificate",
+    "یونین کونسل",
+    "بلدیاتی",
     "پیدائش",
     "وفات",
     "شادی",
     "طلاق",
-    "کردار سرٹیفکیٹ",
+  ],
+
+  "Police Services": [
+    "police",
+    "police verification",
+    "character certificate",
+    "police certificate",
+    "police clearance",
+    "پولیس",
     "پولیس ویریفکیشن",
+    "کردار سرٹیفکیٹ",
+  ],
+
+  "Excise & Taxation": [
+    "excise",
+    "vehicle registration",
+    "vehicle transfer",
+    "token tax",
+    "vehicle tax",
+    "motor vehicle",
     "گاڑی رجسٹریشن",
+    "گاڑی",
+    "ٹوکن ٹیکس",
+    "ایکسائز",
+  ],
+
+  "FBR / Taxation": [
+    "fbr",
+    "tax",
+    "income tax",
+    "taxpayer",
+    "ntn",
+    "iris",
+    "فیڈرل بورڈ آف ریونیو",
+    "ایف بی آر",
     "ٹیکس",
   ],
+
+  "Land & Revenue": [
+    "land",
+    "land record",
+    "revenue",
+    "fard",
+    "property",
+    "mutation",
+    "زمین",
+    "اراضی",
+    "فرد",
+    "انتقال",
+    "ریونیو",
+  ],
+
+  "Government Jobs": [
+    "government job",
+    "government jobs",
+    "govt job",
+    "public job",
+    "government employment",
+    "سرکاری ملازمت",
+    "سرکاری نوکری",
+  ],
 };
+
+// ============================================================
+// SERVICE NORMALIZATION
+// ============================================================
+
+function normalizeServiceName(serviceName: string): string {
+  const value = normalize(serviceName);
+
+  if (
+    value.includes("cnic") ||
+    value.includes("smart cnic") ||
+    value.includes("identity card") ||
+    value.includes("national identity") ||
+    value.includes("شناختی") ||
+    value.includes("نادرا")
+  ) {
+    return "CNIC";
+  }
+
+  if (value.includes("passport") || value.includes("پاسپورٹ")) {
+    return "Passport";
+  }
+
+  if (
+    value.includes("driving") ||
+    value.includes("licence") ||
+    value.includes("license") ||
+    value.includes("ڈرائیونگ")
+  ) {
+    return "Driving Licence";
+  }
+
+  if (value.includes("domicile") || value.includes("ڈومیسائل")) {
+    return "Domicile";
+  }
+
+  if (
+    value.includes("scholarship") ||
+    value.includes("stipend") ||
+    value.includes("وظیف") ||
+    value.includes("اسکالر")
+  ) {
+    return "Scholarships";
+  }
+
+  if (
+    value.includes("protector") ||
+    value.includes("emigrant") ||
+    value.includes("emigration") ||
+    value.includes("پروٹیکٹر")
+  ) {
+    return "Protector of Emigrants";
+  }
+
+  if (
+    value.includes("union council") ||
+    value.includes("local government") ||
+    value.includes("یونین کونسل")
+  ) {
+    return "Union Council / Local Government";
+  }
+
+  if (
+    value.includes("police") ||
+    value.includes("پولیس")
+  ) {
+    return "Police Services";
+  }
+
+  if (
+    value.includes("excise") ||
+    value.includes("vehicle") ||
+    value.includes("token tax") ||
+    value.includes("ایکسائز")
+  ) {
+    return "Excise & Taxation";
+  }
+
+  if (
+    value.includes("fbr") ||
+    value.includes("tax") ||
+    value.includes("ntn") ||
+    value.includes("iris") ||
+    value.includes("ایف بی آر")
+  ) {
+    return "FBR / Taxation";
+  }
+
+  if (
+    value.includes("land") ||
+    value.includes("revenue") ||
+    value.includes("fard") ||
+    value.includes("property") ||
+    value.includes("زمین") ||
+    value.includes("ریونیو")
+  ) {
+    return "Land & Revenue";
+  }
+
+  if (
+    value.includes("government job") ||
+    value.includes("govt job") ||
+    value.includes("سرکاری ملازمت") ||
+    value.includes("سرکاری نوکری")
+  ) {
+    return "Government Jobs";
+  }
+
+  return serviceName;
+}
+
+// ============================================================
+// DETECT SERVICE FROM QUESTION
+// ============================================================
 
 function detectServiceFromQuestion(
   question: string,
@@ -208,9 +418,11 @@ function detectServiceFromQuestion(
   let bestService: string | null = null;
   let bestScore = 0;
 
-  for (const [service, aliases] of Object.entries(
-    SERVICE_ALIASES
-  )) {
+  // ----------------------------------------------------------
+  // First: explicit service groups
+  // ----------------------------------------------------------
+
+  for (const [serviceGroup, aliases] of Object.entries(SERVICE_GROUPS)) {
     let score = 0;
 
     for (const alias of aliases) {
@@ -219,15 +431,19 @@ function detectServiceFromQuestion(
       if (!a) continue;
 
       if (q.includes(a)) {
-        score += a.length >= 8 ? 15 : 10;
+        score += a.length >= 8 ? 20 : 12;
       }
     }
 
     if (score > bestScore) {
       bestScore = score;
-      bestService = service;
+      bestService = serviceGroup;
     }
   }
+
+  // ----------------------------------------------------------
+  // Second: inspect actual database service names
+  // ----------------------------------------------------------
 
   const uniqueServices = Array.from(
     new Set(
@@ -237,41 +453,55 @@ function detectServiceFromQuestion(
     )
   ) as string[];
 
-  for (const service of uniqueServices) {
-    const aliases = SERVICE_ALIASES[service] || [];
+  for (const databaseService of uniqueServices) {
+    const normalizedDatabaseService =
+      normalizeServiceName(databaseService);
+
+    const aliases =
+      SERVICE_GROUPS[normalizedDatabaseService] || [];
 
     let score = 0;
 
-    if (q.includes(normalize(service))) {
-      score += 30;
+    // Exact database service name
+    if (q.includes(normalize(databaseService))) {
+      score += 40;
     }
 
-    for (const alias of aliases) {
-      if (q.includes(normalize(alias))) {
-        score += 15;
+    // Normalized service family
+    if (
+      normalizedDatabaseService &&
+      SERVICE_GROUPS[normalizedDatabaseService]
+    ) {
+      for (const alias of aliases) {
+        if (q.includes(normalize(alias))) {
+          score += 15;
+        }
       }
     }
 
-    const serviceWords = tokenize(service);
+    // Individual words
+    const serviceWords = tokenize(databaseService);
 
     for (const word of serviceWords) {
-      if (q.includes(word)) {
-        score += 5;
+      if (word.length >= 3 && q.includes(word)) {
+        score += 6;
       }
     }
 
     if (score > bestScore) {
       bestScore = score;
-      bestService = service;
+      bestService = normalizedDatabaseService;
     }
   }
 
   return bestScore >= 10 ? bestService : null;
 }
 
-function detectJurisdiction(
-  question: string
-): string | null {
+// ============================================================
+// DETECT JURISDICTION
+// ============================================================
+
+function detectJurisdiction(question: string): string | null {
   const q = normalize(question);
 
   const jurisdictions = [
@@ -337,6 +567,10 @@ function detectJurisdiction(
   return null;
 }
 
+// ============================================================
+// RECORD SCORING
+// ============================================================
+
 function scoreRecord(
   question: string,
   record: VerifiedRecord
@@ -360,32 +594,50 @@ function scoreRecord(
 
   let score = 0;
 
+  // General content match
   for (const token of tokens) {
     if (recordText.includes(token)) {
       score += 3;
     }
   }
 
+  // Title is more important
   const title = normalize(
     `${record.title ?? ""} ${record.title_urdu ?? ""}`
   );
 
   for (const token of tokens) {
     if (title.includes(token)) {
-      score += 7;
+      score += 10;
     }
   }
 
+  // Category
   const category = normalize(record.category);
 
   for (const token of tokens) {
     if (category.includes(token)) {
-      score += 5;
+      score += 7;
+    }
+  }
+
+  // Service
+  const service = normalize(
+    `${record.service_name ?? ""} ${record.service_name_urdu ?? ""}`
+  );
+
+  for (const token of tokens) {
+    if (service.includes(token)) {
+      score += 8;
     }
   }
 
   return score;
 }
+
+// ============================================================
+// SELECT RELEVANT RECORDS
+// ============================================================
 
 function selectRecords(
   question: string,
@@ -402,49 +654,67 @@ function selectRecords(
   const jurisdiction =
     detectJurisdiction(question);
 
-  let serviceToUse =
-    detectedService ||
-    requestedService ||
+  // ----------------------------------------------------------
+  // Normalize UI service
+  // ----------------------------------------------------------
+
+  const normalizedRequestedService =
+    requestedService
+      ? normalizeServiceName(requestedService)
+      : null;
+
+  const normalizedDetectedService =
+    detectedService
+      ? normalizeServiceName(detectedService)
+      : null;
+
+  const serviceToUse =
+    normalizedDetectedService ||
+    normalizedRequestedService ||
     null;
 
   let working = [...records];
 
-  if (serviceToUse) {
-    const serviceNormalized =
-      normalize(serviceToUse);
+  // ----------------------------------------------------------
+  // SERVICE FILTER
+  // ----------------------------------------------------------
 
+  if (serviceToUse) {
     const serviceRecords = working.filter((record) => {
       const databaseService =
-        normalize(record.service_name);
-
-      const databaseUrduService =
-        normalize(record.service_name_urdu);
-
-      if (
-        databaseService === serviceNormalized ||
-        databaseUrduService === serviceNormalized
-      ) {
-        return true;
-      }
-
-      if (
-        databaseService.includes(serviceNormalized) ||
-        serviceNormalized.includes(databaseService)
-      ) {
-        return true;
-      }
-
-      const aliases =
-        SERVICE_ALIASES[serviceToUse] || [];
-
-      return aliases.some((alias) => {
-        const a = normalize(alias);
-
-        return (
-          databaseService.includes(a) ||
-          databaseUrduService.includes(a)
+        normalizeServiceName(
+          record.service_name || ""
         );
-      });
+
+      // Example:
+      //
+      // UI:
+      // CNIC / Smart CNIC
+      //
+      // Database:
+      // CNIC / NADRA
+      //
+      // Both become:
+      // CNIC
+      //
+
+      if (databaseService === serviceToUse) {
+        return true;
+      }
+
+      // Direct aliases
+      const aliases =
+        SERVICE_GROUPS[serviceToUse] || [];
+
+      const databaseText = normalize(
+        `${record.service_name ?? ""} ${
+          record.service_name_urdu ?? ""
+        }`
+      );
+
+      return aliases.some((alias) =>
+        databaseText.includes(normalize(alias))
+      );
     });
 
     if (serviceRecords.length > 0) {
@@ -452,27 +722,34 @@ function selectRecords(
     }
   }
 
+  // ----------------------------------------------------------
+  // JURISDICTION FILTER
+  // ----------------------------------------------------------
+
   if (jurisdiction) {
-    const jurisdictionRecords =
-      working.filter((record) => {
-        const province =
-          normalize(record.province);
+    const jurisdictionRecords = working.filter(
+      (record) => {
+        const province = normalize(record.province);
+
+        const requested =
+          normalize(jurisdiction);
 
         return (
-          province.includes(
-            normalize(jurisdiction)
-          ) ||
-          normalize(jurisdiction).includes(
-            province
-          ) ||
+          province.includes(requested) ||
+          requested.includes(province) ||
           province === "pakistan"
         );
-      });
+      }
+    );
 
     if (jurisdictionRecords.length > 0) {
       working = jurisdictionRecords;
     }
   }
+
+  // ----------------------------------------------------------
+  // SCORE
+  // ----------------------------------------------------------
 
   const scored = working
     .map((record) => ({
@@ -481,27 +758,30 @@ function selectRecords(
     }))
     .sort((a, b) => b.score - a.score);
 
-  if (scored.length <= 30) {
-    return {
-      records: scored.map((x) => x.record),
-      detectedService,
-      jurisdiction,
-    };
-  }
-
+  // Keep the strongest records
   const useful = scored.filter(
-    (x) => x.score > 0
+    (item) => item.score > 0
   );
 
+  const selectedRecords =
+    useful.length > 0
+      ? useful.slice(0, 30).map(
+          (item) => item.record
+        )
+      : scored.slice(0, 30).map(
+          (item) => item.record
+        );
+
   return {
-    records:
-      useful.length > 0
-        ? useful.slice(0, 30).map((x) => x.record)
-        : scored.slice(0, 30).map((x) => x.record),
+    records: selectedRecords,
     detectedService,
     jurisdiction,
   };
 }
+
+// ============================================================
+// VERIFIED CONTEXT
+// ============================================================
 
 function buildVerifiedContext(
   records: VerifiedRecord[],
@@ -531,6 +811,9 @@ function buildVerifiedContext(
 ==============================
 VERIFIED RECORD ${index + 1}
 ==============================
+
+ID:
+${record.id ?? ""}
 
 Service:
 ${record.service_name || ""}
@@ -566,6 +849,10 @@ ${record.last_verified || ""}
     .join("\n");
 }
 
+// ============================================================
+// FALLBACK ANSWER
+// ============================================================
+
 function noVerifiedInformation(
   language: "English" | "Urdu"
 ): string {
@@ -576,28 +863,79 @@ function noVerifiedInformation(
   return "Sorry, sufficient verified government information is currently not available for this question. Please specify the service or relevant province/jurisdiction.";
 }
 
+// ============================================================
+// URDU PROTECTION
+// ============================================================
+
 function protectUrdu(text: string): string {
   return text
-    .replace(/شناختی کارڈ/gi, "شناختی کارڈ")
-    .replace(/ڈرائیونگ لائسنس/gi, "ڈرائیونگ لائسنس")
-    .replace(/پاسپورٹ/gi, "پاسپورٹ")
-    .replace(/ڈومیسائل/gi, "ڈومیسائل")
-    .replace(/اسکالرشپ/gi, "اسکالرشپ")
+    .replace(
+      /شناختی کارڈ/gi,
+      "شناختی کارڈ"
+    )
+    .replace(
+      /ڈرائیونگ لائسنس/gi,
+      "ڈرائیونگ لائسنس"
+    )
+    .replace(
+      /پاسپورٹ/gi,
+      "پاسپورٹ"
+    )
+    .replace(
+      /ڈومیسائل/gi,
+      "ڈومیسائل"
+    )
+    .replace(
+      /اسکالرشپ/gi,
+      "اسکالرشپ"
+    )
     .replace(
       /پروٹیکٹر/gi,
       "پروٹیکٹر آف ایمیگرنٹس"
     );
 }
 
+// ============================================================
+// POST /api/ask
+// ============================================================
+
 export async function POST(
   request: NextRequest
 ) {
   try {
+    // --------------------------------------------------------
+    // READ ENVIRONMENT INSIDE REQUEST
+    // --------------------------------------------------------
+
+    const SUPABASE_URL =
+      process.env.SUPABASE_URL;
+
+    const SUPABASE_ANON_KEY =
+      process.env.SUPABASE_ANON_KEY;
+
+    const GROQ_API_KEY =
+      process.env.GROQ_API_KEY;
+
+    // --------------------------------------------------------
+    // ENVIRONMENT CHECK
+    // --------------------------------------------------------
+
     if (
       !SUPABASE_URL ||
       !SUPABASE_ANON_KEY ||
       !GROQ_API_KEY
     ) {
+      console.error(
+        "Missing environment variables:",
+        {
+          SUPABASE_URL: !SUPABASE_URL,
+          SUPABASE_ANON_KEY:
+            !SUPABASE_ANON_KEY,
+          GROQ_API_KEY:
+            !GROQ_API_KEY,
+        }
+      );
+
       return NextResponse.json(
         {
           error:
@@ -607,53 +945,78 @@ export async function POST(
       );
     }
 
-    const body = await request.json();
+    // --------------------------------------------------------
+    // REQUEST BODY
+    // --------------------------------------------------------
 
-    const question = String(
-      body.question ?? ""
-    ).trim();
+    const body =
+      await request.json();
 
-    const requestedService = String(
-      body.service ?? ""
-    ).trim();
+    const question =
+      String(
+        body.question ?? ""
+      ).trim();
 
-    const requestedLanguage = String(
-      body.language ?? ""
-    ).trim();
+    const requestedService =
+      String(
+        body.service ?? ""
+      ).trim();
+
+    const requestedLanguage =
+      String(
+        body.language ?? ""
+      ).trim();
 
     if (!question) {
       return NextResponse.json(
         {
-          error: "Please enter a question.",
+          error:
+            "Please enter a question.",
         },
         { status: 400 }
       );
     }
 
-    const language: "English" | "Urdu" =
-      requestedLanguage.toLowerCase() === "urdu" ||
+    // --------------------------------------------------------
+    // LANGUAGE
+    // --------------------------------------------------------
+
+    const language:
+      | "English"
+      | "Urdu" =
+      requestedLanguage.toLowerCase() ===
+        "urdu" ||
       isUrdu(question)
         ? "Urdu"
         : "English";
+
+    // --------------------------------------------------------
+    // SUPABASE
+    // --------------------------------------------------------
 
     const supabaseUrl =
       `${SUPABASE_URL}/rest/v1/verified_information` +
       `?select=*&active=eq.true`;
 
-    const supabaseResponse = await fetch(
-      supabaseUrl,
-      {
-        method: "GET",
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization:
-            `Bearer ${SUPABASE_ANON_KEY}`,
-          "Content-Type":
-            "application/json",
-        },
-        cache: "no-store",
-      }
-    );
+    const supabaseResponse =
+      await fetch(
+        supabaseUrl,
+        {
+          method: "GET",
+          headers: {
+            apikey:
+              SUPABASE_ANON_KEY,
+
+            Authorization:
+              `Bearer ${SUPABASE_ANON_KEY}`,
+
+            "Content-Type":
+              "application/json",
+          },
+
+          cache: "no-store",
+        }
+      );
 
     if (!supabaseResponse.ok) {
       const errorText =
@@ -676,17 +1039,25 @@ export async function POST(
     const allRecords =
       (await supabaseResponse.json()) as VerifiedRecord[];
 
+    // --------------------------------------------------------
+    // NO RECORDS
+    // --------------------------------------------------------
+
     if (
       !Array.isArray(allRecords) ||
       allRecords.length === 0
     ) {
       return NextResponse.json({
-        answer: noVerifiedInformation(
-          language
-        ),
+        answer:
+          noVerifiedInformation(language),
+
         source: null,
       });
     }
+
+    // --------------------------------------------------------
+    // SELECT RELEVANT RECORDS
+    // --------------------------------------------------------
 
     const selected =
       selectRecords(
@@ -698,14 +1069,20 @@ export async function POST(
     const relevantRecords =
       selected.records;
 
-    if (relevantRecords.length === 0) {
+    if (
+      relevantRecords.length === 0
+    ) {
       return NextResponse.json({
-        answer: noVerifiedInformation(
-          language
-        ),
+        answer:
+          noVerifiedInformation(language),
+
         source: null,
       });
     }
+
+    // --------------------------------------------------------
+    // VERIFIED CONTEXT
+    // --------------------------------------------------------
 
     const verifiedContext =
       buildVerifiedContext(
@@ -713,39 +1090,54 @@ export async function POST(
         language
       );
 
+    // --------------------------------------------------------
+    // SOURCE
+    // --------------------------------------------------------
+
     const sourceRecord =
       relevantRecords.find(
         (record) =>
           record.official_source_url
-      ) || relevantRecords[0];
+      ) ||
+      relevantRecords[0];
 
-    const source: SourceInfo | null =
+    const source:
+      | SourceInfo
+      | null =
       sourceRecord
         ? {
             department:
               sourceRecord.official_department ||
               "",
+
             title:
               sourceRecord.official_source_title ||
               sourceRecord.title ||
               "",
+
             url:
               sourceRecord.official_source_url ||
               "",
+
             lastVerified:
               sourceRecord.last_verified ||
               "",
+
             province:
               sourceRecord.province ||
               "",
           }
         : null;
 
+    // --------------------------------------------------------
+    // SYSTEM PROMPT
+    // --------------------------------------------------------
+
     const systemPrompt = `
 You are Pakistan Citizen Helper.
 
-You provide simple, practical and trustworthy information
-about Pakistani government and public services.
+You provide simple, practical and trustworthy
+information about Pakistani government and public services.
 
 ============================================================
 MOST IMPORTANT RULE
@@ -776,18 +1168,26 @@ verified information does not contain it.
 SERVICE RULE
 ============================================================
 
-The application automatically identifies the most likely
-service from the user's question.
+The application identifies the most likely service
+from the user's question.
 
-Do not answer using a different service simply because
-the UI selected a different service.
+The UI-selected service and database service names
+may be slightly different.
 
 For example:
 
-If UI service = CNIC
-but question = "What scholarships are available?"
+UI:
+CNIC / Smart CNIC
 
-Answer using SCHOLARSHIP records.
+Database:
+CNIC / NADRA
+
+These refer to the same CNIC service family.
+
+Use the relevant verified records supplied below.
+
+Do not answer using a different service simply because
+the UI selected a different service.
 
 ============================================================
 JURISDICTION RULE
@@ -800,9 +1200,7 @@ the applicable jurisdiction information where possible.
 Do not combine provincial rules.
 
 If rules differ by jurisdiction and the user did not specify
-a jurisdiction, clearly tell the user that the requirements
-vary and identify the jurisdictions covered by the verified
-information.
+a jurisdiction, clearly tell the user that requirements vary.
 
 ============================================================
 SCHOLARSHIP RULE
@@ -879,6 +1277,10 @@ VERIFIED RECORDS
 ${verifiedContext}
 `;
 
+    // --------------------------------------------------------
+    // USER PROMPT
+    // --------------------------------------------------------
+
     const userPrompt = `
 User question:
 
@@ -903,33 +1305,51 @@ ${language}
 Answer ONLY from the verified records.
 `;
 
-    const groqResponse = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization:
-            `Bearer ${GROQ_API_KEY}`,
-          "Content-Type":
-            "application/json",
-        },
-        body: JSON.stringify({
-          model: GROQ_MODEL,
-          temperature: 0,
-          max_tokens: 1600,
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt,
-            },
-            {
-              role: "user",
-              content: userPrompt,
-            },
-          ],
-        }),
-      }
-    );
+    // --------------------------------------------------------
+    // GROQ
+    // --------------------------------------------------------
+
+    const groqResponse =
+      await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          method: "POST",
+
+          headers: {
+            Authorization:
+              `Bearer ${GROQ_API_KEY}`,
+
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            model: GROQ_MODEL,
+
+            temperature: 0,
+
+            max_tokens: 1600,
+
+            messages: [
+              {
+                role: "system",
+                content:
+                  systemPrompt,
+              },
+
+              {
+                role: "user",
+                content:
+                  userPrompt,
+              },
+            ],
+          }),
+        }
+      );
+
+    // --------------------------------------------------------
+    // GROQ ERROR
+    // --------------------------------------------------------
 
     if (!groqResponse.ok) {
       const errorText =
@@ -949,6 +1369,10 @@ Answer ONLY from the verified records.
       );
     }
 
+    // --------------------------------------------------------
+    // GROQ RESPONSE
+    // --------------------------------------------------------
+
     const groqData =
       await groqResponse.json();
 
@@ -958,12 +1382,19 @@ Answer ONLY from the verified records.
 
     if (!answer) {
       answer =
-        noVerifiedInformation(language);
+        noVerifiedInformation(
+          language
+        );
     }
 
     if (language === "Urdu") {
-      answer = protectUrdu(answer);
+      answer =
+        protectUrdu(answer);
     }
+
+    // --------------------------------------------------------
+    // FINAL RESPONSE
+    // --------------------------------------------------------
 
     return NextResponse.json({
       answer,

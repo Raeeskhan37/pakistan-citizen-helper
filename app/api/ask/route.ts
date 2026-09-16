@@ -819,17 +819,3 @@ ${verifiedContext}
     );
   }
 }
-
-Now follow these steps:
-
-1. Open GitHub → "pakistan-citizen-helper".
-2. Select branch "version-2".
-3. Open "app/api/ask/route.ts".
-4. Select all existing code and delete it.
-5. Paste the complete code above.
-6. Commit the change to "version-2".
-7. Do not merge to "main" yet.
-8. Wait for Vercel to build the new Preview deployment.
-9. Tell me whether the deployment says Ready or Build Failed.
-
-If it says Ready, we'll test the three exact questions before making any further database changes.

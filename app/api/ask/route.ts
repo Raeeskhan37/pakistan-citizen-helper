@@ -917,21 +917,3 @@ ${verifiedContext}
   }
 }
 
-Now do only these 4 steps
-
-1. GitHub → "version-2"
-2. Replace the entire "app/api/ask/route.ts" with the code above.
-3. Commit the change.
-4. Wait for Vercel to show Ready.
-
-Then test:
-
-How can I modify my date of birth in my CNIC?
-
-If it fails again, open Vercel Runtime Logs and send me the new error. Don't change anything else yet.
-
-One important point: this file now correctly uses your actual Supabase table:
-
-"verified_information"
-
-and not "citizen_services".

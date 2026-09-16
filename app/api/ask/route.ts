@@ -277,7 +277,11 @@ function normalizeServiceName(serviceName: string = ""): string {
   const text = normalize(serviceName);
 
   for (const [group, aliases] of Object.entries(SERVICE_GROUPS)) {
-    if (aliases.some((alias) => text.includes(normalize(alias)))) {
+    if (
+      aliases.some((alias) =>
+        text.includes(normalize(alias))
+      )
+    ) {
       return group;
     }
   }
@@ -285,11 +289,19 @@ function normalizeServiceName(serviceName: string = ""): string {
   return text;
 }
 
-function detectServiceFromQuestion(question: string): string | null {
+function detectServiceFromQuestion(
+  question: string
+): string | null {
   const text = normalize(question);
 
-  for (const [group, aliases] of Object.entries(SERVICE_GROUPS)) {
-    if (aliases.some((alias) => text.includes(normalize(alias)))) {
+  for (const [group, aliases] of Object.entries(
+    SERVICE_GROUPS
+  )) {
+    if (
+      aliases.some((alias) =>
+        text.includes(normalize(alias))
+      )
+    ) {
       return group;
     }
   }
@@ -301,10 +313,10 @@ function detectServiceFromQuestion(question: string): string | null {
 // TOPIC DETECTION
 // ============================================================
 
-function detectTopic(question: string): string | null {
+function detectTopic(
+  question: string
+): string | null {
   const text = normalize(question);
-
-  // More specific topics must be checked first.
 
   const priorityTopics = [
     "cnic-father-name",
@@ -328,7 +340,11 @@ function detectTopic(question: string): string | null {
   for (const topic of priorityTopics) {
     const aliases = TOPIC_GROUPS[topic] || [];
 
-    if (aliases.some((alias) => text.includes(normalize(alias)))) {
+    if (
+      aliases.some((alias) =>
+        text.includes(normalize(alias))
+      )
+    ) {
       return topic;
     }
   }
@@ -340,18 +356,28 @@ function detectTopic(question: string): string | null {
 // JURISDICTION
 // ============================================================
 
-function detectJurisdiction(question: string): string | null {
+function detectJurisdiction(
+  question: string
+): string | null {
   const text = normalize(question);
 
   if (text.includes("punjab")) return "Punjab";
   if (text.includes("sindh")) return "Sindh";
   if (text.includes("balochistan")) return "Balochistan";
-  if (text.includes("khyber pakhtunkhwa")) return "Khyber Pakhtunkhwa";
-  if (text.includes("kpk")) return "Khyber Pakhtunkhwa";
-  if (text.includes("kp")) return "Khyber Pakhtunkhwa";
+
+  if (
+    text.includes("khyber pakhtunkhwa") ||
+    text.includes("kpk") ||
+    text.includes("kp")
+  ) {
+    return "Khyber Pakhtunkhwa";
+  }
+
   if (text.includes("islamabad")) return "Islamabad";
   if (text.includes("gilgit")) return "Gilgit-Baltistan";
-  if (text.includes("azad kashmir")) return "Azad Jammu and Kashmir";
+  if (text.includes("azad kashmir")) {
+    return "Azad Jammu and Kashmir";
+  }
 
   return null;
 }
@@ -398,25 +424,38 @@ function scoreRecord(
 ): number {
   const q = normalize(question);
 
-  const serviceName = normalizeServiceName(record.service_name || "");
-  const category = normalize(record.category || "");
-  const title = normalize(record.title || "");
-  const content = normalize(record.content_en || "");
+  const serviceName = normalizeServiceName(
+    record.service_name || ""
+  );
+
+  const category = normalize(
+    record.category || ""
+  );
+
+  const title = normalize(
+    record.title || ""
+  );
+
+  const content = normalize(
+    record.content_en || ""
+  );
 
   let score = 0;
 
-  // Service family
   if (service && serviceName === service) {
     score += 100;
   }
 
-  // Exact topic
-  if (topic && recordMatchesTopic(record, topic)) {
+  if (
+    topic &&
+    recordMatchesTopic(record, topic)
+  ) {
     score += 200;
   }
 
-  // Category/title keyword matches
-  const words = q.split(" ").filter((word) => word.length > 2);
+  const words = q
+    .split(" ")
+    .filter((word) => word.length > 2);
 
   for (const word of words) {
     if (category.includes(word)) score += 8;
@@ -424,18 +463,20 @@ function scoreRecord(
     if (content.includes(word)) score += 1;
   }
 
-  // Jurisdiction
   if (jurisdiction) {
-    const province = normalize(record.province || "");
+    const province = normalize(
+      record.province || ""
+    );
 
-    if (province === normalize(jurisdiction)) {
+    if (
+      province === normalize(jurisdiction)
+    ) {
       score += 50;
     } else if (province === "pakistan") {
       score += 20;
     }
   }
 
-  // Active records
   if (record.active !== false) {
     score += 5;
   }
@@ -451,39 +492,44 @@ function selectRecords(
   records: ServiceRecord[],
   question: string
 ): ServiceRecord[] {
-  const service = detectServiceFromQuestion(question);
-  const topic = detectTopic(question);
-  const jurisdiction = detectJurisdiction(question);
+  const service =
+    detectServiceFromQuestion(question);
+
+  const topic =
+    detectTopic(question);
+
+  const jurisdiction =
+    detectJurisdiction(question);
 
   let candidates = records.filter(
     (record) => record.active !== false
   );
 
-  // First restrict to service family.
   if (service) {
-    const serviceCandidates = candidates.filter(
-      (record) =>
-        normalizeServiceName(record.service_name || "") === service
-    );
+    const serviceCandidates =
+      candidates.filter(
+        (record) =>
+          normalizeServiceName(
+            record.service_name || ""
+          ) === service
+      );
 
     if (serviceCandidates.length > 0) {
       candidates = serviceCandidates;
     }
   }
 
-  // If an exact topic is detected, strongly prefer records
-  // matching that topic.
   if (topic) {
-    const topicCandidates = candidates.filter((record) =>
-      recordMatchesTopic(record, topic)
-    );
+    const topicCandidates =
+      candidates.filter((record) =>
+        recordMatchesTopic(record, topic)
+      );
 
     if (topicCandidates.length > 0) {
       candidates = topicCandidates;
     }
   }
 
-  // Score and sort.
   candidates = candidates
     .map((record) => ({
       record,
@@ -495,10 +541,11 @@ function selectRecords(
         jurisdiction
       ),
     }))
-    .sort((a, b) => b.score - a.score)
+    .sort(
+      (a, b) => b.score - a.score
+    )
     .map((item) => item.record);
 
-  // Keep only the strongest few records.
   return candidates.slice(0, 5);
 }
 
@@ -506,7 +553,9 @@ function selectRecords(
 // BUILD VERIFIED CONTEXT
 // ============================================================
 
-function buildVerifiedContext(records: ServiceRecord[]): string {
+function buildVerifiedContext(
+  records: ServiceRecord[]
+): string {
   if (records.length === 0) {
     return "No verified record was found.";
   }
@@ -516,9 +565,14 @@ function buildVerifiedContext(records: ServiceRecord[]): string {
       return `
 VERIFIED RECORD ${index + 1}
 
-Service: ${record.service_name || ""}
-Category: ${record.category || ""}
-Title: ${record.title || ""}
+Service:
+${record.service_name || ""}
+
+Category:
+${record.category || ""}
+
+Title:
+${record.title || ""}
 
 Verified English Information:
 ${record.content_en || ""}
@@ -542,14 +596,18 @@ Last Verified:
 ${record.last_verified || ""}
 `;
     })
-    .join("\n-----------------------------\n");
+    .join(
+      "\n-----------------------------\n"
+    );
 }
 
 // ============================================================
-// POST
+// POST API
 // ============================================================
 
-export async function POST(request: Request) {
+export async function POST(
+  request: Request
+) {
   try {
     const body = await request.json();
 
@@ -559,7 +617,9 @@ export async function POST(request: Request) {
         : "";
 
     const language =
-      body.language === "ur" ? "ur" : "en";
+      body.language === "ur"
+        ? "ur"
+        : "en";
 
     if (!question) {
       return NextResponse.json(
@@ -577,11 +637,20 @@ export async function POST(request: Request) {
     // ENVIRONMENT VARIABLES
     // ========================================================
 
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-    const groqApiKey = process.env.GROQ_API_KEY;
+    const supabaseUrl =
+      process.env.SUPABASE_URL;
 
-    if (!supabaseUrl || !supabaseAnonKey || !groqApiKey) {
+    const supabaseAnonKey =
+      process.env.SUPABASE_ANON_KEY;
+
+    const groqApiKey =
+      process.env.GROQ_API_KEY;
+
+    if (
+      !supabaseUrl ||
+      !supabaseAnonKey ||
+      !groqApiKey
+    ) {
       return NextResponse.json(
         {
           answer:
@@ -592,24 +661,28 @@ export async function POST(request: Request) {
     }
 
     // ========================================================
-    // GET VERIFIED RECORDS FROM SUPABASE
+    // GET VERIFIED INFORMATION FROM SUPABASE
     // ========================================================
 
-    const supabaseResponse = await fetch(
-      `${supabaseUrl}/rest/v1/citizen_services?active=eq.true&select=*`,
-      {
-        method: "GET",
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      }
-    );
+    const supabaseResponse =
+      await fetch(
+        `${supabaseUrl}/rest/v1/verified_information?active=eq.true&select=*`,
+        {
+          method: "GET",
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization:
+              `Bearer ${supabaseAnonKey}`,
+            "Content-Type":
+              "application/json",
+          },
+          cache: "no-store",
+        }
+      );
 
     if (!supabaseResponse.ok) {
-      const errorText = await supabaseResponse.text();
+      const errorText =
+        await supabaseResponse.text();
 
       console.error(
         "Supabase error:",
@@ -632,15 +705,18 @@ export async function POST(request: Request) {
       (await supabaseResponse.json()) as ServiceRecord[];
 
     // ========================================================
-    // SELECT MOST RELEVANT VERIFIED RECORDS
+    // SELECT RELEVANT VERIFIED RECORDS
     // ========================================================
 
-    const selectedRecords = selectRecords(
-      records,
-      question
-    );
+    const selectedRecords =
+      selectRecords(
+        records,
+        question
+      );
 
-    if (selectedRecords.length === 0) {
+    if (
+      selectedRecords.length === 0
+    ) {
       return NextResponse.json({
         answer:
           language === "ur"
@@ -651,28 +727,30 @@ export async function POST(request: Request) {
     }
 
     const verifiedContext =
-      buildVerifiedContext(selectedRecords);
+      buildVerifiedContext(
+        selectedRecords
+      );
 
-    const detectedTopic = detectTopic(question);
+    const detectedTopic =
+      detectTopic(question);
 
     // ========================================================
-    // STRICT AI INSTRUCTIONS
+    // STRICT AI PROMPT
     // ========================================================
 
     const systemPrompt = `
 You are Pakistan Citizen Helper.
 
-Your job is to answer questions about Pakistani government
-services using ONLY the verified information supplied below.
+Answer Pakistani government service questions using ONLY
+the verified information supplied below.
 
 IMPORTANT RULES:
 
 1. Answer ONLY the exact subject asked by the user.
 
-2. Do NOT give a general explanation if the user asks about
-   one specific field, document, fee, procedure, or requirement.
+2. Do NOT give unrelated information.
 
-3. Do NOT mix unrelated topics.
+3. Do NOT mix different service topics.
 
 4. If the user asks about father's name, answer only about
    father's name.
@@ -691,60 +769,73 @@ IMPORTANT RULES:
    processing time.
 
 10. If the verified records do not contain enough information
-    for the exact question, clearly say that the verified
-    records do not provide enough information. Do not invent
-    requirements, fees, documents, or procedures.
+    for the exact question, say so clearly.
 
-11. Do not combine information from unrelated records merely
-    because they belong to the same department.
+11. Never invent documents, fees, dates, requirements or
+    procedures.
 
 12. Do not guess.
 
 13. Keep the answer concise and practical.
 
-14. Mention the official source when useful.
+14. Mention the official source when appropriate.
 
-15. Answer in ${language === "ur" ? "Urdu" : "English"}.
+15. Answer in ${
+      language === "ur"
+        ? "Urdu"
+        : "English"
+    }.
 
 Detected topic:
-${detectedTopic || "General service question"}
+${
+  detectedTopic ||
+  "General service question"
+}
 
-Verified records:
+Verified information:
 ${verifiedContext}
 `;
 
     // ========================================================
-    // GROQ REQUEST
+    // GROQ
     // ========================================================
 
-    const groqResponse = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${groqApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-          temperature: 0.1,
-          max_completion_tokens: 900,
-          messages: [
-            {
-              role: "system",
-              content: systemPrompt,
-            },
-            {
-              role: "user",
-              content: question,
-            },
-          ],
-        }),
-      }
-    );
+    const groqResponse =
+      await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization:
+              `Bearer ${groqApiKey}`,
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            model:
+              "openai/gpt-oss-120b",
+
+            temperature: 0.1,
+
+            max_completion_tokens: 900,
+
+            messages: [
+              {
+                role: "system",
+                content: systemPrompt,
+              },
+              {
+                role: "user",
+                content: question,
+              },
+            ],
+          }),
+        }
+      );
 
     if (!groqResponse.ok) {
-      const errorText = await groqResponse.text();
+      const errorText =
+        await groqResponse.text();
 
       console.error(
         "Groq error:",
@@ -763,7 +854,8 @@ ${verifiedContext}
       );
     }
 
-    const groqData = await groqResponse.json();
+    const groqData =
+      await groqResponse.json();
 
     const answer =
       groqData?.choices?.[0]?.message?.content?.trim();
@@ -784,7 +876,8 @@ ${verifiedContext}
     // SOURCE
     // ========================================================
 
-    const primarySource = selectedRecords[0];
+    const primarySource =
+      selectedRecords[0];
 
     return NextResponse.json({
       answer,
@@ -796,7 +889,8 @@ ${verifiedContext}
           "Official Government Source",
 
         url:
-          primarySource.official_source_url || "",
+          primarySource.official_source_url ||
+          "",
 
         department:
           primarySource.official_department ||
@@ -808,7 +902,10 @@ ${verifiedContext}
       },
     });
   } catch (error) {
-    console.error("API error:", error);
+    console.error(
+      "API error:",
+      error
+    );
 
     return NextResponse.json(
       {
@@ -819,3 +916,22 @@ ${verifiedContext}
     );
   }
 }
+
+Now do only these 4 steps
+
+1. GitHub → "version-2"
+2. Replace the entire "app/api/ask/route.ts" with the code above.
+3. Commit the change.
+4. Wait for Vercel to show Ready.
+
+Then test:
+
+How can I modify my date of birth in my CNIC?
+
+If it fails again, open Vercel Runtime Logs and send me the new error. Don't change anything else yet.
+
+One important point: this file now correctly uses your actual Supabase table:
+
+"verified_information"
+
+and not "citizen_services".

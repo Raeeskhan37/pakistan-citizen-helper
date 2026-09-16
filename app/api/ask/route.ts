@@ -33,7 +33,10 @@ function isUrdu(text: string): boolean {
   return /[\u0600-\u06FF]/.test(text);
 }
 
-const STOP = new Set(["the","is","are","was","were","how","what","where","when","which","can","may","for","from","with","about","please","tell","me","give","get","my","i","do","does","a","an","of","to","in","on","and","or","کے","کی","کا","کو","میں","سے","اور","ہے","ہیں","کیا","کہاں","کیسے","مجھے","لیے","بارے","میرا","میری"]);
+const STOP = new Set([
+  "the","is","are","was","were","how","what","where","when","which","can","may","for","from","with","about","please","tell","me","give","get","my","i","do","does","a","an","of","to","in","on","and","or",
+  "کے","کی","کا","کو","میں","سے","اور","ہے","ہیں","کیا","کہاں","کیسے","مجھے","لیے","بارے","میرا","میری"
+]);
 
 const TOPICS: Record<string,string[]> = {
   age_dob:["age","date of birth","dob","birth date","year of birth","عمر","تاریخ پیدائش","پیدائش کی تاریخ"],
@@ -62,6 +65,20 @@ const SERVICES: Record<string,string[]> = {
   "Protector of Emigrants":["protector","protector of emigrants","emigration","emigrant","overseas employment","work visa","employment visa","پروٹیکٹر","ایمیگریشن","بیرون ملک ملازمت"],
   "Other Services":["birth certificate","death certificate","marriage certificate","divorce certificate","police verification","vehicle registration","token tax","income tax","fbr","tax","crc","form b","fard","پیدائش","وفات","شادی","طلاق","پولیس ویریفکیشن","گاڑی رجسٹریشن","ٹیکس"]
 };
+
+const OFFICIAL_SOURCES = [
+  {keys:["nadra","cnic","identity card","nic","شناختی کارڈ","نادرا"], url:"https://www.nadra.gov.pk/identityDocument/cnic", title:"NADRA CNIC Services", department:"NADRA"},
+  {keys:["passport","پاسپورٹ"], url:"https://dgip.gov.pk/passport/ordinary-passport.php", title:"DGI&P Ordinary Passport", department:"Directorate General of Immigration & Passports"},
+  {keys:["police","character certificate","police verification","fir","complaint","driving licence","driving license","پولیس","ویریفکیشن","ایف آئی آر"], url:"https://punjabpolice.gov.pk/", title:"Punjab Police Citizen Services", department:"Punjab Police"},
+  {keys:["excise","vehicle registration","token tax","vehicle","موٹر گاڑی","گاڑی رجسٹریشن","ٹوکن ٹیکس"], url:"https://excise.punjab.gov.pk/services", title:"Punjab Excise & Taxation Services", department:"Excise, Taxation & Narcotics Control Department Punjab"},
+  {keys:["birth certificate","death certificate","marriage certificate","divorce certificate","union council","local government","نکاح","شادی","وفات","پیدائش","یونین کونسل"], url:"https://lgcd.punjab.gov.pk/faq", title:"Punjab Local Government FAQ", department:"Local Government & Community Development Punjab"},
+  {keys:["fard","mutation","land","property","revenue","زمین","فرد","انتقال"], url:"https://www.punjab-zameen.gov.pk/", title:"Punjab Land Records Authority", department:"Punjab Land Records Authority"},
+  {keys:["fbr","income tax","ntn","tax return","sales tax","iris","انکم ٹیکس","ٹیکس"], url:"https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150", title:"FBR Income Tax Registration", department:"Federal Board of Revenue"},
+  {keys:["scholarship","scholarships","hec","stipend","اسکالرشپ","وظیفہ"], url:"https://www.hec.gov.pk/site/scholarships", title:"HEC Scholarships", department:"Higher Education Commission"},
+  {keys:["government job","government jobs","job","jobs","سرکاری نوکری","ملازمت"], url:"https://njp.gov.pk/jobs", title:"National Jobs Portal", department:"National Jobs Portal, Government of Pakistan"},
+  {keys:["domicile","ڈومیسائل"], url:"https://pmru.kp.gov.pk/kp-citizen-portal.php", title:"KP Citizen Portal", department:"Government of Khyber Pakhtunkhwa"},
+  {keys:["protector","emigrant","emigration","overseas employment","work visa","پروٹیکٹر","امیگریشن"], url:"https://beoe.gov.pk/", title:"Bureau of Emigration & Overseas Employment", department:"Bureau of Emigration & Overseas Employment"}
+];
 
 function detectTopic(q:string):string|null {
   const text=normalize(q); let best:string|null=null; let score=0;
@@ -116,54 +133,66 @@ function context(records:VerifiedRecord[],language:"English"|"Urdu"):string {
   return records.map((r,i)=>`RECORD ${i+1}\nService: ${language==="Urdu"?(r.service_name_urdu||r.service_name||""):(r.service_name||"")}\nCategory: ${r.category||""}\nJurisdiction: ${r.province||""}\nTitle: ${language==="Urdu"?(r.title_urdu||r.title||""):(r.title||"")}\nVerified Information: ${language==="Urdu"?(r.content_urdu||r.content||""):(r.content||r.content_urdu||"")}\nOfficial Department: ${r.official_department||""}\nOfficial Source: ${r.official_source_title||""}\nOfficial URL: ${r.official_source_url||""}\nLast Verified: ${r.last_verified||""}`).join("\n\n");
 }
 
-function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت، اس مخصوص سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ میں کافی معلومات موجود نہیں ہیں۔":"Sorry, sufficient verified government information is not currently available for this specific question.";}
+function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت، اس مخصوص سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ یا دستیاب سرکاری ماخذ میں کافی معلومات موجود نہیں ہیں۔ میں غیر مصدقہ طریقہ یا فیس نہیں بتاؤں گا۔":"Sorry, sufficient verified government information is not currently available for this specific question. I will not invent a procedure, document requirement, fee, or deadline.";}
 
-function ageProcedureAnswer(language:"English"|"Urdu"):string {
-  if(language==="Urdu") {
-    return "نادرا کی سرکاری CNIC معلومات میں **Update / Modify** سروس موجود ہے، اور اسی صفحے پر CNIC میں غلط تاریخِ پیدائش کی صورت میں طریقہ کار سے متعلق مخصوص FAQ بھی درج ہے۔ ہمارے موجودہ verified database میں اس FAQ کا مکمل جواب/تفصیلی مرحلہ وار طریقہ محفوظ نہیں ہے، اس لیے میں کوئی غیر مصدقہ طریقہ یا مطلوبہ دستاویزات نہیں گھڑوں گا۔\n\nالبتہ نادرا کے موجودہ سرکاری Fee Structure میں Age Modification کی الگ فیس درج ہے:\n• ایک سال تک: Rs. 1,000\n• ایک سال سے زیادہ اور دو سال تک: Rs. 2,000\n• دو سال سے زیادہ اور تین سال تک: Rs. 3,000\n• تین سال سے زیادہ: Rs. 5,000\n• دوسری مرتبہ عمر کی تبدیلی: Rs. 10,000";
+function sourceForQuestion(question:string,service:string|null,jurisdiction:string|null){
+  const text=normalize(`${question} ${service||""}`);
+  let candidates=OFFICIAL_SOURCES.filter(s=>s.keys.some(k=>text.includes(normalize(k))));
+  if(jurisdiction==="Khyber Pakhtunkhwa"){
+    if(text.includes("police")||text.includes("character")||text.includes("verification")) candidates=[{keys:[],url:"https://apipsm.kppolice.gov.pk/psm/VideoTutorial",title:"KP Police Sahulat Markaz",department:"Khyber Pakhtunkhwa Police"},...candidates];
+    if(text.includes("birth")||text.includes("death")||text.includes("marriage")||text.includes("divorce")||text.includes("union council")) candidates=[{keys:[],url:"https://lgkp.gov.pk/page/registration-bdmd",title:"KP Local Government Birth, Death, Marriage & Divorce Registration",department:"Local Government, Elections & Rural Development Department KP"},...candidates];
+    if(text.includes("excise")||text.includes("vehicle")||text.includes("token")) candidates=[{keys:[],url:"https://cfc.kp.gov.pk/Home/",title:"KP Citizens Facilitation Portal",department:"Government of Khyber Pakhtunkhwa"},...candidates];
   }
-  return "NADRA's official CNIC page provides an **Update / Modify** service and lists a specific FAQ for a citizen who identifies an incorrect date of birth on the CNIC. Our current verified database does not yet contain the full answer to that FAQ or a sufficiently detailed step-by-step procedure, so I will not invent the required procedure or documents.\n\nThe current official NADRA Fee Structure does provide the separate Age Modification fees:\n• Up to 1 year: Rs. 1,000\n• More than 1 year and up to 2 years: Rs. 2,000\n• More than 2 years and up to 3 years: Rs. 3,000\n• More than 3 years: Rs. 5,000\n• Second-time age change: Rs. 10,000";
+  return candidates[0]||null;
+}
+
+async function fetchOfficialPage(url:string):Promise<string>{
+  try{
+    const res=await fetch(url,{headers:{"User-Agent":"Mozilla/5.0 Pakistan Citizen Helper"},cache:"no-store"});
+    if(!res.ok)return "";
+    const html=await res.text();
+    const text=html.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<noscript[\s\S]*?<\/noscript>/gi," ").replace(/<[^>]+>/g," ").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/\s+/g," ").trim();
+    return text.slice(0,28000);
+  }catch{return "";}
 }
 
 export async function POST(request:NextRequest){
   try{
     if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
-    const body=await request.json(); const question=String(body.question??"").trim(); const requested=String(body.service??"").trim(); const langInput=String(body.language??"").trim();
+    const body=await request.json();
+    const question=String(body.question??"").trim();
+    const requested=String(body.service??"").trim();
+    const langInput=String(body.language??"").trim();
     if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});
-    const language: "English"|"Urdu" = langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
+    const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
 
     const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,category,title,content,service_name_urdu,province,title_urdu,content_urdu,official_department,official_source_title,official_source_url,last_verified,active&active=eq.true&order=last_verified.desc`;
     const db=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`},cache:"no-store"});
     if(!db.ok){console.error(await db.text());return NextResponse.json({error:"Unable to retrieve verified information from Supabase."},{status:500});}
 
     const all=(await db.json()) as VerifiedRecord[];
-    if(!all.length)return NextResponse.json({answer:noInfo(language),source:null});
-
     const selected=selectRecords(question,requested,all);
-    if(!selected.records.length)return NextResponse.json({answer:noInfo(language),source:null});
+    const registrySource=sourceForQuestion(question,selected.service,selected.jurisdiction);
+    const recordSource=selected.records.find(r=>r.official_source_url)?.official_source_url||"";
+    const sourceUrl=recordSource||registrySource?.url||"";
+    const sourceMeta=registrySource||{
+      url:sourceUrl,
+      title:selected.records[0]?.official_source_title||"Official Government Source",
+      department:selected.records[0]?.official_department||"Government of Pakistan"
+    };
 
-    const sourceRecord=selected.records.find(r=>r.official_source_url)||selected.records[0];
-    const source={department:sourceRecord.official_department||"",title:sourceRecord.official_source_title||sourceRecord.title||"Official Government Source",url:sourceRecord.official_source_url||"",lastVerified:sourceRecord.last_verified||"",province:sourceRecord.province||""};
+    const officialText=sourceUrl?await fetchOfficialPage(sourceUrl):"";
+    const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";
 
-    // The UI sends "CNIC Modification", while the database uses "CNIC / NADRA".
-    // Therefore use both the selected service and the actual selected records when
-    // deciding whether this is the high-value age/DOB case.
-    const isCnicAgeQuestion = selected.topic==="age_dob" &&
-      (normalize(selected.service).includes("cnic") || normalize(requested).includes("cnic") ||
-       selected.records.some(r=>normalize(r.service_name).includes("cnic")));
+    if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
 
-    if(isCnicAgeQuestion && !normalize(question).includes("fee") && !normalize(question).includes("fees")) {
-      return NextResponse.json({answer:ageProcedureAnswer(language),source});
-    }
+    const system=`You are Pakistan Citizen Helper, a government-information assistant. Answer ONLY from the VERIFIED DATABASE RECORDS and OFFICIAL GOVERNMENT SOURCE TEXT supplied below. Never use outside knowledge, guesses, memory, or invented procedures. Keep the answer focused on the user's exact question and selected service. If the user asks for a fee, give only the fee relevant to that service/question. If the user asks for documents, give only documents explicitly stated in the supplied sources. If the user asks for procedure, explain only the procedure explicitly stated in the supplied sources. If a detail is absent, say it is not available in the verified source. If province/jurisdiction matters, do not silently apply one province's rules to another. Mention the province when the source is province-specific. Use simple Pakistani Urdu when language is Urdu. Do not combine unrelated services.\n\nVERIFIED DATABASE RECORDS:\n${dbContext}\n\nOFFICIAL SOURCE: ${sourceMeta.title}\nOFFICIAL DEPARTMENT: ${sourceMeta.department}\nOFFICIAL URL: ${sourceUrl}\nOFFICIAL SOURCE TEXT:\n${officialText||"No live source text could be retrieved; rely only on the verified database records."}`;
 
-    const system=`You are Pakistan Citizen Helper. Answer ONLY from the VERIFIED RECORDS below. Never invent or guess facts. Use the actual information contained in the records. Keep the answer focused on the exact question. Detected topic: ${selected.topic||"general"}. If the question asks for a procedure and the record contains a procedure, explain that procedure clearly. If the question asks for a fee and the record contains fees, give the applicable fees. If the exact requested detail is absent, say so clearly. Never claim a fee is unavailable if a supplied record contains a fee. If the question is about age/date of birth, prioritize the Age / Date of Birth record over a generic CNIC record. Use simple Pakistani Urdu when language is Urdu.\n\nVERIFIED RECORDS:\n${context(selected.records,language)}`;
-
-    const ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:GROQ_MODEL,temperature:0,max_tokens:1200,messages:[{role:"system",content:system},{role:"user",content:`Question: ${question}\nSelected service: ${selected.service||requested||"not specified"}\nJurisdiction: ${selected.jurisdiction||"not specified"}\nLanguage: ${language}`}]})});
+    const ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:GROQ_MODEL,temperature:0,max_tokens:1400,messages:[{role:"system",content:system},{role:"user",content:`Question: ${question}\nSelected service: ${selected.service||requested||"not specified"}\nJurisdiction: ${selected.jurisdiction||"not specified"}\nLanguage: ${language}`}]})});
     if(!ai.ok){console.error(await ai.text());return NextResponse.json({error:"AI service is temporarily unavailable. Please try again."},{status:500});}
-
     const data=await ai.json();
     const answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);
-    return NextResponse.json({answer,source});
+    return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""}});
   }catch(error){
     console.error("API /api/ask error:",error);
     return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});

@@ -118,6 +118,14 @@ function context(records:VerifiedRecord[],language:"English"|"Urdu"):string {
 
 function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت، اس مخصوص سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ میں کافی معلومات موجود نہیں ہیں۔":"Sorry, sufficient verified government information is not currently available for this specific question.";}
 
+function ageProcedureAnswer(language:"English"|"Urdu", records:VerifiedRecord[]):string {
+  const feeRecord=records.find(r=>normalize(r.title).includes("age / date of birth modification fees"));
+  if(language==="Urdu") {
+    return "نادرا کی سرکاری CNIC معلومات کے مطابق CNIC کے لیے **Update / Modify** سروس موجود ہے، اور اسی سرکاری صفحے پر CNIC میں غلط تاریخِ پیدائش کے بارے میں مخصوص FAQ بھی موجود ہے۔ تاہم ہمارے محفوظ شدہ تصدیق شدہ ریکارڈ میں اس FAQ کا مکمل جواب/تفصیلی مرحلہ وار طریقہ موجود نہیں ہے، اس لیے میں کوئی غیر مصدقہ طریقہ یا مطلوبہ دستاویزات نہیں بتاؤں گا۔\n\nالبتہ نادرا کے موجودہ Fee Structure میں Age Modification کی الگ فیس درج ہے: ایک سال تک Rs. 1,000؛ ایک سال سے زیادہ اور دو سال تک Rs. 2,000؛ دو سال سے زیادہ اور تین سال تک Rs. 3,000؛ تین سال سے زیادہ Rs. 5,000؛ دوسری مرتبہ عمر کی تبدیلی Rs. 10,000۔";
+  }
+  return "NADRA's official CNIC service page provides an **Update / Modify** service and also lists a specific FAQ for a citizen who identifies an incorrect date of birth on the CNIC. However, our verified database does not yet contain the full answer to that FAQ or a sufficiently detailed step-by-step procedure, so I will not invent the required procedure or documents.\n\nThe verified NADRA Fee Structure does provide the separate Age Modification fees: up to 1 year: Rs. 1,000; more than 1 year and up to 2 years: Rs. 2,000; more than 2 years and up to 3 years: Rs. 3,000; more than 3 years: Rs. 5,000; second-time age change: Rs. 10,000.";
+}
+
 export async function POST(request:NextRequest){
   try{
     if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
@@ -138,7 +146,14 @@ export async function POST(request:NextRequest){
     const sourceRecord=selected.records.find(r=>r.official_source_url)||selected.records[0];
     const source={department:sourceRecord.official_department||"",title:sourceRecord.official_source_title||sourceRecord.title||"Official Government Source",url:sourceRecord.official_source_url||"",lastVerified:sourceRecord.last_verified||"",province:sourceRecord.province||""};
 
-    const system=`You are Pakistan Citizen Helper. Answer ONLY from the VERIFIED RECORDS below. Never invent or guess facts. Use the actual information contained in the records. Keep the answer focused on the exact question. Detected topic: ${selected.topic||"general"}. If the question asks for a procedure and the record contains a procedure, explain that procedure clearly. If the question asks for a fee and the record contains fees, give the applicable fees. If the exact requested detail is absent, say so clearly. Do not say that fees, documents or procedure are unavailable when they are actually present in the supplied records. If the question is about age/date of birth, prioritize the Age / Date of Birth record over a generic CNIC record. Use simple Pakistani Urdu when language is Urdu.\n\nVERIFIED RECORDS:\n${context(selected.records,language)}`;
+    // For this high-value case, do not let the language model ignore a verified fee record.
+    // The official NADRA page confirms Update / Modify and the existence of the incorrect-DOB FAQ,
+    // while the database currently has the official age-modification fee schedule but not the FAQ answer.
+    if(selected.topic==="age_dob" && selected.service==="CNIC / NADRA" && !normalize(question).includes("fee") && !normalize(question).includes("fees")) {
+      return NextResponse.json({answer:ageProcedureAnswer(language,selected.records),source});
+    }
+
+    const system=`You are Pakistan Citizen Helper. Answer ONLY from the VERIFIED RECORDS below. Never invent or guess facts. Use the actual information contained in the records. Keep the answer focused on the exact question. Detected topic: ${selected.topic||"general"}. If the question asks for a procedure and the record contains a procedure, explain that procedure clearly. If the question asks for a fee and the record contains fees, give the applicable fees. If the exact requested detail is absent, say so clearly. Never claim a fee is unavailable if a supplied record contains a fee. If the question is about age/date of birth, prioritize the Age / Date of Birth record over a generic CNIC record. Use simple Pakistani Urdu when language is Urdu.\n\nVERIFIED RECORDS:\n${context(selected.records,language)}`;
 
     const ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:GROQ_MODEL,temperature:0,max_tokens:1200,messages:[{role:"system",content:system},{role:"user",content:`Question: ${question}\nSelected service: ${selected.service||requested||"not specified"}\nJurisdiction: ${selected.jurisdiction||"not specified"}\nLanguage: ${language}`}]})});
     if(!ai.ok){console.error(await ai.text());return NextResponse.json({error:"AI service is temporarily unavailable. Please try again."},{status:500});}

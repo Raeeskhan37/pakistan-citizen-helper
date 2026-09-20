@@ -105,18 +105,23 @@ Selected department/service: ${requested||"not specified"}
 Requested language: ${language}
 `;
  const hasVerifiedRecords=selected.records.length>0;
- const messages=[{role:"system",content:system},{role:"user",content:`Goal: ${question}\nSelected department/service: ${selected.service||requested||"not specified"}\nJurisdiction: ${selected.jurisdiction||"not specified"}\nLanguage: ${language}\n\nVERIFIED DATABASE RECORDS:\n${dbContext}\n\nOFFICIAL SOURCE TEXT:\n${officialText||"No official source text was retrieved."}\n\nIMPORTANT: Answer ONLY from the verified records and official source text above. If they do not contain the answer, say that verified information for this specific question is unavailable. Never invent or infer government facts.`}]};
- const makeAiBody=(model:string)=>({model,temperature:1,reasoning_effort:"low",include_reasoning:false,max_completion_tokens:2048,messages});
+ const messages=[{role:"system",content:system},{role:"user",content:`Goal: ${question}
+Selected department/service: ${selected.service||requested||"not specified"}
+Jurisdiction: ${selected.jurisdiction||"not specified"}
+Language: ${language}
+
+VERIFIED DATABASE RECORDS:
+${dbContext}
+
+OFFICIAL SOURCE TEXT:
+${officialText||"No official source text was retrieved."}
+
+IMPORTANT: Answer ONLY from the verified records and official source text above. If they do not contain the answer, say that verified information for this specific question is unavailable. Never invent or infer government facts.`}];
+ const makeAiBody=(model:string)=>({model,temperature:1,reasoning_effort:"low",max_completion_tokens:2048,messages});
  let ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b"))});
  if(!ai.ok){
-   const firstError=await ai.text();
-   console.error("Primary Groq model failed:",firstError);
+   console.error("Primary Groq model failed:",await ai.text());
    ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-20b"))});
  }
- if(!ai.ok){
-   const errorText=await ai.text();
-   console.error("Groq fallback request failed:",errorText);
-   return NextResponse.json({error:"The AI service could not answer this question right now.",errorType:"ai_service_error",detail:errorText.slice(0,500)},{status:502});
- }
-if(!ai.ok){console.error(await ai.text());return NextResponse.json({error:"AI service request failed. Please try again.", errorType:"ai_service_error"},{status:502});}const data=await ai.json();const answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});
+ if(!ai.ok){console.error(await ai.text());return NextResponse.json({error:"AI service request failed. Please try again.", errorType:"ai_service_error"},{status:502});}const data=await ai.json();const answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});
  }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

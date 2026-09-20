@@ -105,8 +105,14 @@ Selected department/service: ${requested||"not specified"}
 Requested language: ${language}
 `;
  const hasVerifiedRecords=selected.records.length>0;
- const aiBody:any={model:"openai/gpt-oss-120b",temperature:0.2,reasoning_effort:"low",max_completion_tokens:1200,messages:[{role:"system",content:system},{role:"user",content:`Goal: ${question}\nSelected department/service: ${selected.service||requested||"not specified"}\nJurisdiction: ${selected.jurisdiction||"not specified"}\nLanguage: ${language}\n\nVERIFIED DATABASE RECORDS:\n${dbContext}\n\nOFFICIAL SOURCE TEXT:\n${officialText||"No official source text was retrieved."}\n\nIMPORTANT: Answer ONLY from the verified records and official source text above. If they do not contain the answer, say that verified information for this specific question is unavailable. Never invent or infer government facts.`}]};
- const ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(aiBody)});
+ const messages=[{role:"system",content:system},{role:"user",content:`Goal: ${question}\nSelected department/service: ${selected.service||requested||"not specified"}\nJurisdiction: ${selected.jurisdiction||"not specified"}\nLanguage: ${language}\n\nVERIFIED DATABASE RECORDS:\n${dbContext}\n\nOFFICIAL SOURCE TEXT:\n${officialText||"No official source text was retrieved."}\n\nIMPORTANT: Answer ONLY from the verified records and official source text above. If they do not contain the answer, say that verified information for this specific question is unavailable. Never invent or infer government facts.`}]};
+ const makeAiBody=(model:string)=>({model,temperature:1,reasoning_effort:"low",include_reasoning:false,max_completion_tokens:2048,messages});
+ let ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b"))});
+ if(!ai.ok){
+   const firstError=await ai.text();
+   console.error("Primary Groq model failed:",firstError);
+   ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-20b"))});
+ }
  if(!ai.ok){
    const errorText=await ai.text();
    console.error("Groq fallback request failed:",errorText);

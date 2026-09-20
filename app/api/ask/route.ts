@@ -112,9 +112,15 @@ Requested language: ${language}
  if(shouldSearch){aiBody.tool_choice="auto";aiBody.tools=[{type:"browser_search"}];}
  let ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(aiBody)});
  if(!ai.ok && shouldSearch){
-   console.error("Groq browser-search request failed:",await ai.text());
+   const searchError=await ai.text();
+   console.error("Groq browser-search request failed:",searchError);
    delete aiBody.tools; delete aiBody.tool_choice;
    ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(aiBody)});
+ }
+ if(!ai.ok){
+   const errorText=await ai.text();
+   console.error("Groq fallback request failed:",errorText);
+   return NextResponse.json({error:"The AI service could not answer this question right now.",errorType:"ai_service_error",detail:errorText.slice(0,500)},{status:502});
  }
 if(!ai.ok){console.error(await ai.text());return NextResponse.json({error:"AI service request failed. Please try again.", errorType:"ai_service_error"},{status:502});}const data=await ai.json();const answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});
  }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

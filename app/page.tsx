@@ -81,7 +81,7 @@ export default function Home() {
       </header>
 
       <section className="content">
-        {!department && !service && <>
+        {!department && <>
           <section className="hero">
             <div className="hero-copy"><span className="hero-kicker">🇵🇰 {isUrdu ? "پاکستانی شہریوں کے لیے" : "FOR CITIZENS OF PAKISTAN"}</span><h1>{isUrdu ? "سرکاری خدمات، آسان اور قابلِ اعتماد" : "Government services, made simple and trustworthy."}</h1><p>{isUrdu ? "مصدقہ سرکاری معلومات تلاش کریں، سوال پوچھیں اور متعلقہ سرکاری ذریعہ براہِ راست دیکھیں۔" : "Find verified government information, ask a question, and access the relevant official source."}</p><div className="hero-trust"><span>✓ {isUrdu ? "سرکاری ذرائع" : "Official sources"}</span><span>✓ {isUrdu ? "مصدقہ معلومات" : "Verified information"}</span><span>✓ {isUrdu ? "مفت رسائی" : "Free access"}</span></div></div>
             <div className="hero-seal"><span>🇵🇰</span><small>PAKISTAN<br/>CITIZEN<br/>HELPER</small></div>

@@ -87,7 +87,7 @@ Answer the citizen's EXACT question first. Keep the answer short, direct, and ea
 Rules:
 - Use the verified database records as the primary evidence. Use official government source text only when it directly supports the answer.
 - Every factual claim in your answer must be directly supported by the supplied verified record or official source text, or by a result returned by the browser search.
-- If the supplied evidence does not contain the answer, use the built-in browser search only on relevant official Pakistani government domains.
+- If the supplied evidence does not contain the answer, use the built-in browser search only on relevant official Pakistani government domains. For parent/father/mother information questions, you MUST search the official NADRA website before answering.
 - Never fill missing information from memory, general knowledge, assumptions, or patterns. Never invent or guess government facts, fees, documents, eligibility, deadlines, procedures, office locations, or processing times.
 - If the exact requested topic is not supported by verified evidence, say that verified information for that specific topic is unavailable.
 - Do NOT give a general workflow or a long explanation unless the citizen asks for it.
@@ -105,6 +105,6 @@ Selected department/service: ${requested||"not specified"}
 Requested language: ${language}
 `;
  const hasVerifiedRecords=selected.records.length>0;
- const shouldSearch=!hasVerifiedRecords;
+ const needsOfficialVerification=selected.topic==="parent_information" || /parent|father|mother|والد|والدہ|والدین/i.test(question); const shouldSearch=!hasVerifiedRecords || needsOfficialVerification;
  const ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:"openai/gpt-oss-120b",temperature:1,reasoning_effort:"low",max_completion_tokens:2048,tool_choice:shouldSearch?"required":"none",tools:shouldSearch?[{type:"browser_search"}]:[],messages:[{role:"system",content:system},{role:"user",content:`Goal: ${question}\nSelected service: ${selected.service||requested||"not specified"}\nJurisdiction: ${selected.jurisdiction||"not specified"}\nLanguage: ${language}\n\nVERIFIED DATABASE RECORDS:\n${dbContext}\n\nOFFICIAL SOURCE TEXT:\n${officialText||"No official source text was retrieved."}\n\nIMPORTANT: Use the verified records and official source text above. If they do not contain the answer, use browser search to check the relevant official Pakistani government source. Do not invent facts.`}]})});if(!ai.ok){console.error(await ai.text());return NextResponse.json({error:"AI service request failed. Please try again.", errorType:"ai_service_error"},{status:502});}const data=await ai.json();const answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});
  }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

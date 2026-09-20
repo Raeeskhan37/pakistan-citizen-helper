@@ -49,21 +49,19 @@ const departments: Department[] = [
 export default function Home() {
   const [language, setLanguage] = useState<"English" | "Urdu">("English");
   const [department, setDepartment] = useState<Department | null>(null);
-  const [service, setService] = useState<Service | null>(null);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
   const isUrdu = language === "Urdu";
-  const suggestions = useMemo(() => service ? [service.question, "What documents are required?", "What is the fee?", "What is the processing time?"] : [], [service]);
-  const goHome = () => { setDepartment(null); setService(null); setAnswer(null); setQuestion(""); };
-  const goDepartment = () => { setService(null); setAnswer(null); setQuestion(""); };
-  const chooseService = (s: Service) => { setService(s); setQuestion(""); setAnswer(null); };
+  const suggestions = useMemo(() => department ? (department.id === "nadra" ? ["What are the current CNIC and Smart CNIC fees?", "What documents are required for CNIC?", "What are the CRC photo and biometric requirements by age?", "How can I apply through PakID?"] : ["What services and requirements are available?", "What documents are required?", "What is the fee?", "How can I apply?"]) : [], [department]);
+  const goHome = () => { setDepartment(null); setAnswer(null); setQuestion(""); };
+  const goDepartment = () => { setAnswer(null); setQuestion(""); };
   const ask = async () => {
-    if (!question.trim() || !service) return;
+    if (!question.trim() || !department) return;
     setLoading(true); setAnswer(null);
     try {
-      const res = await fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: question.trim(), service: service.name, language, department: department?.name }) });
+      const res = await fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: question.trim(), service: department.name, language, department: department.name }) });
       const data = await res.json();
       setAnswer(data);
     } catch { setAnswer({ error: "Unable to connect to the verified information service. Please try again." }); }
@@ -93,12 +91,12 @@ export default function Home() {
           <div className="department-grid">{departments.map((d, i) => <button key={d.id} className={`department-card ${i === 0 ? "featured" : ""}`} onClick={() => setDepartment(d)}><span className="card-number">{String(i + 1).padStart(2, "0")}</span><span className="card-icon">{d.icon}</span><span className="card-text"><strong>{isUrdu ? d.urdu : d.name}</strong><small>{d.description}</small></span><span className="arrow">→</span></button>)}</div>
         </>}
 
-        {department && !service && <section className="view"><button className="back" onClick={goHome}>← {isUrdu ? "تمام محکمے" : "All departments"}</button><div className="view-title"><span className="big-icon">{department.icon}</span><div><div className="eyebrow">{isUrdu ? "محکمہ" : "DEPARTMENT"}</div><h1>{isUrdu ? department.urdu : department.name}</h1><p>{department.description}</p></div></div><div className="service-intro"><strong>{isUrdu ? "دستیاب خدمات" : "Available services"}</strong><span>{department.services.length} {isUrdu ? "سروسز" : "services"}</span></div><div className="service-grid">{department.services.map(s => <button key={s.id} className="service-card" onClick={() => chooseService(s)}><span className="service-icon">{s.icon}</span><span><strong>{s.name}</strong><small>{s.description}</small></span><span className="arrow">→</span></button>)}</div></section>}
-
-        {department && service && <section className="view question-view"><button className="back" onClick={goDepartment}>← {isUrdu ? "سروسز پر واپس" : "Back to services"}</button><div className="service-banner"><span className="service-banner-icon">{service.icon}</span><div><div className="eyebrow">{isUrdu ? department.urdu : department.name}</div><h1>{service.name}</h1></div></div>
-          {!answer && <><div className="question-card"><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "ہم صرف دستیاب مصدقہ معلومات کی بنیاد پر جواب دیں گے۔" : "Answers are based only on available verified information."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? "مثلاً: فیس کتنی ہے؟ کون سے کاغذات درکار ہیں؟" : "For example: What is the fee? What documents are required?"} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
+        {department && <section className="view question-view"><button className="back" onClick={goHome}>← {isUrdu ? "تمام محکمے" : "All departments"}</button><div className="service-banner"><span className="service-banner-icon">{department.icon}</span><div><div className="eyebrow">{isUrdu ? "محکمہ" : "DEPARTMENT"}</div><h1>{isUrdu ? department.urdu : department.name}</h1><p>{isUrdu ? "اس محکمے سے متعلق کوئی بھی سوال پوچھیں" : "Ask any question related to this government department."}</p></div></div>
+          {!answer && <><div className="question-card"><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "آپ اس محکمے کی کسی بھی سروس کے بارے میں سوال پوچھ سکتے ہیں۔" : "Ask anything about this department. You do not need to select a specific service."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? "مثلاً: CNIC کی فیس کتنی ہے؟ CRC کے لیے کیا ضروری ہے؟" : "For example: What is the CNIC fee? What documents are required for CRC?"} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
           {answer && <div className="answer-area"><div className={`answer-card ${answer.error ? "is-warning" : ""}`}>{answer.error ? <><div className="status-icon warning">!</div><div className="verified-label">{isUrdu ? "معلومات دستیاب نہیں" : "INFORMATION UNAVAILABLE"}</div><h2>{isUrdu ? "مصدقہ معلومات نہیں مل سکیں" : "Verified information is unavailable"}</h2><p>{answer.error}</p></> : <><div className="answer-top"><div className="status-icon">✓</div><div><div className="verified-label">{isUrdu ? "مصدقہ سرکاری معلومات" : "VERIFIED GOVERNMENT INFORMATION"}</div><small>{isUrdu ? "دستیاب سرکاری معلومات کی بنیاد پر" : "Based on available official information"}</small></div></div><div className="answer-text">{answer.answer}</div></>}</div>{answer.source && <div className="source-card"><div className="source-main"><span className="source-icon">↗</span><div><span className="source-label">{isUrdu ? "سرکاری ذریعہ" : "OFFICIAL SOURCE"}</span><strong>{answer.source.title || "Official government source"}</strong><small>{answer.source.department || department.name}{answer.source.lastVerified ? ` · Verified ${answer.source.lastVerified}` : ""}</small></div></div>{answer.source.url && <a href={answer.source.url} target="_blank" rel="noreferrer">{isUrdu ? "سرکاری ویب سائٹ کھولیں" : "Visit official source"} ↗</a>}</div>}<button className="secondary" onClick={() => { setAnswer(null); setQuestion(""); }}>↻ {isUrdu ? "دوسرا سوال پوچھیں" : "Ask another question"}</button></div>}
         </section>}
+
+        }
       </section>
       <footer><div><strong>Pakistan Citizen Helper</strong><span>•</span><span>{isUrdu ? "مصدقہ سرکاری معلومات" : "Verified Government Information"}</span></div><p>Developed by <strong>Raees Khan</strong> · Assistant Director, NADRA</p></footer>
     </main>

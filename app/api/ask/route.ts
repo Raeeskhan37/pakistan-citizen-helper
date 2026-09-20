@@ -79,7 +79,22 @@ export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=String(body.service??"").trim();const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
  const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,category,title,content,service_name_urdu,province,title_urdu,content_urdu,official_department,official_source_title,official_source_url,last_verified,active&active=eq.true&order=last_verified.desc`;const db=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`},cache:"no-store"});if(!db.ok){console.error(await db.text());return NextResponse.json({error:"Unable to retrieve verified information from Supabase."},{status:500});}
- const all=(await db.json()) as VerifiedRecord[];const selected=selectRecords(question,requested,all);const registrySource=sourceForQuestion(question,selected.service,selected.jurisdiction,requested);const recordSource=selected.records.find(r=>r.official_source_url)?.official_source_url||"";const sourceUrl=recordSource||registrySource?.url||"";const sourceMeta=registrySource||{url:sourceUrl,title:selected.records[0]?.official_source_title||"Official Government Source",department:selected.records[0]?.official_department||"Government of Pakistan"};const officialText=sourceUrl?await fetchOfficialPage(sourceUrl):"";const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
+ const all=(await db.json()) as VerifiedRecord[];const selected=selectRecords(question,requested,all);const registrySource=sourceForQuestion(question,selected.service,selected.jurisdiction,requested);const recordSource=selected.records.find(r=>r.official_source_url)?.official_source_url||"";const sourceUrl=recordSource||registrySource?.url||"";const sourceMeta=registrySource||{url:sourceUrl,title:selected.records[0]?.official_source_title||"Official Government Source",department:selected.records[0]?.official_department||"Government of Pakistan"};
+const jurisdictionSourceHints:Record<string,string[]>={
+ "Driving Licence":["kppolice.gov.pk","kprts.gov.pk","transport.kp.gov.pk","ptpkp.gov.pk"],
+ "Domicile":["kp.gov.pk","cfc.kp.gov.pk"],
+ "Passport & Immigration":["dgip.gov.pk"],
+ "NADRA Services":["nadra.gov.pk"],
+ "Police Services":["kppolice.gov.pk"],
+ "Excise & Taxation":["kp.gov.pk"],
+ "Land & Revenue":["revenue.kp.gov.pk"],
+ "Education & Scholarships":["kpese.gov.pk","hed.gkp.pk"],
+ "FBR / Taxation":["fbr.gov.pk"],
+ "Protector & Overseas Employment":["beoe.gov.pk"],
+ "Union Council":["lgkp.gov.pk"],
+ "Government Jobs":["njp.gov.pk","kp.gov.pk"]
+};
+const allowedHints=jurisdictionSourceHints[requested]||[];const officialText=sourceUrl?await fetchOfficialPage(sourceUrl):"";const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the verified government Q&A assistant inside Pakistan Citizen Helper.
 
 Answer the citizen's EXACT question first. Keep the answer short, direct, and easy to read.
@@ -87,7 +102,10 @@ Answer the citizen's EXACT question first. Keep the answer short, direct, and ea
 Rules:
 - Use the verified database records as the primary evidence. Use official government source text only when it directly supports the answer.
 - Every factual claim in your answer must be directly supported by the supplied verified record or official source text, or by a result returned by the browser search.
-- If the supplied evidence does not contain the answer, use the built-in browser search only on relevant official Pakistani government domains. For parent/father/mother information questions, you MUST search the official NADRA website before answering.
+- If the supplied evidence does not contain the answer, use official government source retrieval for the selected department. The source must match the selected department and, when jurisdiction is known, the relevant provincial/federal authority.
+- Never use an unrelated department's source just because it contains matching keywords.
+- For department-specific questions, prefer the department's own official domain (for example NADRA → nadra.gov.pk, Passport → dgip.gov.pk, KP Driving Licence → kppolice.gov.pk/kprts.gov.pk/transport.kp.gov.pk).
+- For parent/father/mother information questions, you MUST verify against NADRA's official website before answering.
 - Never fill missing information from memory, general knowledge, assumptions, or patterns. Never invent or guess government facts, fees, documents, eligibility, deadlines, procedures, office locations, or processing times.
 - If the exact requested topic is not supported by verified evidence, say that verified information for that specific topic is unavailable.
 - Do NOT give a general workflow or a long explanation unless the citizen asks for it.

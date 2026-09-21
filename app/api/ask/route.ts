@@ -51,30 +51,52 @@ function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت�
 function sourceForQuestion(question:string,service:string|null,jurisdiction:string|null,requested:string=""){
  const text=normalize(question+" "+(service||"")+" "+requested);
  const req=normalize(requested);
- const sourceByDepartment:Record<string,typeof OFFICIAL_SOURCES[number]>= {
+ const federal:Record<string,typeof OFFICIAL_SOURCES[number]>={
    "nadra services":OFFICIAL_SOURCES[0],
    "passport services":OFFICIAL_SOURCES[1],
-   "driving licence":OFFICIAL_SOURCES[2],
-   "police services":OFFICIAL_SOURCES[3],
-   "excise & taxation":OFFICIAL_SOURCES[4],
-   "union council":OFFICIAL_SOURCES[5],
-   "land & revenue":OFFICIAL_SOURCES[6],
    "fbr / taxation":OFFICIAL_SOURCES[7],
-   "education & scholarships":OFFICIAL_SOURCES[8],
    "government jobs":OFFICIAL_SOURCES[9],
-   "domicile":OFFICIAL_SOURCES[10],
    "protector & overseas employment":OFFICIAL_SOURCES[11]
  };
- if(sourceByDepartment[req])return sourceByDepartment[req];
- let candidates=OFFICIAL_SOURCES.filter(s=>s.keys.some(k=>text.includes(normalize(k))));
- if(jurisdiction==="Khyber Pakhtunkhwa"){
-   if(text.includes("driving")||text.includes("license")||text.includes("licence")||text.includes("ڈرائیونگ"))candidates=[{keys:[],url:"https://www.kppolice.gov.pk/",title:"KP Police E-Driving License Services",department:"Khyber Pakhtunkhwa Police"},...candidates];
-   if(text.includes("police")||text.includes("character")||text.includes("verification"))candidates=[{keys:[],url:"https://apipsm.kppolice.gov.pk/psm/VideoTutorial",title:"KP Police Sahulat Markaz",department:"Khyber Pakhtunkhwa Police"},...candidates];
-   if(text.includes("birth")||text.includes("death")||text.includes("marriage")||text.includes("divorce")||text.includes("union council"))candidates=[{keys:[],url:"https://lgkp.gov.pk/page/registration-bdmd",title:"KP Local Government Birth, Death, Marriage & Divorce Registration",department:"Local Government, Elections & Rural Development Department KP"},...candidates];
-   if(text.includes("excise")||text.includes("vehicle")||text.includes("token"))candidates=[{keys:[],url:"https://cfc.kp.gov.pk/Home/",title:"KP Citizens Facilitation Portal",department:"Government of Khyber Pakhtunkhwa"},...candidates];
+ if(federal[req])return federal[req];
+
+ if(req==="education & scholarships"){
+   return {keys:[],url:"https://www.hec.gov.pk/english/scholarshipsgrants/pages/default.aspx",title:"HEC Scholarships",department:"Higher Education Commission"} as typeof OFFICIAL_SOURCES[number];
  }
- if(jurisdiction==="Islamabad Capital Territory"&&(text.includes("driving")||text.includes("license")||text.includes("licence")))candidates=[{keys:[],url:"https://dlims.islamabadpolice.gov.pk/",title:"ITP DLIMS Driving Licence Services",department:"Islamabad Traffic Police"},...candidates];
- if(jurisdiction==="Sindh"&&(text.includes("driving")||text.includes("license")||text.includes("licence")))candidates=[{keys:[],url:"https://dls.gos.pk/",title:"Driving License Sindh",department:"Sindh Police – Driving License Unit"},...candidates];
+ if(req==="land & revenue" && jurisdiction==="Khyber Pakhtunkhwa"){
+   return {keys:[],url:"https://revenue.kp.gov.pk/",title:"KP Revenue & Estate Department",department:"Revenue & Estate Department, Government of Khyber Pakhtunkhwa"} as typeof OFFICIAL_SOURCES[number];
+ }
+ if(req==="excise & taxation" && jurisdiction==="Khyber Pakhtunkhwa"){
+   return {keys:[],url:"https://www.kpexcise.gov.pk/",title:"KP Excise & Taxation Department",department:"Excise, Taxation & Narcotics Control Department, Government of Khyber Pakhtunkhwa"} as typeof OFFICIAL_SOURCES[number];
+ }
+ if(req==="union council" && jurisdiction==="Khyber Pakhtunkhwa"){
+   return {keys:[],url:"https://lgkp.gov.pk/page/registration-bdmd",title:"KP Local Government Birth, Death, Marriage & Divorce Registration",department:"Local Government, Elections & Rural Development Department KP"} as typeof OFFICIAL_SOURCES[number];
+ }
+ if(req==="domicile" && jurisdiction==="Khyber Pakhtunkhwa"){
+   return {keys:[],url:"https://cfc.kp.gov.pk/",title:"KP Citizens Facilitation Portal",department:"Government of Khyber Pakhtunkhwa"} as typeof OFFICIAL_SOURCES[number];
+ }
+ if(req==="driving licence" && jurisdiction==="Khyber Pakhtunkhwa"){
+   return {keys:[],url:"https://www.kppolice.gov.pk/",title:"KP Police Driving Licence Services",department:"Khyber Pakhtunkhwa Police"} as typeof OFFICIAL_SOURCES[number];
+ }
+ if(req==="police services" && jurisdiction==="Khyber Pakhtunkhwa"){
+   return {keys:[],url:"https://www.kppolice.gov.pk/",title:"KP Police Citizen Services",department:"Khyber Pakhtunkhwa Police"} as typeof OFFICIAL_SOURCES[number];
+ }
+ if(req==="driving licence" && jurisdiction==="Sindh"){
+   return {keys:[],url:"https://dls.gos.pk/",title:"Driving License Sindh",department:"Sindh Police – Driving License Unit"} as typeof OFFICIAL_SOURCES[number];
+ }
+ if(req==="driving licence" && jurisdiction==="Islamabad Capital Territory"){
+   return {keys:[],url:"https://dlims.islamabadpolice.gov.pk/",title:"ITP DLIMS Driving Licence Services",department:"Islamabad Traffic Police"} as typeof OFFICIAL_SOURCES[number];
+ }
+ if(req==="driving licence" && jurisdiction==="Punjab"){
+   return OFFICIAL_SOURCES[2];
+ }
+ if(req==="police services" && jurisdiction==="Punjab")return OFFICIAL_SOURCES[3];
+ if(req==="excise & taxation" && jurisdiction==="Punjab")return OFFICIAL_SOURCES[4];
+ if(req==="land & revenue" && jurisdiction==="Punjab")return OFFICIAL_SOURCES[6];
+ if(req==="union council" && jurisdiction==="Punjab")return OFFICIAL_SOURCES[5];
+ if(req==="domicile" && jurisdiction==="Punjab")return {keys:[],url:"https://www.punjab.gov.pk/",title:"Punjab Government Citizen Services",department:"Government of Punjab"} as typeof OFFICIAL_SOURCES[number];
+
+ let candidates=OFFICIAL_SOURCES.filter(s=>s.keys.some(k=>text.includes(normalize(k))));
  return candidates[0]||null;
 }
 async function fetchOfficialPage(url:string):Promise<string>{try{const res=await fetch(url,{headers:{"User-Agent":"Mozilla/5.0 Pakistan Citizen Helper"},cache:"no-store"});if(!res.ok)return "";const html=await res.text();return html.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<noscript[\s\S]*?<\/noscript>/gi," ").replace(/<[^>]+>/g," ").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/\s+/g," ").trim().slice(0,28000);}catch{return "";}}
@@ -122,7 +144,15 @@ const jurisdictionSourceHints:Record<string,string[]>={
  "Union Council":["lgkp.gov.pk"],
  "Government Jobs":["njp.gov.pk","kp.gov.pk"]
 };
-const allowedHints=jurisdictionSourceHints[requested]||[];const officialText=sourceUrl?await fetchOfficialPage(sourceUrl):"";const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
+const allowedHints=jurisdictionSourceHints[requested]||[];const alternateOfficialUrls:string[]=[];
+if(requested==="Government Jobs"){alternateOfficialUrls.push("https://www.njp.gov.pk/index.php/jobs");}
+if(requested==="Education & Scholarships"){alternateOfficialUrls.push("https://www.hec.gov.pk/english/scholarshipsgrants/pages/default.aspx","https://www.hec.gov.pk/english/scholarshipsgrants/Pages/NationalScholarships.aspx");}
+if(requested==="Land & Revenue" && selected.jurisdiction==="Khyber Pakhtunkhwa"){alternateOfficialUrls.push("https://revenue.kp.gov.pk/","https://revenue.kp.gov.pk/director-land-record/");}
+if(requested==="Protector & Overseas Employment"){alternateOfficialUrls.push("https://beoe.gov.pk/");}
+const officialUrls=Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
+let officialText="";
+for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}
+const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the verified government Q&A assistant inside Pakistan Citizen Helper.
 
 Answer the citizen's EXACT question first. Keep the answer short, direct, and easy to read.

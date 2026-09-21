@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_MODEL = "openai/gpt-oss-120b";
+const GROQ_MODEL = "openai/gpt-oss-20b";
+const GROQ_FALLBACK_MODEL = "openai/gpt-oss-120b";
 
 type VerifiedRecord = {
   id?: number; service_name?: string|null; category?: string|null; title?: string|null; content?: string|null;
@@ -262,13 +263,13 @@ OFFICIAL SOURCE TEXT:
 ${officialText||"No official source text was retrieved."}
 
 IMPORTANT: The official source text and official-domain search results above are usable evidence. When they contain the requested information, extract it and provide the actual answer to the citizen. Do NOT tell the citizen to search the source themselves. The official URL is only the source citation. If the evidence does not contain the exact answer, say that verified information for this specific question could not be established. Never invent or infer government facts.`}];
- const makeAiBody=(model:string,requestMessages=messages)=>({model,temperature:1,reasoning_effort:"low",max_completion_tokens:1024,messages:requestMessages});
- let ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b"))});
+ const makeAiBody=(model:string,requestMessages=messages)=>({model,temperature:1,reasoning_effort:"low",include_reasoning:false,max_completion_tokens:2048,messages:requestMessages});
+ let ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody(GROQ_MODEL))});
  if(!ai.ok){
    console.error("Primary Groq model failed:",await ai.text());
-   ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-20b"))});
+   ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody(GROQ_FALLBACK_MODEL))});
  }
- if(!ai.ok){console.error(await ai.text());return NextResponse.json({error:"AI service request failed. Please try again.", errorType:"ai_service_error"},{status:502});}const data=await ai.json();let answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);
+ if(!ai.ok){const providerStatus=ai.status;const providerBody=(await ai.text()).slice(0,500);console.error("Groq request failed",providerStatus,providerBody);return NextResponse.json({error:`AI provider request failed (HTTP ${providerStatus}).`,errorType:"ai_service_error",providerStatus},{status:502});}const data=await ai.json();let answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);
  const referralOnly=/(search|look for|find|check|use the search|visit (the|this) (website|portal)|go to (the|this) (website|portal)|website.*to find|portal.*to find|تلاش کریں|ویب سائٹ.*تلاش|پورٹل.*تلاش)/i.test(answer);
  const evidenceAvailable=selected.records.length>0||officialText.length>200;
  if(referralOnly&&evidenceAvailable){

@@ -45,7 +45,26 @@ function detectJurisdiction(q:string):string|null{const text=normalize(q);const 
 function topicScore(topic:string|null,r:VerifiedRecord):number{if(!topic)return 0;const title=normalize(r.title),cat=normalize(r.category),content=normalize(`${r.content||""} ${r.content_urdu||""}`);let s=0;for(const a of TOPICS[topic]||[]){const x=normalize(a);if(title.includes(x))s+=30;else if(cat.includes(x))s+=20;else if(content.includes(x))s+=8;}return s;}
 function generalScore(q:string,r:VerifiedRecord):number{const text=normalize(`${r.category||""} ${r.title||""} ${r.content||""} ${r.content_urdu||""}`),title=normalize(r.title);let s=0;for(const token of normalize(q).split(/\s+/).filter(x=>x.length>=2&&!STOP.has(x))){if(text.includes(token))s+=2;if(title.includes(token))s+=6;}return s;}
 function serviceMatch(r:VerifiedRecord,service:string):boolean{const db=normalize(r.service_name),wanted=normalize(service);if(!db)return false;if(db===wanted||db.includes(wanted)||wanted.includes(db))return true;return(SERVICES[service]||[]).some(a=>db.includes(normalize(a)));}
-function selectRecords(q:string,requested:string,records:VerifiedRecord[]){const topic=detectTopic(q),service=detectService(q,requested),jurisdiction=detectJurisdiction(q);let work=[...records];if(service){const x=work.filter(r=>serviceMatch(r,service));if(x.length)work=x;}if(jurisdiction){const j=normalize(jurisdiction);const x=work.filter(r=>{const p=normalize(r.province);return p==="pakistan"||p.includes(j)||j.includes(p);});if(x.length)work=x;}const scored=work.map(r=>({r,s:topicScore(topic,r)*10+generalScore(q,r)})).sort((a,b)=>b.s-a.s);const topicMatches=topic?scored.filter(x=>topicScore(topic,x.r)>0):[];const finalRecords=topic?(topicMatches.length?topicMatches:[]):scored;return{records:finalRecords.slice(0,8).map(x=>x.r),topic,service,jurisdiction};}
+function selectRecords(q:string,requested:string,records:VerifiedRecord[]){
+ const topic=detectTopic(q),requestedService=detectService("",requested),questionService=detectService(q,""),jurisdiction=detectJurisdiction(q);
+ // The selected department is the primary scope. A question may contain another department term,
+ // but that must not silently replace the user's selected department.
+ const service=(requestedService||requested) as string;
+ let work=[...records];
+ if(service){
+   const x=work.filter(r=>serviceMatch(r,service));
+   if(x.length)work=x;
+ }
+ if(jurisdiction){
+   const j=normalize(jurisdiction);
+   const x=work.filter(r=>{const p=normalize(r.province);return p==="pakistan"||p.includes(j)||j.includes(p);});
+   if(x.length)work=x;
+ }
+ const scored=work.map(r=>({r,s:topicScore(topic,r)*10+generalScore(q,r)})).sort((a,b)=>b.s-a.s);
+ const topicMatches=topic?scored.filter(x=>topicScore(topic,x.r)>0):[];
+ const finalRecords=topic?(topicMatches.length?topicMatches:[]):scored;
+ return{records:finalRecords.slice(0,8).map(x=>x.r),topic,service,jurisdiction,questionService};
+}
 function context(records:VerifiedRecord[],language:"English"|"Urdu"):string{return records.map((r,i)=>`RECORD ${i+1}\nService: ${language==="Urdu"?(r.service_name_urdu||r.service_name||""):(r.service_name||"")}\nCategory: ${r.category||""}\nJurisdiction: ${r.province||""}\nTitle: ${language==="Urdu"?(r.title_urdu||r.title||""):(r.title||"")}\nVerified Information: ${language==="Urdu"?(r.content_urdu||r.content||""):(r.content||r.content_urdu||"")}\nOfficial Department: ${r.official_department||""}\nOfficial Source: ${r.official_source_title||""}\nOfficial URL: ${r.official_source_url||""}\nLast Verified: ${r.last_verified||""}`).join("\n\n");}
 function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت، اس مخصوص سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ یا دستیاب سرکاری ماخذ میں کافی معلومات موجود نہیں ہیں۔ میں غیر مصدقہ طریقہ یا فیس نہیں بتاؤں گا۔":"Sorry, sufficient verified government information is not currently available for this specific question. I will not invent a procedure, document requirement, fee, or deadline.";}
 function sourceForQuestion(question:string,service:string|null,jurisdiction:string|null,requested:string=""){

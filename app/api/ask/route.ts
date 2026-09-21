@@ -51,7 +51,6 @@ function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت�
 function sourceForQuestion(question:string,service:string|null,jurisdiction:string|null,requested:string=""){
  const text=normalize(question+" "+(service||"")+" "+requested);
  const req=normalize(requested);
- const topic=detectTopic(question);
  const isKP=jurisdiction==="Khyber Pakhtunkhwa";
  if(req==="education & scholarships"){
    if(text.includes("need based")||text.includes("financial need")||text.includes("undergraduate")||text.includes("ضرورت")||text.includes("مالی"))

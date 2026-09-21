@@ -152,6 +152,9 @@ if(requested==="Education & Scholarships"){
  else alternateOfficialUrls.push("https://www.hec.gov.pk/site/scholarships");
 }
 if(requested==="Land & Revenue" && selected.jurisdiction==="Khyber Pakhtunkhwa"){alternateOfficialUrls.push("https://revenue.kp.gov.pk/","https://revenue.kp.gov.pk/director-land-record/");}
+if(requested==="Police Services" && selected.jurisdiction==="Khyber Pakhtunkhwa"){
+ alternateOfficialUrls.push("https://www.kppolice.gov.pk/detail.php?pid=52","https://apipsm.kppolice.gov.pk/psm/VideoTutorial");
+}
 if(requested==="Protector & Overseas Employment"){alternateOfficialUrls.push("https://beoe.gov.pk/");}
 const departmentDomains:Record<string,string[]>={
  "Government Jobs":["njp.gov.pk"],

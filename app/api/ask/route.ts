@@ -99,6 +99,16 @@ function sourceForQuestion(question:string,service:string|null,jurisdiction:stri
  let candidates=OFFICIAL_SOURCES.filter(s=>s.keys.some(k=>text.includes(normalize(k))));
  return candidates[0]||null;
 }
+async function fetchOfficialSearch(query:string,domains:string[]):Promise<string>{
+ const results:string[]=[];
+ for(const domain of domains){
+   const url="https://www.google.com/search?q="+encodeURIComponent("site:"+domain+" "+query);
+   const text=await fetchOfficialPage(url);
+   if(text)results.push("\nOFFICIAL SEARCH "+domain+"\n"+text.slice(0,14000));
+ }
+ return results.join("\n");
+}
+
 async function fetchOfficialPage(url:string):Promise<string>{try{const res=await fetch(url,{headers:{"User-Agent":"Mozilla/5.0 Pakistan Citizen Helper"},cache:"no-store"});if(!res.ok)return "";const html=await res.text();return html.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<noscript[\s\S]*?<\/noscript>/gi," ").replace(/<[^>]+>/g," ").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/\s+/g," ").trim().slice(0,28000);}catch{return "";}}
 
 function webSearchDomains(question:string,service:string,jurisdiction:string|null):string[]{
@@ -149,9 +159,28 @@ if(requested==="Government Jobs"){alternateOfficialUrls.push("https://www.njp.go
 if(requested==="Education & Scholarships"){alternateOfficialUrls.push("https://www.hec.gov.pk/english/scholarshipsgrants/pages/default.aspx","https://www.hec.gov.pk/english/scholarshipsgrants/Pages/NationalScholarships.aspx");}
 if(requested==="Land & Revenue" && selected.jurisdiction==="Khyber Pakhtunkhwa"){alternateOfficialUrls.push("https://revenue.kp.gov.pk/","https://revenue.kp.gov.pk/director-land-record/");}
 if(requested==="Protector & Overseas Employment"){alternateOfficialUrls.push("https://beoe.gov.pk/");}
+const departmentDomains:Record<string,string[]>={
+ "Government Jobs":["njp.gov.pk"],
+ "Education & Scholarships":["hec.gov.pk"],
+ "Land & Revenue":selected.jurisdiction==="Khyber Pakhtunkhwa"?["revenue.kp.gov.pk"]:["punjab-zameen.gov.pk"],
+ "Protector & Overseas Employment":["beoe.gov.pk"],
+ "Police Services":selected.jurisdiction==="Khyber Pakhtunkhwa"?["kppolice.gov.pk"]:["punjabpolice.gov.pk"],
+ "Excise & Taxation":selected.jurisdiction==="Khyber Pakhtunkhwa"?["kpexcise.gov.pk"]:["excise.punjab.gov.pk"],
+ "Driving Licence":selected.jurisdiction==="Khyber Pakhtunkhwa"?["kppolice.gov.pk"]:selected.jurisdiction==="Sindh"?["dls.gos.pk"]:selected.jurisdiction==="Islamabad Capital Territory"?["dlims.islamabadpolice.gov.pk"]:["dlims.punjab.gov.pk"],
+ "Domicile":selected.jurisdiction==="Khyber Pakhtunkhwa"?["cfc.kp.gov.pk","kp.gov.pk"]:["gov.pk"],
+ "Union Council":selected.jurisdiction==="Khyber Pakhtunkhwa"?["lgkp.gov.pk"]:["lgcd.punjab.gov.pk"],
+ "FBR / Taxation":["fbr.gov.pk"],
+ "Passport Services":["dgip.gov.pk"],
+ "NADRA Services":["nadra.gov.pk"]
+};
 const officialUrls=Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
 let officialText="";
 for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}
+const domains=departmentDomains[requested]||[];
+if(domains.length){
+ const searchText=await fetchOfficialSearch(question,domains);
+ if(searchText)officialText+=searchText;
+}
 const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the verified government Q&A assistant inside Pakistan Citizen Helper.
 
@@ -192,7 +221,7 @@ ${dbContext}
 OFFICIAL SOURCE TEXT:
 ${officialText||"No official source text was retrieved."}
 
-IMPORTANT: Answer ONLY from the verified records and official source text above. If they do not contain the answer, say that verified information for this specific question is unavailable. Never invent or infer government facts.`}];
+IMPORTANT: Answer ONLY from the verified records and official source text / official-domain search results above. If they do not contain the answer, say that verified information for this specific question is unavailable. Never invent or infer government facts.`}];
  const makeAiBody=(model:string)=>({model,temperature:1,reasoning_effort:"low",max_completion_tokens:2048,messages});
  let ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b"))});
  if(!ai.ok){

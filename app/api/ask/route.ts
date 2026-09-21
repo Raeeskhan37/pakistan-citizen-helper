@@ -69,18 +69,14 @@ function generalScore(q:string,r:VerifiedRecord):number{const text=normalize(`${
 function serviceMatch(r:VerifiedRecord,service:string):boolean{const db=normalize(r.service_name),wanted=normalize(service);if(!db)return false;if(db===wanted||db.includes(wanted)||wanted.includes(db))return true;return(SERVICES[service]||[]).some(a=>db.includes(normalize(a)));}
 function selectRecords(q:string,requested:string,records:VerifiedRecord[]){
  const topic=detectTopic(q),department=canonicalDepartment(requested),requestedService=detectService("",department),questionService=detectService(q,""),jurisdiction=detectJurisdiction(q);
- // The selected department is the primary scope. A question may contain another department term,
- // but that must not silently replace the user's selected department.
  const service=(requestedService||department) as string;
  let work=[...records];
  if(service){
-   const x=work.filter(r=>serviceMatch(r,service));
-   if(x.length)work=x;
+   work=work.filter(r=>serviceMatch(r,service));
  }
  if(jurisdiction){
    const j=normalize(jurisdiction);
-   const x=work.filter(r=>{const p=normalize(r.province);return p==="pakistan"||p.includes(j)||j.includes(p);});
-   if(x.length)work=x;
+   work=work.filter(r=>{const p=normalize(r.province);return !p||p==="pakistan"||p.includes(j)||j.includes(p);});
  }
  const scored=work.map(r=>({r,s:topicScore(topic,r)*10+generalScore(q,r)})).sort((a,b)=>b.s-a.s);
  const topicMatches=topic?scored.filter(x=>topicScore(topic,x.r)>0):[];
@@ -166,9 +162,9 @@ function webSearchDomains(question:string,service:string,jurisdiction:string|nul
 
 export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
- const body=await request.json();const question=String(body.question??"").trim();const requested=String(body.service??"").trim();const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
+ const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
  const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,category,title,content,service_name_urdu,province,title_urdu,content_urdu,official_department,official_source_title,official_source_url,last_verified,active&active=eq.true&order=last_verified.desc`;const db=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`},cache:"no-store"});if(!db.ok){console.error(await db.text());return NextResponse.json({error:"Unable to retrieve verified information from Supabase."},{status:500});}
- const all=(await db.json()) as VerifiedRecord[];const selected=selectRecords(question,requested,all);const registrySource=sourceForQuestion(question,selected.service,selected.jurisdiction,requested);const recordSource=selected.records.find(r=>r.official_source_url)?.official_source_url||"";const sourceUrl=recordSource||registrySource?.url||"";const sourceMeta=registrySource||{url:sourceUrl,title:selected.records[0]?.official_source_title||"Official Government Source",department:selected.records[0]?.official_department||"Government of Pakistan"};
+ const all=(await db.json()) as VerifiedRecord[];const selected=selectRecords(question,requested,all);const registrySource=sourceForQuestion(question,selected.service,selected.jurisdiction,requested);const matchingRecord=selected.records.find(r=>normalize(r.official_department||"").includes(normalize(registrySource?.department||"___no_registry_department___")));const recordSource=matchingRecord?.official_source_url||"";const sourceUrl=registrySource?.url||recordSource||"";const sourceMeta=registrySource||{url:sourceUrl,title:selected.records[0]?.official_source_title||"Official Government Source",department:selected.records[0]?.official_department||"Government of Pakistan"};
 const jurisdictionSourceHints:Record<string,string[]>={
  "Driving Licence":["kppolice.gov.pk","kprts.gov.pk","transport.kp.gov.pk","ptpkp.gov.pk"],
  "Domicile":["kp.gov.pk","cfc.kp.gov.pk"],

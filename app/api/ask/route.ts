@@ -83,7 +83,7 @@ function selectRecords(q:string,requested:string,records:VerifiedRecord[]){
  const finalRecords=topic?(topicMatches.length?topicMatches:[]):scored;
  return{records:finalRecords.slice(0,8).map(x=>x.r),topic,service,jurisdiction,questionService};
 }
-function context(records:VerifiedRecord[],language:"English"|"Urdu"):string{return records.map((r,i)=>`RECORD ${i+1}\nService: ${language==="Urdu"?(r.service_name_urdu||r.service_name||""):(r.service_name||"")}\nCategory: ${r.category||""}\nJurisdiction: ${r.province||""}\nTitle: ${language==="Urdu"?(r.title_urdu||r.title||""):(r.title||"")}\nVerified Information: ${language==="Urdu"?(r.content_urdu||r.content||""):(r.content||r.content_urdu||"")}\nOfficial Department: ${r.official_department||""}\nOfficial Source: ${r.official_source_title||""}\nOfficial URL: ${r.official_source_url||""}\nLast Verified: ${r.last_verified||""}`).join("\n\n");}
+function context(records:VerifiedRecord[],language:"English"|"Urdu"):string{return records.slice(0,4).map((r,i)=>{const info=language==="Urdu"?(r.content_urdu||r.content||""):(r.content||r.content_urdu||"");return `RECORD ${i+1}\nService: ${language==="Urdu"?(r.service_name_urdu||r.service_name||""):(r.service_name||"")}\nCategory: ${r.category||""}\nJurisdiction: ${r.province||""}\nTitle: ${language==="Urdu"?(r.title_urdu||r.title||""):(r.title||"")}\nVerified Information: ${info.slice(0,2200)}\nOfficial Department: ${r.official_department||""}\nOfficial Source: ${r.official_source_title||""}\nOfficial URL: ${r.official_source_url||""}\nLast Verified: ${r.last_verified||""}`}).join("\n\n");}
 function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت، اس مخصوص سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ یا دستیاب سرکاری ماخذ میں کافی معلومات موجود نہیں ہیں۔ میں غیر مصدقہ طریقہ یا فیس نہیں بتاؤں گا۔":"Sorry, sufficient verified government information is not currently available for this specific question. I will not invent a procedure, document requirement, fee, or deadline.";}
 function sourceForQuestion(question:string,service:string|null,jurisdiction:string|null,requested:string=""){
  const req=normalize(canonicalDepartment(requested));
@@ -214,7 +214,8 @@ if(domains.length){
  const searchText=await fetchOfficialSearch(question,domains);
  if(searchText)officialText+=searchText;
 }
-const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
+officialText=officialText.slice(0,10000);
+ const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the central verified government information agent inside Pakistan Citizen Helper.
 
 Your primary responsibility is to PROVIDE the citizen with the required answer. Do not send the citizen away to search another government website when the supplied official evidence contains the requested information.
@@ -261,7 +262,7 @@ OFFICIAL SOURCE TEXT:
 ${officialText||"No official source text was retrieved."}
 
 IMPORTANT: The official source text and official-domain search results above are usable evidence. When they contain the requested information, extract it and provide the actual answer to the citizen. Do NOT tell the citizen to search the source themselves. The official URL is only the source citation. If the evidence does not contain the exact answer, say that verified information for this specific question could not be established. Never invent or infer government facts.`}];
- const makeAiBody=(model:string)=>({model,temperature:1,reasoning_effort:"low",max_completion_tokens:2048,messages});
+ const makeAiBody=(model:string,requestMessages=messages)=>({model,temperature:1,reasoning_effort:"low",max_completion_tokens:1024,messages:requestMessages});
  let ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b"))});
  if(!ai.ok){
    console.error("Primary Groq model failed:",await ai.text());
@@ -272,7 +273,7 @@ IMPORTANT: The official source text and official-domain search results above are
  const evidenceAvailable=selected.records.length>0||officialText.length>200;
  if(referralOnly&&evidenceAvailable){
    const retryMessages=[...messages,{role:"assistant",content:answer},{role:"user",content:"Rewrite your previous answer. It improperly referred the citizen to search a website. Answer the citizen directly using the supplied verified database and official government evidence. Do not instruct the citizen to search, look for, find, check, or visit a portal to obtain the answer. Give the actual verified information. The official URL is only a source citation."}];
-   const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:"openai/gpt-oss-120b",temperature:1,reasoning_effort:"low",max_completion_tokens:2048,messages:retryMessages})});
+   const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b",retryMessages))});
    if(retry.ok){const rd=await retry.json();answer=rd?.choices?.[0]?.message?.content?.trim()||answer;}
  }
  return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});

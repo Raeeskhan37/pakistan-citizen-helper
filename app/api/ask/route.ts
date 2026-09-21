@@ -87,6 +87,16 @@ function sourceForQuestion(question:string,service:string|null,jurisdiction:stri
  let candidates=OFFICIAL_SOURCES.filter(s=>s.keys.some(k=>text.includes(normalize(k))));
  return candidates[0]||null;
 }
+async function fetchOfficialSearch(query:string,domains:string[]):Promise<string>{
+ const results:string[]=[];
+ for(const domain of domains){
+   const url="https://www.google.com/search?q="+encodeURIComponent("site:"+domain+" "+query);
+   const page=await fetchOfficialPage(url);
+   if(page)results.push("\nOFFICIAL DOMAIN SEARCH: "+domain+"\n"+page.slice(0,14000));
+ }
+ return results.join("\n");
+}
+
 async function fetchOfficialPage(url:string):Promise<string>{try{const res=await fetch(url,{headers:{"User-Agent":"Mozilla/5.0 Pakistan Citizen Helper"},cache:"no-store"});if(!res.ok)return "";const html=await res.text();return html.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<noscript[\s\S]*?<\/noscript>/gi," ").replace(/<[^>]+>/g," ").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/\s+/g," ").trim().slice(0,28000);}catch{return "";}}
 
 function webSearchDomains(question:string,service:string,jurisdiction:string|null):string[]{

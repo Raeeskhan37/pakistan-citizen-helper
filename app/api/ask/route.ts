@@ -17,6 +17,19 @@ type VerifiedRecord = {
 
 function normalize(v:unknown):string{return String(v??"").toLowerCase().normalize("NFKC").replace(/\s+/g," ").trim();}
 function isUrdu(text:string):boolean{return /[\u0600-\u06FF]/.test(text);}
+function canonicalDepartment(v:string):string{
+ const x=normalize(v);
+ const map:Record<string,string>={
+  "cnic / nadra":"NADRA Services","nadra services":"NADRA Services","nadra":"NADRA Services",
+  "passport":"Passport Services","passport services":"Passport Services",
+  "union council":"Union Council","union council / local government":"Union Council","local government":"Union Council",
+  "domicile":"Domicile","driving licence":"Driving Licence","police services":"Police Services",
+  "protector & overseas employment":"Protector & Overseas Employment","protector of emigrants":"Protector & Overseas Employment",
+  "excise & taxation":"Excise & Taxation","education & scholarships":"Education & Scholarships",
+  "land & revenue":"Land & Revenue","fbr / taxation":"FBR / Taxation","government jobs":"Government Jobs"
+ };
+ return map[x]||v;
+}
 
 const STOP=new Set(["the","is","are","was","were","how","what","where","when","which","can","may","for","from","with","about","please","tell","me","give","get","my","i","do","does","a","an","of","to","in","on","and","or","کے","کی","کا","کو","میں","سے","اور","ہے","ہیں","کیا","کہاں","کیسے","مجھے","لیے","بارے","میرا","میری"]);
 const TOPICS:Record<string,string[]>={
@@ -40,16 +53,25 @@ const OFFICIAL_SOURCES=[
 ];
 
 function detectTopic(q:string):string|null{const text=normalize(q);let best:string|null=null,score=0;for(const [topic,aliases] of Object.entries(TOPICS)){let s=0;for(const a of aliases)if(text.includes(normalize(a)))s+=a.length>=8?12:7;if(s>score){score=s;best=topic;}}return score>=7?best:null;}
-function detectService(q:string,requested:string):string|null{const text=normalize(q);const departmentOnly=/^(nadra services|passport services|union council|domicile|driving licence|police services|protector & overseas employment|excise & taxation|education & scholarships|land & revenue|fbr \/ taxation|government jobs)$/i.test(requested.trim());let best=departmentOnly?null:(requested||null),score=departmentOnly?0:(requested?5:0);for(const [service,aliases] of Object.entries(SERVICES)){let s=0;for(const a of aliases)if(text.includes(normalize(a)))s+=a.length>=8?15:10;if(s>score){score=s;best=service;}}return best;}
+function detectService(q:string,requested:string):string|null{
+ const text=normalize(q),department=canonicalDepartment(requested);
+ const departmentOnly=/^(nadra services|passport services|union council|domicile|driving licence|police services|protector & overseas employment|excise & taxation|education & scholarships|land & revenue|fbr \/ taxation|government jobs)$/i.test(department);
+ let best=departmentOnly?null:(department||null),score=departmentOnly?0:(department?5:0);
+ for(const [service,aliases] of Object.entries(SERVICES)){
+  let s=0;for(const a of aliases)if(text.includes(normalize(a)))s+=a.length>=8?15:10;
+  if(s>score){score=s;best=service;}
+ }
+ return best;
+}
 function detectJurisdiction(q:string):string|null{const text=normalize(q);const data:Array<[string,string[]]>=[["Punjab",["punjab","پنجاب"]],["Sindh",["sindh","sind","سندھ"]],["Khyber Pakhtunkhwa",["khyber pakhtunkhwa","kpk","kp","خیبر پختونخوا","خیبرپختونخوا"]],["Islamabad Capital Territory",["islamabad","ict","اسلام آباد","اسلامباد"]],["Balochistan",["balochistan","بلوچستان"]],["Azad Jammu and Kashmir",["ajk","azad kashmir","آزاد کشمیر","آزاد جموں و کشمیر"]],["Gilgit-Baltistan",["gilgit","gilgit baltistan","گلگت","گلگت بلتستان"]]];for(const [name,terms] of data)for(const t of terms)if(text.includes(normalize(t)))return name;return null;}
 function topicScore(topic:string|null,r:VerifiedRecord):number{if(!topic)return 0;const title=normalize(r.title),cat=normalize(r.category),content=normalize(`${r.content||""} ${r.content_urdu||""}`);let s=0;for(const a of TOPICS[topic]||[]){const x=normalize(a);if(title.includes(x))s+=30;else if(cat.includes(x))s+=20;else if(content.includes(x))s+=8;}return s;}
 function generalScore(q:string,r:VerifiedRecord):number{const text=normalize(`${r.category||""} ${r.title||""} ${r.content||""} ${r.content_urdu||""}`),title=normalize(r.title);let s=0;for(const token of normalize(q).split(/\s+/).filter(x=>x.length>=2&&!STOP.has(x))){if(text.includes(token))s+=2;if(title.includes(token))s+=6;}return s;}
 function serviceMatch(r:VerifiedRecord,service:string):boolean{const db=normalize(r.service_name),wanted=normalize(service);if(!db)return false;if(db===wanted||db.includes(wanted)||wanted.includes(db))return true;return(SERVICES[service]||[]).some(a=>db.includes(normalize(a)));}
 function selectRecords(q:string,requested:string,records:VerifiedRecord[]){
- const topic=detectTopic(q),requestedService=detectService("",requested),questionService=detectService(q,""),jurisdiction=detectJurisdiction(q);
+ const topic=detectTopic(q),department=canonicalDepartment(requested),requestedService=detectService("",department),questionService=detectService(q,""),jurisdiction=detectJurisdiction(q);
  // The selected department is the primary scope. A question may contain another department term,
  // but that must not silently replace the user's selected department.
- const service=(requestedService||requested) as string;
+ const service=(requestedService||department) as string;
  let work=[...records];
  if(service){
    const x=work.filter(r=>serviceMatch(r,service));
@@ -69,7 +91,7 @@ function context(records:VerifiedRecord[],language:"English"|"Urdu"):string{retu
 function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت، اس مخصوص سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ یا دستیاب سرکاری ماخذ میں کافی معلومات موجود نہیں ہیں۔ میں غیر مصدقہ طریقہ یا فیس نہیں بتاؤں گا۔":"Sorry, sufficient verified government information is not currently available for this specific question. I will not invent a procedure, document requirement, fee, or deadline.";}
 function sourceForQuestion(question:string,service:string|null,jurisdiction:string|null,requested:string=""){
  const text=normalize(question+" "+(service||"")+" "+requested);
- const req=normalize(requested);
+ const req=normalize(canonicalDepartment(requested));
  const isKP=jurisdiction==="Khyber Pakhtunkhwa";
  if(req==="education & scholarships"){
    if(text.includes("need based")||text.includes("financial need")||text.includes("undergraduate")||text.includes("ضرورت")||text.includes("مالی"))

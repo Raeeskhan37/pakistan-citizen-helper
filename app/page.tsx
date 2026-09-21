@@ -52,14 +52,17 @@ export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const isUrdu = language === "Urdu";
+  const visibleDepartments = useMemo(() => { const q = search.trim().toLowerCase(); return q ? departments.filter(d => `${d.name} ${d.urdu} ${d.description}`.toLowerCase().includes(q)) : departments; }, [search]);
   const suggestions = useMemo(() => department ? (department.id === "nadra" ? ["What are the current CNIC and Smart CNIC fees?", "What documents are required for CNIC?", "What are the CRC photo and biometric requirements by age?", "How can I apply through PakID?"] : ["What services and requirements are available?", "What documents are required?", "What is the fee?", "How can I apply?"]) : [], [department]);
-  const goHome = () => { setDepartment(null); setAnswer(null); setQuestion(""); };
+  const goHome = () => { setDepartment(null); setAnswer(null); setQuestion(""); setSearch(""); setCopied(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const goDepartment = () => { setAnswer(null); setQuestion(""); };
   const ask = async () => {
     if (!question.trim() || !department) return;
-    setLoading(true); setAnswer(null);
+    setLoading(true); setAnswer(null); setCopied(false);
     try {
       const res = await fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: question.trim(), service: department.name, language, department: department.name }) });
       const data = await res.json();
@@ -67,6 +70,8 @@ export default function Home() {
     } catch { setAnswer({ error: "Unable to connect to the verified information service. Please try again." }); }
     finally { setLoading(false); }
   };
+
+  const copyAnswer = async () => { if (!answer?.answer) return; try { await navigator.clipboard.writeText(answer.answer); setCopied(true); window.setTimeout(() => setCopied(false), 1600); } catch {} };
 
   return (
     <main className="app-shell" dir={isUrdu ? "rtl" : "ltr"}>
@@ -87,17 +92,18 @@ export default function Home() {
             <div className="hero-seal"><span>🇵🇰</span><small>PAKISTAN<br/>CITIZEN<br/>HELPER</small></div>
           </section>
           <section className="welcome"><div><span className="eyebrow">{isUrdu ? "خوش آمدید" : "WELCOME"}</span><h2>{isUrdu ? "آپ کو کس سرکاری سروس کی معلومات چاہیے؟" : "What government service do you need?"}</h2><p>{isUrdu ? "شروع کرنے کے لیے ایک محکمہ منتخب کریں۔" : "Select a department below to get started."}</p></div><div className="trust-badge"><span>✓</span><small>{isUrdu ? "مصدقہ" : "Verified"}<br/>{isUrdu ? "معلومات" : "Information"}</small></div></section>
-          <div className="section-head"><div><span className="eyebrow">{isUrdu ? "خدمات" : "SERVICES"}</span><h2>{isUrdu ? "سرکاری محکمے" : "Government departments"}</h2><p>{isUrdu ? "اپنی مطلوبہ سروس تلاش کرنے کے لیے محکمہ منتخب کریں" : "Choose a department to find the service you need."}</p></div><span className="count">{departments.length}</span></div>
-          <div className="department-grid">{departments.map((d, i) => <button key={d.id} className={`department-card ${i === 0 ? "featured" : ""}`} onClick={() => setDepartment(d)}><span className="card-number">{String(i + 1).padStart(2, "0")}</span><span className="card-icon">{d.icon}</span><span className="card-text"><strong>{isUrdu ? d.urdu : d.name}</strong><small>{d.description}</small></span><span className="arrow">→</span></button>)}</div>
+          <div className="section-head"><div><span className="eyebrow">{isUrdu ? "خدمات" : "SERVICES"}</span><h2>{isUrdu ? "سرکاری محکمے" : "Government departments"}</h2><p>{isUrdu ? "اپنی مطلوبہ سروس تلاش کرنے کے لیے محکمہ منتخب کریں" : "Choose a department to find the service you need."}</p></div><span className="count">{visibleDepartments.length}<small>/ {departments.length}</small></span></div>
+          <div className="department-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder={isUrdu ? "محکمے تلاش کریں..." : "Search departments..."} aria-label="Search departments" />{search && <button onClick={() => setSearch("")} aria-label="Clear search">×</button>}</div>
+          <div className="department-grid">{visibleDepartments.map((d, i) => <button key={d.id} className={`department-card ${i === 0 ? "featured" : ""}`} onClick={() => setDepartment(d)}><span className="card-number">{String(i + 1).padStart(2, "0")}</span><span className="card-icon">{d.icon}</span><span className="card-text"><strong>{isUrdu ? d.urdu : d.name}</strong><small>{d.description}</small></span><span className="arrow">→</span></button>)}</div>
         </>}
 
         {department && <section className="view question-view"><button className="back" onClick={goHome}>← {isUrdu ? "تمام محکمے" : "All departments"}</button><div className="service-banner"><span className="service-banner-icon">{department.icon}</span><div><div className="eyebrow">{isUrdu ? "محکمہ" : "DEPARTMENT"}</div><h1>{isUrdu ? department.urdu : department.name}</h1><p>{isUrdu ? "اس محکمے سے متعلق کوئی بھی سوال پوچھیں" : "Ask any question related to this government department."}</p></div></div>
           {!answer && <><div className="question-card"><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "آپ اس محکمے کی کسی بھی سروس کے بارے میں سوال پوچھ سکتے ہیں۔" : "Ask anything about this department. You do not need to select a specific service."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? `مثلاً: ${department?.name} سے متعلق کوئی سوال پوچھیں` : `For example: What is the fee? What documents are required?`} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
-          {answer && <div className="answer-area"><div className={`answer-card ${answer.error ? "is-warning" : ""}`}>{answer.error ? <><div className="status-icon warning">!</div><div className="verified-label">{isUrdu ? "معلومات دستیاب نہیں" : "INFORMATION UNAVAILABLE"}</div><h2>{isUrdu ? "مصدقہ معلومات نہیں مل سکیں" : "Verified information is unavailable"}</h2><p>{answer.error}</p></> : <><div className="answer-top"><div className="status-icon">✓</div><div><div className="verified-label">{isUrdu ? "مصدقہ سرکاری معلومات" : "VERIFIED GOVERNMENT INFORMATION"}</div><small>{isUrdu ? "دستیاب سرکاری معلومات کی بنیاد پر" : "Based on available official information"}</small></div></div><div className="answer-text">{answer.answer}</div></>}</div>{answer.source && <div className="source-card"><div className="source-main"><span className="source-icon">↗</span><div><span className="source-label">{isUrdu ? "سرکاری ذریعہ" : "OFFICIAL SOURCE"}</span><strong>{answer.source.title || "Official government source"}</strong><small>{answer.source.department || department.name}{answer.source.lastVerified ? ` · Verified ${answer.source.lastVerified}` : ""}</small></div></div>{answer.source.url && <a href={answer.source.url} target="_blank" rel="noreferrer">{isUrdu ? "سرکاری ویب سائٹ کھولیں" : "Visit official source"} ↗</a>}</div>}<button className="secondary" onClick={() => { setAnswer(null); setQuestion(""); }}>↻ {isUrdu ? "دوسرا سوال پوچھیں" : "Ask another question"}</button></div>}
+          {answer && <div className="answer-area"><div className={`answer-card ${answer.error ? "is-warning" : ""}`}>{answer.error ? <><div className="status-icon warning">!</div><div className="verified-label">{isUrdu ? "معلومات دستیاب نہیں" : "INFORMATION UNAVAILABLE"}</div><h2>{isUrdu ? "مصدقہ معلومات نہیں مل سکیں" : "Verified information is unavailable"}</h2><p>{answer.error}</p></> : <><div className="answer-top"><div className="status-icon">✓</div><div><div className="verified-label">{isUrdu ? "مصدقہ سرکاری معلومات" : "VERIFIED GOVERNMENT INFORMATION"}</div><small>{isUrdu ? "دستیاب سرکاری معلومات کی بنیاد پر" : "Based on available official information"}</small></div></div><div className="answer-text">{answer.answer}</div><button className="copy-button" onClick={copyAnswer}>{copied ? "✓ Copied" : "⧉ Copy answer"}</button></>}</div>{answer.source && <div className="source-card"><div className="source-main"><span className="source-icon">↗</span><div><span className="source-label">{isUrdu ? "سرکاری ذریعہ" : "OFFICIAL SOURCE"}</span><strong>{answer.source.title || "Official government source"}</strong><small>{answer.source.department || department.name}{answer.source.lastVerified ? ` · Verified ${answer.source.lastVerified}` : ""}</small></div></div>{answer.source.url && <a href={answer.source.url} target="_blank" rel="noreferrer">{isUrdu ? "سرکاری ویب سائٹ کھولیں" : "Visit official source"} ↗</a>}</div>}<button className="secondary" onClick={() => { setAnswer(null); setQuestion(""); }}>↻ {isUrdu ? "دوسرا سوال پوچھیں" : "Ask another question"}</button></div>}
         </section>}
 
       </section>
-      <footer><div><strong>Pakistan Citizen Helper</strong><span>•</span><span>{isUrdu ? "مصدقہ سرکاری معلومات" : "Verified Government Information"}</span></div><p>Developed by <strong>Raees Khan</strong> · Assistant Director, NADRA</p></footer>
+      <footer><div><strong>Pakistan Citizen Helper</strong><span>•</span><span>{isUrdu ? "مصدقہ سرکاری معلومات" : "Verified Government Information"}</span></div><div className="footer-note">{isUrdu ? "حساس ذاتی معلومات، CNIC نمبر، پاس ورڈ یا OTP درج نہ کریں۔" : "Do not enter sensitive personal information, CNIC numbers, passwords or OTPs."}</div><p>Developed by <strong>Raees Khan</strong> · Assistant Director, NADRA</p></footer>
     </main>
   );
 }

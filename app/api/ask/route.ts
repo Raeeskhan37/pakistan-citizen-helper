@@ -272,7 +272,7 @@ IMPORTANT: The official source text and official-domain search results above are
  const evidenceAvailable=selected.records.length>0||officialText.length>200;
  if(referralOnly&&evidenceAvailable){
    const retryMessages=[...messages,{role:"assistant",content:answer},{role:"user",content:"Rewrite your previous answer. It improperly referred the citizen to search a website. Answer the citizen directly using the supplied verified database and official government evidence. Do not instruct the citizen to search, look for, find, check, or visit a portal to obtain the answer. Give the actual verified information. The official URL is only a source citation."}];
-   const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b").withMessages?{}:{model:"openai/gpt-oss-120b",temperature:1,reasoning_effort:"low",max_completion_tokens:2048,messages:retryMessages})});
+   const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:"openai/gpt-oss-120b",temperature:1,reasoning_effort:"low",max_completion_tokens:2048,messages:retryMessages})});
    if(retry.ok){const rd=await retry.json();answer=rd?.choices?.[0]?.message?.content?.trim()||answer;}
  }
  return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});

@@ -179,7 +179,7 @@ const jurisdictionSourceHints:Record<string,string[]>={
  "Government Jobs":["njp.gov.pk","kp.gov.pk"]
 };
 const allowedHints=jurisdictionSourceHints[requested]||[];const alternateOfficialUrls:string[]=[];
-if(requested==="Government Jobs"){alternateOfficialUrls.push("https://www.njp.gov.pk/index.php/jobs");}
+if(requested==="Government Jobs"){alternateOfficialUrls.push("https://www.njp.gov.pk/index.php/jobs","https://www.njp.gov.pk/index.php/jobs/live","https://www.njp.gov.pk/index.php/jobs/search");}
 if(requested==="Education & Scholarships"){
  if(normalize(question).includes("need based")||normalize(question).includes("financial need")||normalize(question).includes("undergraduate"))
    alternateOfficialUrls.push("https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/Eligibility-Criteria.aspx","https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/How-To-Apply.aspx");
@@ -215,33 +215,39 @@ if(domains.length){
  if(searchText)officialText+=searchText;
 }
 const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
- const system=`You are the verified government Q&A assistant inside Pakistan Citizen Helper.
+ const system=\`You are the central verified government information agent inside Pakistan Citizen Helper.
 
-Answer the citizen's EXACT question first. Keep the answer short, direct, and easy to read.
+Your primary responsibility is to PROVIDE the citizen with the required answer. Do not send the citizen away to search another government website when the supplied official evidence contains the requested information.
 
-Rules:
-- Use the verified database records as the primary evidence. Use official government source text only when it directly supports the answer.
-- Every factual claim in your answer must be directly supported by the supplied verified record or official source text, or by a result returned by the browser search.
-- If the supplied evidence does not contain the answer, use official government source retrieval for the selected department. The source must match the selected department and, when jurisdiction is known, the relevant provincial/federal authority.
-- Never use an unrelated department's source just because it contains matching keywords.
-- For department-specific questions, prefer the department's own official domain (for example NADRA → nadra.gov.pk, Passport → dgip.gov.pk, KP Driving Licence → kppolice.gov.pk/kprts.gov.pk/transport.kp.gov.pk).
-- For parent/father/mother information questions, you MUST verify against NADRA's official website before answering.
-- Never fill missing information from memory, general knowledge, assumptions, or patterns. Never invent or guess government facts, fees, documents, eligibility, deadlines, procedures, office locations, or processing times.
-- If the exact requested topic is not supported by verified evidence, say that verified information for that specific topic is unavailable.
-- Do NOT give a general workflow or a long explanation unless the citizen asks for it.
-- If the question is about a fee, give only the relevant fee and processing information.
-- If the question is about address change, give only the address-change information.
-- If the question is about Smart NIC/SNIC, use Smart NIC/SNIC information, not generic CNIC information.
-- Do not mix unrelated services or requirements into the answer.
+Answer the citizen's EXACT question first. Be direct, practical, concise, and easy to read.
+
+NON-NEGOTIABLE EVIDENCE RULES:
+- Every factual claim must be supported by the supplied verified database record or retrieved official-government source text/search result.
+- The verified database is the primary evidence layer. Official government pages are the second evidence layer.
+- If the database is insufficient, use the retrieved official source evidence for the selected department and the correct federal/provincial jurisdiction.
+- Never use an unrelated department, service, or province merely because keywords match.
+- Never fill gaps from memory, general knowledge, assumptions, or patterns.
+- Never invent or guess fees, documents, eligibility, deadlines, procedures, office locations, processing times, vacancies, qualifications, or legal requirements.
+- If official evidence contains the answer, GIVE THAT ANSWER. Do not tell the citizen to search, look for, find, check, or visit another site to obtain the answer.
+- The official source URL is a citation/source for the answer, not a substitute for the answer.
+- For current vacancies, current fees, current requirements, current offices, or other changing information, use the retrieved current official evidence and state the relevant information and date when available.
+- For Government Jobs, retrieve and summarize matching current vacancies from official government evidence when available. Do not merely tell the citizen to search NJP.
+- For procedures, provide the actual verified procedure steps available in the evidence.
+- For documents, list the verified documents.
+- For fees, give the verified fee and relevant processing information.
+- For eligibility, give the verified eligibility criteria.
+- For status/tracking, give the verified tracking method and relevant official details.
+- For parent/father/mother information questions, verify against NADRA's official website before answering.
+- If evidence is insufficient for the EXACT topic, clearly say verified information for that specific topic could not be established. Do not replace it with generic advice.
+- If sources conflict, state the conflict briefly and identify the conflicting official sources rather than guessing.
 - If the question is ambiguous, ask ONE short clarifying question.
-- If verified information is unavailable, say so clearly.
-- If sources conflict, state the conflict briefly instead of guessing.
+- Do not mix unrelated services or requirements into the answer.
 - Use simple Pakistani Urdu when the requested language is Urdu.
-- When supported by the browser search, include the official source citation/link.
+- Never describe generic guidance as verified government information unless it is supported by evidence.
 
 Selected department/service: ${requested||"not specified"}
 Requested language: ${language}
-`;
+\`;
  const hasVerifiedRecords=selected.records.length>0;
  const messages=[{role:"system",content:system},{role:"user",content:`Goal: ${question}
 Selected department/service: ${selected.service||requested||"not specified"}
@@ -254,12 +260,20 @@ ${dbContext}
 OFFICIAL SOURCE TEXT:
 ${officialText||"No official source text was retrieved."}
 
-IMPORTANT: Answer ONLY from the verified records and official source text / official-domain search results above. If they do not contain the answer, say that verified information for this specific question is unavailable. Never invent or infer government facts.`}];
+IMPORTANT: The official source text and official-domain search results above are usable evidence. When they contain the requested information, extract it and provide the actual answer to the citizen. Do NOT tell the citizen to search the source themselves. The official URL is only the source citation. If the evidence does not contain the exact answer, say that verified information for this specific question could not be established. Never invent or infer government facts.`}];
  const makeAiBody=(model:string)=>({model,temperature:1,reasoning_effort:"low",max_completion_tokens:2048,messages});
  let ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b"))});
  if(!ai.ok){
    console.error("Primary Groq model failed:",await ai.text());
    ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-20b"))});
  }
- if(!ai.ok){console.error(await ai.text());return NextResponse.json({error:"AI service request failed. Please try again.", errorType:"ai_service_error"},{status:502});}const data=await ai.json();const answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});
+ if(!ai.ok){console.error(await ai.text());return NextResponse.json({error:"AI service request failed. Please try again.", errorType:"ai_service_error"},{status:502});}const data=await ai.json();let answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);
+ const referralOnly=/(search|look for|find|check|use the search|visit (the|this) (website|portal)|go to (the|this) (website|portal)|website.*to find|portal.*to find|تلاش کریں|ویب سائٹ.*تلاش|پورٹل.*تلاش)/i.test(answer);
+ const evidenceAvailable=selected.records.length>0||officialText.length>200;
+ if(referralOnly&&evidenceAvailable){
+   const retryMessages=[...messages,{role:"assistant",content:answer},{role:"user",content:"Rewrite your previous answer. It improperly referred the citizen to search a website. Answer the citizen directly using the supplied verified database and official government evidence. Do not instruct the citizen to search, look for, find, check, or visit a portal to obtain the answer. Give the actual verified information. The official URL is only a source citation."}];
+   const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b").withMessages?{}:{model:"openai/gpt-oss-120b",temperature:1,reasoning_effort:"low",max_completion_tokens:2048,messages:retryMessages})});
+   if(retry.ok){const rd=await retry.json();answer=rd?.choices?.[0]?.message?.content?.trim()||answer;}
+ }
+ return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});
  }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

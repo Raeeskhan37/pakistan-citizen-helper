@@ -262,6 +262,7 @@ const departmentDomains:Record<string,string[]>={
  "NADRA Services":["nadra.gov.pk"]
 };
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
+  let civilRegistrationEvidence="";
   if(requested==="Union Council" && (normalize(question).includes("death certificate") || normalize(question).includes("death") || normalize(question).includes("ڈیتھ") || normalize(question).includes("وفات") || normalize(question).includes("موت"))){
     civilRegistrationEvidence=`
 OFFICIAL VERIFIED EVIDENCE — PUNJAB
@@ -274,7 +275,6 @@ Source: https://lgkp.gov.pk/page/crvs
 Death registration requires Form-D, the applicant's CNIC number, and documentary evidence where applicable, including a graveyard/Ghorkan certificate or parchi. KP's official registration page also lists death registration as a Union Council service with a 2-day stated time limit.
 `;
   }
-  let civilRegistrationEvidence="";
   if(requested==="Union Council"){
     const nq=normalize(question);
     const isBirth=nq.includes("birth")||nq.includes("پیدائش")||nq.includes("پیدائشی");

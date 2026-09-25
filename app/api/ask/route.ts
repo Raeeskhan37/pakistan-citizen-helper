@@ -238,7 +238,6 @@ const departmentDomains:Record<string,string[]>={
  "NADRA Services":["nadra.gov.pk"]
 };
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
-const isNadra=requested==="NADRA Services";
 const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
 let officialText="";
 for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}

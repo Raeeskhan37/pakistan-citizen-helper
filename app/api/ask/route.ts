@@ -230,11 +230,16 @@ if(requested==="Police Services" && selected.jurisdiction==="Khyber Pakhtunkhwa"
  alternateOfficialUrls.push("https://www.kppolice.gov.pk/detail.php?pid=52","https://apipsm.kppolice.gov.pk/psm/VideoTutorial");
 }
 if(requested==="Union Council"){
-  // Birth/death/marriage/divorce registration is provincial. Retrieve the
-  // dedicated official registration pages so the model has actual evidence
-  // instead of relying only on a generic FAQ/search result.
+  // Birth/death/marriage/divorce registration is jurisdiction-specific.
+  // Retrieve the strongest available official source for the detected jurisdiction.
   if(selected.jurisdiction==="Khyber Pakhtunkhwa"){
     alternateOfficialUrls.push("https://lgkp.gov.pk/page/crvs","https://lgkp.gov.pk/page/registration-bdmd");
+  } else if(selected.jurisdiction==="Islamabad Capital Territory"){
+    alternateOfficialUrls.push("https://ictadministration.gov.pk/birth-certificate/","https://ictadministration.gov.pk/death-registration/");
+  } else if(selected.jurisdiction==="Sindh"){
+    alternateOfficialUrls.push("https://www.sindh.gov.pk/useful-links","https://cm.sindh.gov.pk/news/cm-sindh-presides-over-cabinet-meeting-reviews-57-item-agenda");
+  } else if(selected.jurisdiction==="Balochistan"){
+    alternateOfficialUrls.push("https://balochistan.gov.pk/");
   } else if(!selected.jurisdiction){
     alternateOfficialUrls.push("https://lgcd.punjab.gov.pk/faq","https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf","https://lgkp.gov.pk/page/crvs","https://lgkp.gov.pk/page/registration-bdmd");
   } else {
@@ -251,7 +256,7 @@ const departmentDomains:Record<string,string[]>={
  "Excise & Taxation":selected.jurisdiction==="Khyber Pakhtunkhwa"?["kpexcise.gov.pk"]:["excise.punjab.gov.pk"],
  "Driving Licence":selected.jurisdiction==="Khyber Pakhtunkhwa"?["kppolice.gov.pk"]:selected.jurisdiction==="Sindh"?["dls.gos.pk"]:selected.jurisdiction==="Islamabad Capital Territory"?["dlims.islamabadpolice.gov.pk"]:["dlims.punjab.gov.pk"],
  "Domicile":selected.jurisdiction==="Khyber Pakhtunkhwa"?["cfc.kp.gov.pk","kp.gov.pk"]:["gov.pk"],
- "Union Council":selected.jurisdiction==="Khyber Pakhtunkhwa"?["lgkp.gov.pk"]:["lgcd.punjab.gov.pk"],
+ "Union Council":selected.jurisdiction==="Khyber Pakhtunkhwa"?["lgkp.gov.pk"]:selected.jurisdiction==="Islamabad Capital Territory"?["ictadministration.gov.pk"]:selected.jurisdiction==="Sindh"?["sindh.gov.pk"]:selected.jurisdiction==="Balochistan"?["balochistan.gov.pk"]:["lgcd.punjab.gov.pk"],
  "FBR / Taxation":["fbr.gov.pk"],
  "Passport Services":["dgip.gov.pk"],
  "NADRA Services":["nadra.gov.pk"]
@@ -334,7 +339,8 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - If evidence is insufficient for the exact topic, clearly say verified information for that specific topic could not be established.
 - For NADRA Urdu document lists, prefer a short numbered list over a table unless the evidence clearly supports a table. This reduces accidental column/header reinterpretation.
 - If sources conflict, state the conflict briefly rather than guessing.
-- For Union Council / Local Government birth- and death-certificate questions, use the supplied CIVIL REGISTRATION EVIDENCE as authoritative official evidence. Do not say that the documents are unavailable when that evidence is present. If no province is specified, clearly label Punjab and KP requirements separately; do not merge them into one national list. For death registration, distinguish normal registration from late registration where the official evidence does so.
+- For Union Council / Local Government birth- and death-certificate questions, use the supplied CIVIL REGISTRATION EVIDENCE as authoritative official evidence. Do not say that the documents are unavailable when that evidence is present. Treat Punjab, KP, Sindh, Balochistan and Islamabad Capital Territory as separate jurisdictions. Never merge provincial/ICT requirements into one national list. If the official source for a jurisdiction does not provide the requested document list, say that clearly rather than inventing it.
+- Output formatting: use clean Markdown only. Do not output HTML tags such as <br>, HTML entities, zero-width characters, non-breaking spaces, or escaped markup. Use normal spaces and simple numbered lists/tables.
 - For Union Council / Local Government questions, birth/death/marriage/divorce registration is provincial. Use the retrieved official provincial source evidence directly. Never reply that evidence is unavailable when the retrieved source contains the requested document list. If no province was specified and both Punjab and KP evidence are present, present the requirements separately by province and do not merge them into one national list.
 - For Passport Services questions, prefer the retrieved DGI&P official source text over general knowledge.
 - For passport document questions, distinguish adults (18+), minors, first-time/new passport, renewal, lost/damaged passport, and online/overseas categories when the official evidence does so. Do not mix requirements between categories.

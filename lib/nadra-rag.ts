@@ -42,7 +42,15 @@ function score(text: string, queryTerms: string[]) {
   return value;
 }
 
-async function getPolicyConfig(): Promise<PolicyConfig> {\n  if (policyConfigCache) return policyConfigCache;\n  const res = await fetch(ENGLISH_CONFIG_URL, { cache: "force-cache" });\n  if (!res.ok) throw new Error("Unable to load NADRA policy configuration.");\n  policyConfigCache = await res.json();\n  return policyConfigCache!;\n}\n\nasync function getEnglishChunks(): Promise<EnglishChunk[]> {
+async function getPolicyConfig(): Promise<PolicyConfig> {
+  if (policyConfigCache) return policyConfigCache;
+  const res = await fetch(ENGLISH_CONFIG_URL, { cache: "force-cache" });
+  if (!res.ok) throw new Error("Unable to load NADRA policy configuration.");
+  policyConfigCache = await res.json();
+  return policyConfigCache!;
+}
+
+async function getEnglishChunks(): Promise<EnglishChunk[]> {
   if (englishCache) return englishCache;
   const res = await fetch(ENGLISH_METADATA_URL, { cache: "force-cache" });
   if (!res.ok) throw new Error("Unable to load NADRA policy metadata.");
@@ -82,8 +90,26 @@ function expandQuestion(question: string) {
 
 export async function retrieveNadraEvidence(question: string, language: "English" | "Urdu") {
   try {
-    const query = expandQuestion(question);\n    const config = await getPolicyConfig();\n    const policy = config.document || {};\n    const effectiveDate = policy.effective_date || "21 September 2026";\n    const issueDate = policy.issue_date || "18 September 2026";
+    const query = expandQuestion(question);
+    const config = await getPolicyConfig();
+    const policy = config.document || {};
+    const effectiveDate = policy.effective_date || "21 September 2026";
+    const issueDate = policy.issue_date || "18 September 2026";
     const queryTerms = terms(query);
+    const qn = normalize(question);
+
+    if (/effective date|effective_date|مؤثر ہونے کی تاریخ|نافذ العمل تاریخ|موثر ہونے کی تاریخ/i.test(qn)) {
+      return [
+        "SOURCE: NADRA Registration Policy",
+        `DOCUMENT: ${policy.document || "Registration Policy"}`,
+        `VERSION: ${policy.version || "RP-6.0.2"}`,
+        `IDENTIFIER: ${policy.identifier || "NADRA-Reg-Policy-6.0.2"}`,
+        `STATUS: ${policy.status || "Approved"}`,
+        `ISSUE DATE: ${issueDate}`,
+        `EFFECTIVE DATE: ${effectiveDate}`,
+        `TOTAL PAGES: ${policy.total_pages || 44}`
+      ].join("\n");
+    }
 
     if (language === "Urdu") {
       const chunks = await getUrduChunks();
@@ -97,10 +123,17 @@ export async function retrieveNadraEvidence(question: string, language: "English
       return [
         "SOURCE: NADRA Registration Policy 6.0.2 (Urdu)",
         "VERSION: RP-6.0.2",
-        `ISSUE DATE: ${issueDate}`,\n      `EFFECTIVE DATE: ${effectiveDate}`,
+        `ISSUE DATE: ${issueDate}`,
+      `EFFECTIVE DATE: ${effectiveDate}`,
         "",
-        ...ranked.map((x, i) => `[NADRA URDU EVIDENCE ${i + 1}]\nChunk: ${x.index + 1}\nRetrieval score: ${x.score}\n\n${x.text.slice(0, 5000)}`)
-      ].join("\n\n");
+        ...ranked.map((x, i) => `[NADRA URDU EVIDENCE ${i + 1}]
+Chunk: ${x.index + 1}
+Retrieval score: ${x.score}
+
+${x.text.slice(0, 5000)}`)
+      ].join("
+
+");
     }
 
     const chunks = await getEnglishChunks();
@@ -114,10 +147,18 @@ export async function retrieveNadraEvidence(question: string, language: "English
     return [
       "SOURCE: NADRA Registration Policy 6.0.2",
       "VERSION: RP-6.0.2",
-      `ISSUE DATE: ${issueDate}`,\n      `EFFECTIVE DATE: ${effectiveDate}`,
+      `ISSUE DATE: ${issueDate}`,
+      `EFFECTIVE DATE: ${effectiveDate}`,
       "",
-      ...ranked.map((x, i) => `[NADRA POLICY EVIDENCE ${i + 1}]\nPage: ${x.item.page ?? "N/A"}\nSection: ${x.item.major_section || x.item.subsection || ""}\nRetrieval score: ${x.score}\n\n${(x.item.text || "").slice(0, 5000)}`)
-    ].join("\n\n");
+      ...ranked.map((x, i) => `[NADRA POLICY EVIDENCE ${i + 1}]
+Page: ${x.item.page ?? "N/A"}
+Section: ${x.item.major_section || x.item.subsection || ""}
+Retrieval score: ${x.score}
+
+${(x.item.text || "").slice(0, 5000)}`)
+    ].join("
+
+");
   } catch (error) {
     console.error("NADRA RAG retrieval failed:", error);
     return "";

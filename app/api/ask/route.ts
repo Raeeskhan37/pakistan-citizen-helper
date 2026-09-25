@@ -258,15 +258,19 @@ const departmentDomains:Record<string,string[]>={
 };
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
   let civilRegistrationEvidence="";
-  if(requested==="Union Council" && (detectTopic(question)==="birth certificate" || normalize(question).includes("birth") || normalize(question).includes("پیدائش") || normalize(question).includes("پیدائشی"))){
-    civilRegistrationEvidence=`
+  if(requested==="Union Council"){
+    const nq=normalize(question);
+    const isBirth=nq.includes("birth")||nq.includes("پیدائش")||nq.includes("پیدائشی");
+    const isDeath=nq.includes("death")||nq.includes("وفات")||nq.includes("موت")||nq.includes("ڈیتھ");
+    if(isBirth){
+      civilRegistrationEvidence=`
 OFFICIAL VERIFIED EVIDENCE — PUNJAB LOCAL GOVERNMENT
 Source: https://lgcd.punjab.gov.pk/faq
 For birth registration within 60 days, the Punjab Local Government FAQ states that the applicant should contact the relevant Union Council. Required documents:
 1. Copy of parents' NIC/CNIC.
 2. Birth certificate/slip issued by the hospital or traditional birth attendant.
 3. Union Council-provided form, duly completed with signature and thumb impression.
-The same official FAQ states registration is free, while PKR 100 is charged for issuance of the NADRA computerized birth registration certificate. It states 3 working days for normal registration, 7 working days for late registration from 61 days to 7 years, and 20 working days for registration beyond 7 years.
+Registration is free; PKR 100 is charged for issuance of the NADRA computerized birth registration certificate.
 
 OFFICIAL VERIFIED EVIDENCE — KP LOCAL GOVERNMENT
 Source: https://lgkp.gov.pk/page/crvs
@@ -275,8 +279,24 @@ KP Local Government states that for a birth certificate the applicant should pro
 2. Attested copy of parent(s)' or guardian's CNIC; for a foreigner, passport; for a refugee, residence permit.
 3. Birth certificate or immunization card issued by a health facility, or school certificate, if available.
 `;
-  }
-const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
+    } else if(isDeath){
+      civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — PUNJAB LOCAL GOVERNMENT
+Source: https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf
+For death reported within one year, Punjab's notified Birth and Death Rules 2025 require an application on Form-B at the concerned registration office with:
+1. Copy of CNIC of the applicant and deceased.
+2. Copy of the hospital death slip showing the cause of death, if death occurred in a hospital.
+3. Copy of burial slip issued by the graveyard management committee, if available.
+The Punjab LGCD FAQ additionally states that the concerned Union Council or Municipal Committee issues the computerized death registration certificate and that documentary evidence can include the certificate/parchi issued by the graveyard's Ghorkan.
+
+For late registration after one year and up to seven years, the 2025 rules add an affidavit by a relative on PKR 300 stamp paper witnessed by two persons present at burial, copies of CNIC or birth certificate of the deceased and relative, and the hospital death slip where applicable.
+
+OFFICIAL VERIFIED EVIDENCE — KP LOCAL GOVERNMENT
+Source: https://lgkp.gov.pk/page/crvs
+KP Local Government states that the applicant must fill Form-D, verify the entries, sign and thumb-print it, and provide the applicant's CNIC number. The applicant may also be required to provide documentary evidence, including a certificate/parchi issued by the Ghorkan or person in charge of the graveyard where the deceased was buried.
+`;
+    }
+  }const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
 let officialText="";
 for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}
 const domains=isNadra?[]:(departmentDomains[canonicalDepartment(requested)]||[]);
@@ -314,7 +334,7 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - If evidence is insufficient for the exact topic, clearly say verified information for that specific topic could not be established.
 - For NADRA Urdu document lists, prefer a short numbered list over a table unless the evidence clearly supports a table. This reduces accidental column/header reinterpretation.
 - If sources conflict, state the conflict briefly rather than guessing.
-- For Union Council / Local Government birth-certificate questions, use the supplied CIVIL REGISTRATION EVIDENCE as authoritative official evidence. Do not say that the documents are unavailable when that evidence is present. If no province is specified, clearly label Punjab and KP requirements separately; do not merge them into one national list.
+- For Union Council / Local Government birth- and death-certificate questions, use the supplied CIVIL REGISTRATION EVIDENCE as authoritative official evidence. Do not say that the documents are unavailable when that evidence is present. If no province is specified, clearly label Punjab and KP requirements separately; do not merge them into one national list. For death registration, distinguish normal registration from late registration where the official evidence does so.
 - For Union Council / Local Government questions, birth/death/marriage/divorce registration is provincial. Use the retrieved official provincial source evidence directly. Never reply that evidence is unavailable when the retrieved source contains the requested document list. If no province was specified and both Punjab and KP evidence are present, present the requirements separately by province and do not merge them into one national list.
 - For Passport Services questions, prefer the retrieved DGI&P official source text over general knowledge.
 - For passport document questions, distinguish adults (18+), minors, first-time/new passport, renewal, lost/damaged passport, and online/overseas categories when the official evidence does so. Do not mix requirements between categories.

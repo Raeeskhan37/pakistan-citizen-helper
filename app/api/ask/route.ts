@@ -262,7 +262,6 @@ const departmentDomains:Record<string,string[]>={
  "NADRA Services":["nadra.gov.pk"]
 };
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
-  let civilRegistrationEvidence="";
   if(requested==="Union Council" && (normalize(question).includes("death certificate") || normalize(question).includes("death") || normalize(question).includes("ڈیتھ") || normalize(question).includes("وفات") || normalize(question).includes("موت"))){
     civilRegistrationEvidence=`
 OFFICIAL VERIFIED EVIDENCE — PUNJAB

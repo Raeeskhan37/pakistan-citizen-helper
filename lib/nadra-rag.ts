@@ -1,4 +1,5 @@
 const ENGLISH_METADATA_URL = "https://raw.githubusercontent.com/Raeeskhan37/NADRA-Policy-Assistant/main/nadra_registration_policy_metadata.json";
+const ENGLISH_CONFIG_URL = "https://raw.githubusercontent.com/Raeeskhan37/NADRA-Policy-Assistant/main/nadra_registration_policy_config.json";
 const URDU_TEXT_URL = "https://raw.githubusercontent.com/Raeeskhan37/NADRA-Policy-Assistant/main/urdu/nadra_urdu_6_0_2_v2_clean.txt";
 
 type EnglishChunk = {
@@ -10,7 +11,9 @@ type EnglishChunk = {
   text?: string;
 };
 
+type PolicyConfig = { document?: { organization?: string; document?: string; version?: string; identifier?: string; status?: string; issue_date?: string; effective_date?: string; total_pages?: number } };
 let englishCache: EnglishChunk[] | null = null;
+let policyConfigCache: PolicyConfig | null = null;
 let urduCache: string[] | null = null;
 
 const STOP = new Set([
@@ -39,7 +42,7 @@ function score(text: string, queryTerms: string[]) {
   return value;
 }
 
-async function getEnglishChunks(): Promise<EnglishChunk[]> {
+async function getPolicyConfig(): Promise<PolicyConfig> {\n  if (policyConfigCache) return policyConfigCache;\n  const res = await fetch(ENGLISH_CONFIG_URL, { cache: "force-cache" });\n  if (!res.ok) throw new Error("Unable to load NADRA policy configuration.");\n  policyConfigCache = await res.json();\n  return policyConfigCache!;\n}\n\nasync function getEnglishChunks(): Promise<EnglishChunk[]> {
   if (englishCache) return englishCache;
   const res = await fetch(ENGLISH_METADATA_URL, { cache: "force-cache" });
   if (!res.ok) throw new Error("Unable to load NADRA policy metadata.");
@@ -79,7 +82,7 @@ function expandQuestion(question: string) {
 
 export async function retrieveNadraEvidence(question: string, language: "English" | "Urdu") {
   try {
-    const query = expandQuestion(question);
+    const query = expandQuestion(question);\n    const config = await getPolicyConfig();\n    const policy = config.document || {};\n    const effectiveDate = policy.effective_date || "21 September 2026";\n    const issueDate = policy.issue_date || "18 September 2026";
     const queryTerms = terms(query);
 
     if (language === "Urdu") {
@@ -94,7 +97,7 @@ export async function retrieveNadraEvidence(question: string, language: "English
       return [
         "SOURCE: NADRA Registration Policy 6.0.2 (Urdu)",
         "VERSION: RP-6.0.2",
-        "EFFECTIVE DATE: 21 September 2026",
+        `ISSUE DATE: ${issueDate}`,\n      `EFFECTIVE DATE: ${effectiveDate}`,
         "",
         ...ranked.map((x, i) => `[NADRA URDU EVIDENCE ${i + 1}]\nChunk: ${x.index + 1}\nRetrieval score: ${x.score}\n\n${x.text.slice(0, 5000)}`)
       ].join("\n\n");
@@ -111,7 +114,7 @@ export async function retrieveNadraEvidence(question: string, language: "English
     return [
       "SOURCE: NADRA Registration Policy 6.0.2",
       "VERSION: RP-6.0.2",
-      "EFFECTIVE DATE: 21 September 2026",
+      `ISSUE DATE: ${issueDate}`,\n      `EFFECTIVE DATE: ${effectiveDate}`,
       "",
       ...ranked.map((x, i) => `[NADRA POLICY EVIDENCE ${i + 1}]\nPage: ${x.item.page ?? "N/A"}\nSection: ${x.item.major_section || x.item.subsection || ""}\nRetrieval score: ${x.score}\n\n${(x.item.text || "").slice(0, 5000)}`)
     ].join("\n\n");

@@ -246,7 +246,8 @@ if(domains.length){
 }
 officialText=officialText.slice(0,10000);
  const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
- const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
+ const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";
+ if(!selected.records.length&&!officialText&&!ragEvidence)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the central verified government information agent inside Pakistan Citizen Helper.
 
 Your primary responsibility is to PROVIDE the citizen with the required answer. Do not send the citizen away to search another government website when the supplied official evidence contains the requested information.
@@ -284,6 +285,9 @@ Requested language: ${language}
 Selected department/service: ${selected.service||requested||"not specified"}
 Jurisdiction: ${selected.jurisdiction||"not specified"}
 Language: ${language}
+
+NADRA POLICY RAG EVIDENCE:
+${ragEvidence||"No NADRA policy RAG evidence was retrieved."}
 
 VERIFIED DATABASE RECORDS:
 ${dbContext}

@@ -236,17 +236,18 @@ const departmentDomains:Record<string,string[]>={
  "Passport Services":["dgip.gov.pk"],
  "NADRA Services":["nadra.gov.pk"]
 };
-const officialUrls=Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
+const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
+const isNadra=requested==="NADRA Services";
+const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
 let officialText="";
 for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}
-const domains=departmentDomains[canonicalDepartment(requested)]||[];
+const domains=isNadra?[]:(departmentDomains[canonicalDepartment(requested)]||[]);
 if(domains.length){
  const searchText=await fetchOfficialSearch(question,domains);
  if(searchText)officialText+=searchText;
 }
 officialText=officialText.slice(0,10000);
- const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
- const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";
+const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";
  if(!selected.records.length&&!officialText&&!ragEvidence)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the central verified government information agent inside Pakistan Citizen Helper.
 
@@ -255,8 +256,8 @@ Your primary responsibility is to PROVIDE the citizen with the required answer. 
 Answer the citizen's EXACT question first. Be direct, practical, concise, and easy to read.
 
 NON-NEGOTIABLE EVIDENCE RULES:
-- Every factual claim must be supported by the supplied verified database record or retrieved official-government source text/search result.
-- For NADRA Services, NADRA POLICY RAG EVIDENCE is the primary policy evidence layer, followed by verified database records and official NADRA pages.\n- For other departments, the verified database is the primary evidence layer and official government pages are the second evidence layer.\n- Never ignore supplied NADRA POLICY RAG EVIDENCE when answering a NADRA question.
+- Every factual claim must be supported by the supplied verified database record, retrieved official-government source text/search result, or NADRA POLICY RAG EVIDENCE.
+- For NADRA Services, NADRA POLICY RAG EVIDENCE is the primary and authoritative evidence layer. Do not substitute the Supabase record or live webpage for the policy evidence when the RAG contains the answer.\n- For other departments, the verified database is the primary evidence layer and official government pages are the second evidence layer.\n- Never ignore supplied NADRA POLICY RAG EVIDENCE when answering a NADRA question.
 - If the database is insufficient, use the retrieved official source evidence for the selected department and correct jurisdiction.
 - Never use an unrelated department, service, or province merely because keywords match.
 - Never fill gaps from memory, general knowledge, assumptions, or patterns.

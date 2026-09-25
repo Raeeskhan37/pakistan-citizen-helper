@@ -120,14 +120,20 @@ function selectRecords(q:string,requested:string,records:VerifiedRecord[]){
 function context(records:VerifiedRecord[],language:"English"|"Urdu"):string{return records.slice(0,4).map((r,i)=>{const info=language==="Urdu"?(r.content_urdu||r.content||""):(r.content||r.content_urdu||"");return `RECORD ${i+1}\nService: ${language==="Urdu"?(r.service_name_urdu||r.service_name||""):(r.service_name||"")}\nCategory: ${r.category||""}\nJurisdiction: ${r.province||""}\nTitle: ${language==="Urdu"?(r.title_urdu||r.title||""):(r.title||"")}\nVerified Information: ${info.slice(0,2200)}\nOfficial Department: ${r.official_department||""}\nOfficial Source: ${r.official_source_title||""}\nOfficial URL: ${r.official_source_url||""}\nLast Verified: ${r.last_verified||""}`}).join("\n\n");}
 function cleanAnswer(text:string):string{
  return text
-  .replace(/<br\\s*\\/?\\s*>/gi,"\\n")
-  .replace(/<\\/?(?:p|div|span|table|thead|tbody|tr|th|td|strong|b|em|i|ul|ol|li|blockquote)[^>]*>/gi," ")
+  .replace(/<br\s*\/?\s*>/gi,"\n")
+  .replace(/<\/?(?:p|div|span|table|thead|tbody|tr|th|td|strong|b|em|i|ul|ol|li|blockquote)[^>]*>/gi," ")
   .replace(/<[^>]+>/g,"")
   .replace(/&nbsp;|&#160;|&#xA0;/gi," ")
-  .replace(/&amp;/gi,"&").replace(/&lt;/gi,"<").replace(/&gt;/gi,">")
-  .replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'")
-  .replace(/[\\u200B-\\u200D\\uFEFF]/g,"").replace(/\\u00A0/g," ")
-  .replace(/[ \\t]+\\n/g,"\\n").replace(/\\n{3,}/g,"\\n\\n").trim();
+  .replace(/&amp;/gi,"&")
+  .replace(/&lt;/gi,"<")
+  .replace(/&gt;/gi,">")
+  .replace(/&quot;/gi,'"')
+  .replace(/&#39;|&apos;/gi,"'")
+  .replace(/[\u200B-\u200D\uFEFF]/g,"")
+  .replace(/\u00A0/g," ")
+  .replace(/[ \t]+\n/g,"\n")
+  .replace(/\n{3,}/g,"\n\n")
+  .trim();
 }
 function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت، اس مخصوص سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ یا دستیاب سرکاری ماخذ میں کافی معلومات موجود نہیں ہیں۔ میں غیر مصدقہ طریقہ یا فیس نہیں بتاؤں گا۔":"Sorry, sufficient verified government information is not currently available for this specific question. I will not invent a procedure, document requirement, fee, or deadline.";}
 function sourceForQuestion(question:string,service:string|null,jurisdiction:string|null,requested:string=""){

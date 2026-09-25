@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { retrieveNadraEvidence } from "@/lib/nadra-rag";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -244,6 +245,7 @@ if(domains.length){
  if(searchText)officialText+=searchText;
 }
 officialText=officialText.slice(0,10000);
+ const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
  const dbContext=selected.records.length?context(selected.records,language):"No matching verified database record was found.";if(!selected.records.length&&!officialText)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the central verified government information agent inside Pakistan Citizen Helper.
 

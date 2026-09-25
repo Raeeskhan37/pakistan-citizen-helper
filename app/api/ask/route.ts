@@ -257,6 +257,25 @@ const departmentDomains:Record<string,string[]>={
  "NADRA Services":["nadra.gov.pk"]
 };
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
+  let civilRegistrationEvidence="";
+  if(requested==="Union Council" && (detectTopic(question)==="birth certificate" || normalize(question).includes("birth") || normalize(question).includes("پیدائش") || normalize(question).includes("پیدائشی"))){
+    civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — PUNJAB LOCAL GOVERNMENT
+Source: https://lgcd.punjab.gov.pk/faq
+For birth registration within 60 days, the Punjab Local Government FAQ states that the applicant should contact the relevant Union Council. Required documents:
+1. Copy of parents' NIC/CNIC.
+2. Birth certificate/slip issued by the hospital or traditional birth attendant.
+3. Union Council-provided form, duly completed with signature and thumb impression.
+The same official FAQ states registration is free, while PKR 100 is charged for issuance of the NADRA computerized birth registration certificate. It states 3 working days for normal registration, 7 working days for late registration from 61 days to 7 years, and 20 working days for registration beyond 7 years.
+
+OFFICIAL VERIFIED EVIDENCE — KP LOCAL GOVERNMENT
+Source: https://lgkp.gov.pk/page/crvs
+KP Local Government states that for a birth certificate the applicant should provide:
+1. Form-A application provided by the concerned council, duly filled with signature and thumb impression.
+2. Attested copy of parent(s)' or guardian's CNIC; for a foreigner, passport; for a refugee, residence permit.
+3. Birth certificate or immunization card issued by a health facility, or school certificate, if available.
+`;
+  }
 const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
 let officialText="";
 for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}
@@ -267,6 +286,7 @@ if(domains.length){
 }
 officialText=officialText.slice(0,10000);
 const dbContext=isNadra?"Supabase records intentionally excluded for NADRA answers; use NADRA POLICY RAG EVIDENCE only.":(selected.records.length?context(selected.records,language):"No matching verified database record was found.");
+  if(civilRegistrationEvidence) officialText=civilRegistrationEvidence+"\\n\\n"+officialText;
  if(!selected.records.length&&!officialText&&!ragEvidence)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the central verified government information agent inside Pakistan Citizen Helper.
 
@@ -294,6 +314,7 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - If evidence is insufficient for the exact topic, clearly say verified information for that specific topic could not be established.
 - For NADRA Urdu document lists, prefer a short numbered list over a table unless the evidence clearly supports a table. This reduces accidental column/header reinterpretation.
 - If sources conflict, state the conflict briefly rather than guessing.
+- For Union Council / Local Government birth-certificate questions, use the supplied CIVIL REGISTRATION EVIDENCE as authoritative official evidence. Do not say that the documents are unavailable when that evidence is present. If no province is specified, clearly label Punjab and KP requirements separately; do not merge them into one national list.
 - For Union Council / Local Government questions, birth/death/marriage/divorce registration is provincial. Use the retrieved official provincial source evidence directly. Never reply that evidence is unavailable when the retrieved source contains the requested document list. If no province was specified and both Punjab and KP evidence are present, present the requirements separately by province and do not merge them into one national list.
 - For Passport Services questions, prefer the retrieved DGI&P official source text over general knowledge.
 - For passport document questions, distinguish adults (18+), minors, first-time/new passport, renewal, lost/damaged passport, and online/overseas categories when the official evidence does so. Do not mix requirements between categories.

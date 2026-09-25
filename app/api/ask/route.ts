@@ -287,149 +287,73 @@ const isBirth=nq.includes("birth")||nq.includes("پیدائش")||nq.includes("پ
 const isDeath=nq.includes("death")||nq.includes("وفات")||nq.includes("موت")||nq.includes("ڈیتھ");
 const isCivilRegistration=requested==="Union Council"&&(isBirth||isDeath);
 
-if(isBirth){
- if(selected.jurisdiction==="Punjab"){
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Punjab
-Source: https://lgcd.punjab.gov.pk/faq
-1. Copy of parents' NIC/CNIC.
-2. Birth certificate/slip issued by the hospital or traditional birth attendant.
-3. Union Council-provided form, completed with signature and thumb impression.
-Registration is free; PKR 100 is charged for issuance of the NADRA computerized birth registration certificate.
-`;
- } else if(selected.jurisdiction==="Khyber Pakhtunkhwa"){
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Khyber Pakhtunkhwa
-Source: https://lgkp.gov.pk/page/crvs
-1. Form-A application supplied by the concerned council, completed with signature and thumb impression.
-2. Attested copy of parent(s)' or guardian's CNIC; for a foreigner, passport; for a refugee, residence permit.
-3. Birth certificate or immunization card issued by a health facility, or school certificate if available.
-`;
- } else if(selected.jurisdiction==="Islamabad Capital Territory"){
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Islamabad Capital Territory
-Source: https://ictadministration.gov.pk/birth-certificate/
-The retrieved official service provides birth-registration information requirements. No additional physical-document checklist is asserted here unless explicitly listed by the source.
-`;
- } else if(selected.jurisdiction==="Sindh"){
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Sindh
-Source: https://www.sindh.gov.pk/
-The retrieved official source identifies civil registration as a local-council service but does not establish a specific birth-certificate document checklist.
-`;
- } else if(selected.jurisdiction==="Balochistan"){
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Balochistan
-Source: https://balochistan.gov.pk/
-The retrieved official source does not establish a specific birth-certificate document checklist.
-`;
- } else {
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Punjab
-Source: https://lgcd.punjab.gov.pk/faq
-1. Copy of parents' NIC/CNIC.
-2. Birth certificate/slip issued by the hospital or traditional birth attendant.
-3. Union Council-provided form, completed with signature and thumb impression.
+const civilSources={
+ Punjab:"https://lgcd.punjab.gov.pk/faq",
+ PunjabDeath:"https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf",
+ KP:"https://lgkp.gov.pk/page/crvs",
+ ICTBirth:"https://ictadministration.gov.pk/birth-certificate/",
+ ICTDeath:"https://ictadministration.gov.pk/death-registration/",
+ Sindh:"https://www.sindh.gov.pk/",
+ Balochistan:"https://balochistan.gov.pk/wp-content/uploads/2024/10/Balochistan-Local-Government-Act-2010.pdf"
+} as const;
 
-OFFICIAL VERIFIED EVIDENCE — Khyber Pakhtunkhwa
-Source: https://lgkp.gov.pk/page/crvs
-1. Form-A application supplied by the concerned council, completed with signature and thumb impression.
-2. Attested copy of parent(s)' or guardian's CNIC; for a foreigner, passport; for a refugee, residence permit.
-3. Birth certificate or immunization card issued by a health facility, or school certificate if available.
+function civilSourceLine(name:string,url:string){return `Source: ${url}`;}
 
-OFFICIAL VERIFIED EVIDENCE — Islamabad Capital Territory
-Source: https://ictadministration.gov.pk/birth-certificate/
-The retrieved official service does not establish a specific additional physical-document checklist here.
-
-OFFICIAL VERIFIED EVIDENCE — Sindh
-Source: https://www.sindh.gov.pk/
-The retrieved official source does not establish a specific birth-certificate document checklist.
-
-OFFICIAL VERIFIED EVIDENCE — Balochistan
-Source: https://balochistan.gov.pk/
-The retrieved official source does not establish a specific birth-certificate document checklist.
-`;
+function buildCivilAnswer(kind:"birth"|"death",jurisdiction:string|null,language:"English"|"Urdu"):string{
+ const generic=!jurisdiction;
+ if(language==="Urdu"){
+  const birth={
+   Punjab:[`**پنجاب**`,[`1. والدین کے NIC/CNIC کی کاپی۔`,`2. ہسپتال یا روایتی برتھ اٹینڈنٹ کی طرف سے جاری کردہ پیدائش کا سرٹیفکیٹ/سلِپ۔`,`3. متعلقہ یونین کونسل کا فراہم کردہ فارم، دستخط اور انگوٹھے کے نشان کے ساتھ مکمل شدہ۔`],civilSources.Punjab],
+   KP:[`**خیبر پختونخوا**`,[`1. فارم-A، متعلقہ کونسل سے حاصل کردہ، دستخط اور انگوٹھے کے نشان کے ساتھ مکمل شدہ۔`,`2. والدین/سرپرست کے CNIC کی تصدیق شدہ کاپی؛ غیر ملکی کے لیے پاسپورٹ، اور پناہ گزین کے لیے رہائشی اجازت نامہ۔`,`3. صحت کے ادارے کا جاری کردہ پیدائشی سرٹیفکیٹ یا امیونائزیشن کارڈ، یا دستیاب ہو تو اسکول سرٹیفکیٹ۔`],civilSources.KP],
+   ICT:[`**اسلام آباد کیپیٹل ٹیریٹری (ICT)**,[`1. والد کا مکمل نام اور CNIC کی فوٹو کاپی۔`,`2. بچے کا نام، جنس، جائے پیدائش اور تاریخ/وقت پیدائش۔`,`3. ہسپتال/کلینک اور ڈیلیوری میں شریک ڈاکٹر/مڈوائف کی تفصیل؛ تصدیق شدہ فوٹو کاپی درکار ہے۔`,`4. والدہ کا نام، پتہ اور CNIC نمبر/قومیت، مذہب اور والد کی قومیت۔`,`5. والد کا رہائشی پتہ اور پیشہ۔`,`6. رپورٹ کرنے والے شخص کا نام اور پتہ، اور رپورٹ کی تاریخ۔`],civilSources.ICTBirth],
+   Sindh:[`**سندھ**,[`اس وقت دستیاب سرکاری ماخذ میں پیدائش کے سرٹیفکیٹ کے لیے مخصوص دستاویزات کی فہرست قائم نہیں ہوتی۔ غیر مصدقہ دستاویز شامل نہیں کی جائے گی۔`],civilSources.Sindh],
+   Balochistan:[`**بلوچستان**,[`اس وقت دستیاب سرکاری ماخذ میں پیدائش کے سرٹیفکیٹ کے لیے مخصوص دستاویزات کی فہرست قائم نہیں ہوتی۔ غیر مصدقہ دستاویز شامل نہیں کی جائے گی۔`],civilSources.Balochistan]
+  };
+  const death={
+   Punjab:[`**پنجاب**`,[`**ایک سال کے اندر رپورٹ ہونے والی وفات:**`,`1. فارم-B۔`,`2. درخواست دہندہ کے CNIC کی کاپی۔`,`3. متوفی کے CNIC کی کاپی۔`,`4. اگر وفات ہسپتال میں ہوئی ہو تو ہسپتال کی ڈیتھ سلِپ جس میں وجۂ وفات درج ہو۔`,`5. اگر دستیاب ہو تو قبرستان کی طرف سے جاری کردہ تدفین کی سلِپ۔`,`**ایک سال سے زیادہ اور سات سال تک تاخیر سے رجسٹریشن:**`,`1. رشتہ دار کا PKR 300 اسٹامپ پیپر پر حلف نامہ، جس کی تصدیق تدفین کے وقت موجود دو افراد کریں۔`,`2. متوفی اور درخواست دینے والے رشتہ دار کے CNIC یا برتھ سرٹیفکیٹ کی نقول۔`,`3. جہاں قابلِ اطلاق ہو ہسپتال کی ڈیتھ سلِپ۔`],civilSources.PunjabDeath],
+   KP:[`**خیبر پختونخوا**`,[`1. فارم-D، مکمل، تصدیق شدہ، دستخط شدہ اور انگوٹھے کے نشان کے ساتھ۔`,`2. درخواست دہندہ کا CNIC نمبر۔`,`3. دستیاب ہو تو گورکن/قبرستان کے ذمہ دار کی طرف سے جاری کردہ سرٹیفکیٹ یا پرچی سمیت دستاویزی ثبوت۔`],civilSources.KP],
+   ICT:[`**اسلام آباد کیپیٹل ٹیریٹری (ICT)**`,[`یہاں سرکاری صفحہ الگ فزیکل ڈاکیومنٹ چیک لسٹ کے بجائے مطلوبہ معلومات بتاتا ہے:`,`1. متوفی کا نام اور قومیت۔`,`2. شوہر/والد/والدہ کا نام اور پیشہ۔`,`3. متوفی کا پتہ۔`,`4. مذہب، جنس اور ذات۔`,`5. تاریخ، وقت اور وجۂ وفات، اور عمر۔`,`6. رپورٹ کرنے والے شخص کا نام اور پتہ۔`,`7. رپورٹ کی تاریخ۔`,`جمع کرانے کی جگہ: Citizen Facilitation Center, G-11/4, Islamabad۔ سرکاری صفحے پر 7 دن کا processing time درج ہے۔`],civilSources.ICTDeath],
+   Sindh:[`**سندھ**`,[`دستیاب سرکاری ماخذ میں ڈیتھ سرٹیفکیٹ کے لیے مخصوص دستاویزات کی فہرست فراہم نہیں کی گئی۔ اس لیے غیر مصدقہ دستاویزات شامل نہیں کی جائیں گی۔`],civilSources.Sindh],
+   Balochistan:[`**بلوچستان**`,[`دستیاب سرکاری ماخذ وفات کی رجسٹریشن کو یونین کونسل کے فرائض میں شامل کرتا ہے، لیکن مخصوص ڈیتھ سرٹیفکیٹ دستاویزات کی چیک لسٹ فراہم نہیں کرتا۔ اس لیے غیر مصدقہ دستاویزات شامل نہیں کی جائیں گی۔`],civilSources.Balochistan]
+  };
+  const data=kind==="birth"?birth:death;
+  const order=[["Punjab",data.Punjab],["Khyber Pakhtunkhwa",data.KP],["Islamabad Capital Territory",data.ICT],["Sindh",data.Sindh],["Balochistan",data.Balochistan]] as const;
+  const wanted=jurisdiction==="Khyber Pakhtunkhwa"?"Khyber Pakhtunkhwa":jurisdiction==="Islamabad Capital Territory"?"Islamabad Capital Territory":jurisdiction||"";
+  const items=generic?order:order.filter(([name])=>name===wanted);
+  return (generic?`### ${kind==="birth"?"یونین کونسل سے پیدائشی سرٹیفکیٹ کے لیے":"یونین کونسل سے ڈیتھ سرٹیفکیٹ کے لیے"} تصدیق شدہ معلومات\n\n`:"")+items.map(([,v])=>`${v[0]}\n\n${v[1].map(x=>`- ${x}`).join("\n")}\n\n${civilSourceLine(String(v[0]).replace(/[*]/g,""),v[2])}`).join("\n\n");
  }
+ const birth={
+  Punjab:[`### Punjab`,[`1. Copy of the parents' NIC/CNIC.`,`2. Birth certificate or birth slip issued by the hospital or traditional birth attendant.`,`3. Union Council-provided form, completed with signature and thumb impression.`],civilSources.Punjab],
+  KP:[`### Khyber Pakhtunkhwa`,[`1. Form-A supplied by the concerned council, completed with signature and thumb impression.`,`2. Attested copy of the parent(s)' or guardian's CNIC; for a foreigner, passport; for a refugee, residence permit.`,`3. Birth certificate or immunization card issued by a health facility, or school certificate if available.`],civilSources.KP],
+  ICT:[`### Islamabad Capital Territory (ICT)`,[`1. Father's full name and photocopy of National Identity Card number.`,`2. Child's name and sex, place of birth, and date and hour of birth.`,`3. Name of hospital/clinic and doctor or midwife who attended the delivery; an attested photocopy is required.`,`4. Mother's name and address and her CNIC number or nationality, religion and father's nationality.`,`5. Father's residential address and occupation/profession.`,`6. Name and address of the person making the report and the date of report.`],civilSources.ICTBirth],
+  Sindh:[`### Sindh`,[`The available official source does not establish a specific document checklist for birth-certificate registration. No unverified documents are added.`],civilSources.Sindh],
+  Balochistan:[`### Balochistan`,[`The available official source does not establish a specific document checklist for birth-certificate registration. No unverified documents are added.`],civilSources.Balochistan]
+ };
+ const death={
+  Punjab:[`### Punjab`,[`**Death reported within one year:**`,`1. Form-B.`,`2. Copy of the applicant's CNIC.`,`3. Copy of the deceased's CNIC.`,`4. Hospital death slip showing cause of death, if the death occurred in a hospital.`,`5. Burial slip issued by the graveyard management committee, if available.`,`**Late registration after one year and up to seven years:**`,`1. Affidavit by a relative on PKR 300 stamp paper, witnessed by two persons present at the burial.`,`2. Copies of the CNIC or birth certificate of the deceased and the relative making the application.`,`3. Hospital death slip where applicable.`],civilSources.PunjabDeath],
+  KP:[`### Khyber Pakhtunkhwa`,[`1. Form-D, completed, verified, signed and thumb-printed.`,`2. Applicant's CNIC number.`,`3. Documentary evidence may include a certificate or parchi issued by the Ghorkan or person in charge of the graveyard where the deceased was buried.`],civilSources.KP],
+  ICT:[`### Islamabad Capital Territory (ICT)`,[`The official page lists information to be provided rather than a separate physical-document checklist:`,`1. Deceased's name and nationality.`,`2. Husband/father/mother's name and occupation.`,`3. Address of the deceased.`,`4. Religion, sex and caste.`,`5. Date, time and cause of death, and age.`,`6. Name and address of the person reporting the death.`,`7. Date of report.`,`Submission: Citizen Facilitation Center, Mauve Area, G-11/4, Islamabad. The official page states a 7-day processing time.`],civilSources.ICTDeath],
+  Sindh:[`### Sindh`,[`The available official source confirms civil/death registration through local-government authorities but does not establish a specific document checklist for a death certificate. No unverified documents are added.`],civilSources.Sindh],
+  Balochistan:[`### Balochistan`,[`The available official source identifies death registration/certification as a Union Council function, but does not establish a specific death-certificate document checklist. No unverified documents are added.`],civilSources.Balochistan]
+ };
+ const data=kind==="birth"?birth:death;
+ const order=[["Punjab",data.Punjab],["Khyber Pakhtunkhwa",data.KP],["Islamabad Capital Territory",data.ICT],["Sindh",data.Sindh],["Balochistan",data.Balochistan]] as const;
+ const wanted=jurisdiction==="Khyber Pakhtunkhwa"?"Khyber Pakhtunkhwa":jurisdiction==="Islamabad Capital Territory"?"Islamabad Capital Territory":jurisdiction||"";
+ const items=generic?order:order.filter(([name])=>name===wanted);
+ return (generic?`## Verified official information for ${kind==="birth"?"Union Council birth registration":"Union Council death registration"}\n\n`:"")+items.map(([,v])=>`${v[0]}\n\n${v[1].map(x=>x.startsWith("**")||x.startsWith("###")?`\n${x}`:x).join("\n")}\n\nSource: ${v[2]}`).join("\n\n");
 }
 
-if(isDeath){
- if(selected.jurisdiction==="Punjab"){
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Punjab
-Source: https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf
-For death reported within one year: Form-B; copy of applicant's CNIC and deceased's CNIC; hospital death slip showing cause of death if death occurred in a hospital; burial slip issued by the graveyard management committee if available.
-For late registration after one year and up to seven years: an affidavit by a relative on PKR 300 stamp paper witnessed by two persons present at burial; copies of CNIC or birth certificate of the deceased and the relative; hospital death slip where applicable.
-`;
- } else if(selected.jurisdiction==="Khyber Pakhtunkhwa"){
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Khyber Pakhtunkhwa
-Source: https://lgkp.gov.pk/page/crvs
-1. Form-D, completed, verified, signed and thumb-printed.
-2. Applicant's CNIC number.
-3. Documentary evidence may include a certificate/parchi issued by the Ghorkan or person in charge of the graveyard where the deceased was buried.
-`;
- } else if(selected.jurisdiction==="Islamabad Capital Territory"){
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Islamabad Capital Territory
-Source: https://ictadministration.gov.pk/death-registration/
-The official service lists information to be provided rather than a separate physical-document checklist:
-1. Deceased's name and nationality.
-2. Husband/father/mother's name and occupation.
-3. Address.
-4. Religion, sex and caste.
-5. Date, time and cause of death, and age.
-6. Name and address of the person reporting the death.
-7. Date of report.
-The service states submission at Citizen Facilitation Center, G-11/4, Islamabad, with a stated processing time of 7 days.
-`;
- } else if(selected.jurisdiction==="Sindh"){
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Sindh
-Source: https://www.sindh.gov.pk/
-The retrieved official Sindh source identifies death registration as a local-council civil-registration service but does not provide a specific document checklist.
-No verified Sindh document list is asserted.
-`;
- } else if(selected.jurisdiction==="Balochistan"){
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Balochistan
-Source: https://balochistan.gov.pk/wp-content/uploads/2024/10/Balochistan-Local-Government-Act-2010.pdf
-The Act identifies registration/certification of deaths as a Union Council function, but the retrieved official source does not provide a specific document checklist.
-No verified Balochistan document list is asserted.
-`;
- } else {
-  civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — Punjab
-Source: https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf
-For death reported within one year: Form-B; applicant's and deceased's CNIC copies; hospital death slip showing cause of death if applicable; burial slip if available.
-For late registration after one year and up to seven years: relative's affidavit on PKR 300 stamp paper witnessed by two persons present at burial; copies of CNIC or birth certificate of deceased and relative; hospital death slip where applicable.
-
-OFFICIAL VERIFIED EVIDENCE — Khyber Pakhtunkhwa
-Source: https://lgkp.gov.pk/page/crvs
-1. Form-D, completed, verified, signed and thumb-printed.
-2. Applicant's CNIC number.
-3. Documentary evidence may include a graveyard/Ghorkan certificate or parchi.
-
-OFFICIAL VERIFIED EVIDENCE — Islamabad Capital Territory
-Source: https://ictadministration.gov.pk/death-registration/
-The official service lists information to be provided rather than a separate physical-document checklist:
-1. Deceased's name and nationality.
-2. Husband/father/mother's name and occupation.
-3. Address.
-4. Religion, sex and caste.
-5. Date, time and cause of death, and age.
-6. Name and address of the person reporting the death.
-7. Date of report.
-The service states submission at Citizen Facilitation Center, G-11/4, Islamabad, with a stated processing time of 7 days.
-
-OFFICIAL VERIFIED EVIDENCE — Sindh
-Source: https://www.sindh.gov.pk/
-The retrieved official source does not provide a specific death-certificate document checklist.
-
-OFFICIAL VERIFIED EVIDENCE — Balochistan
-Source: https://balochistan.gov.pk/wp-content/uploads/2024/10/Balochistan-Local-Government-Act-2010.pdf
-The retrieved official source does not provide a specific death-certificate document checklist.
-`;
- }
+if(isCivilRegistration){
+ const kind=isBirth?"birth":"death";
+ const answer=buildCivilAnswer(kind,selected.jurisdiction,language);
+ const firstSource=selected.jurisdiction==="Punjab"?(kind==="death"?civilSources.PunjabDeath:civilSources.Punjab):selected.jurisdiction==="Khyber Pakhtunkhwa"?civilSources.KP:selected.jurisdiction==="Islamabad Capital Territory"?(kind==="death"?civilSources.ICTDeath:civilSources.ICTBirth):selected.jurisdiction==="Sindh"?civilSources.Sindh:selected.jurisdiction==="Balochistan"?civilSources.Balochistan:null;
+ return NextResponse.json({
+  answer,
+  source:firstSource?{department:"Union Council / Local Government",title:`Official ${selected.jurisdiction||"provincial/ICT"} civil-registration source`,url:firstSource,lastVerified:"",province:selected.jurisdiction||""}:null,
+  agent:true,
+  goalFocused:true,
+  webSearch:false
+ });
 }
 
 const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
@@ -472,10 +396,10 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - For NADRA Urdu document lists, prefer a short numbered list over a table unless the evidence clearly supports a table. This reduces accidental column/header reinterpretation.
 - If sources conflict, state the conflict briefly rather than guessing.
 - For Union Council / Local Government birth- and death-certificate questions, use the supplied CIVIL REGISTRATION EVIDENCE as authoritative official evidence. Do not say that the documents are unavailable when that evidence is present. Treat Punjab, KP, Sindh, Balochistan and Islamabad Capital Territory as separate jurisdictions. Never merge provincial/ICT requirements into one national list. If the official source for a jurisdiction does not provide the requested document list, say that clearly rather than inventing it.
-- For a generic death-certificate question without a province, present the available evidence separately for Punjab, Khyber Pakhtunkhwa, Islamabad Capital Territory, Sindh, and Balochistan. Do not merge jurisdictions. Where an official source does not provide a specific checklist, say so clearly and do not invent one.
+- For a generic death-certificate question without a province, present exactly one section for each of Punjab, Khyber Pakhtunkhwa, Islamabad Capital Territory, Sindh, and Balochistan. Never repeat a jurisdiction, never provide a summary followed by a duplicate table, and never merge jurisdictions. Where an official source does not provide a specific checklist, say so clearly and do not invent one.
 - Prefer supplied direct official evidence over live site search for civil-registration questions so the response is fast and deterministic.
 - Output formatting: use clean Markdown only. Do not output HTML tags such as <br>, HTML entities, zero-width characters, non-breaking spaces, or escaped markup. Use normal spaces and simple numbered lists/tables.
-- For Union Council / Local Government questions, birth/death/marriage/divorce registration is provincial. Use the retrieved official provincial source evidence directly. Never reply that evidence is unavailable when the retrieved source contains the requested document list. If no province was specified and both Punjab and KP evidence are present, present the requirements separately by province and do not merge them into one national list.
+- For Union Council / Local Government questions, birth/death/marriage/divorce registration is jurisdiction-specific. Use only the evidence for the requested jurisdiction. If no jurisdiction was specified, present each available jurisdiction exactly once. Never repeat the same requirements in another section and never use one province to fill a missing checklist for another province.
 - For Passport Services questions, prefer the retrieved DGI&P official source text over general knowledge.
 - For passport document questions, distinguish adults (18+), minors, first-time/new passport, renewal, lost/damaged passport, and online/overseas categories when the official evidence does so. Do not mix requirements between categories.
 - If the citizen asks a general "new passport" question without specifying age, answer the general adult requirement first and clearly identify any minor-specific requirements separately.

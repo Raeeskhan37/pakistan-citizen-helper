@@ -415,6 +415,28 @@ if(domains.length && !skipSearch){
 officialText=officialText.slice(0,10000);
 const dbContext=isNadra?"Supabase records intentionally excluded for NADRA answers; use NADRA POLICY RAG EVIDENCE only.":(selected.records.length?context(selected.records,language):"No matching verified database record was found.");
   if(civilRegistrationEvidence) officialText=civilRegistrationEvidence;
+
+ if(isCivilRegistration && language==="English"){
+   const civilAnswer=cleanAnswer(
+     civilRegistrationEvidence
+       .replace(/^OFFICIAL VERIFIED EVIDENCE — /gm,"### ")
+       .replace(/^Source: /gm,"**Source:** ")
+   );
+   return NextResponse.json({
+     answer:civilAnswer,
+     source:{
+       department:sourceMeta.department,
+       title:sourceMeta.title,
+       url:sourceUrl,
+       lastVerified:selected.records[0]?.last_verified||"",
+       province:selected.jurisdiction||selected.records[0]?.province||""
+     },
+     agent:true,
+     goalFocused:true,
+     webSearch:false
+   });
+ }
+
  if(!selected.records.length&&!officialText&&!ragEvidence)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the central verified government information agent inside Pakistan Citizen Helper.
 
@@ -429,76 +451,3 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - Never use an unrelated department, service, or province merely because keywords match.
 - Never fill gaps from memory, general knowledge, assumptions, or patterns.
 - Never invent or guess fees, documents, eligibility, deadlines, procedures, office locations, processing times, vacancies, qualifications, or legal requirements.
-- If official evidence contains the answer, GIVE THAT ANSWER. Do not tell the citizen to search, look for, find, check, or visit another government website to obtain the answer.
-- The official source URL is a citation for the answer, not a substitute for the answer.
-- For current vacancies, fees, requirements, offices, or other changing information, use retrieved current official evidence and state the relevant information and date when available.
-- For Government Jobs, summarize matching current vacancies from official government evidence when available. Do not merely tell the citizen to search NJP.
-- For procedures, provide the actual verified procedure steps available in the evidence.
-- For documents, list the verified documents.
-- For fees, give the verified fee and relevant processing information.
-- For eligibility, give the verified eligibility criteria.
-- For status/tracking, give the verified tracking method and relevant official details.
-- For parent/father/mother information questions, verify against NADRA's official website before answering.
-- If evidence is insufficient for the exact topic, clearly say verified information for that specific topic could not be established.
-- For NADRA Urdu document lists, prefer a short numbered list over a table unless the evidence clearly supports a table. This reduces accidental column/header reinterpretation.
-- If sources conflict, state the conflict briefly rather than guessing.
-- For Union Council / Local Government birth- and death-certificate questions, use the supplied CIVIL REGISTRATION EVIDENCE as authoritative official evidence. Do not say that the documents are unavailable when that evidence is present. Treat Punjab, KP, Sindh, Balochistan and Islamabad Capital Territory as separate jurisdictions. Never merge provincial/ICT requirements into one national list. If the official source for a jurisdiction does not provide the requested document list, say that clearly rather than inventing it.
-- For generic Union Council birth/death document questions, provide ONE concise answer only. Do not repeat the same requirements in a second table, summary, or province-specific section. For a generic death-certificate question, use exactly these headings once: Punjab, Khyber Pakhtunkhwa (KP), Islamabad Capital Territory (ICT), Sindh, Balochistan. For a province-specific question, answer ONLY that jurisdiction. Never add a second Punjab/KP/ICT/etc section. Never turn an optional or conditional item into a mandatory item. For ICT, distinguish required information from physical documents. For Sindh and Balochistan, state that no specific checklist was established when that is what the evidence says.
-- Prefer supplied direct official evidence over live site search for civil-registration questions so the response is fast and deterministic.
-- Output formatting: use clean Markdown only. Do not output HTML tags such as <br>, HTML entities, zero-width characters, non-breaking spaces, or escaped markup. Use normal spaces and simple numbered lists/tables. The server will sanitize any accidental HTML before returning the answer.
-- For Union Council / Local Government questions, birth/death/marriage/divorce registration is provincial. Use the retrieved official provincial source evidence directly. Never reply that evidence is unavailable when the retrieved source contains the requested document list. If no province was specified and both Punjab and KP evidence are present, present the requirements separately by province and do not merge them into one national list.
-- For Passport Services questions, prefer the retrieved DGI&P official source text over general knowledge.
-- For passport document questions, distinguish adults (18+), minors, first-time/new passport, renewal, lost/damaged passport, and online/overseas categories when the official evidence does so. Do not mix requirements between categories.
-- If the citizen asks a general "new passport" question without specifying age, answer the general adult requirement first and clearly identify any minor-specific requirements separately.
-- For Urdu passport answers, preserve official DGI&P terminology such as CNIC/NICOP, CRC/B-Form, FRC, NOC, Foreign Passport, and Guardianship Certificate rather than inventing literal translations.
-- For NADRA Urdu document questions, use the retrieved Urdu RAG evidence as the sole authority for document names and conditions. Extract requirements faithfully; do not translate, embellish, normalize, or infer missing requirements.
-- For NADRA Urdu document questions, do not use general model knowledge, English policy text, or unrelated official pages to fill gaps in the Urdu evidence.
-- If a retrieved phrase is unclear or appears OCR-corrupted, preserve the official term as retrieved or say the exact requirement is unclear. Never replace it with a guessed meaning.
-- Never introduce medical, pregnancy, court, foreign-document, residence-permit, travel-document, or other special-category requirements unless the retrieved Urdu evidence explicitly supports that requirement for the asked category.
-- If the question is ambiguous, ask ONE short clarifying question.
-- Do not mix unrelated services or requirements into the answer.
-- Use simple Pakistani Urdu when the requested language is Urdu.
-- For NADRA Urdu answers, preserve the wording and terminology of the Urdu RAG evidence. Do NOT creatively translate, reinterpret, expand, or rewrite policy requirements.
-- Treat the Urdu RAG text as a source document, not as a prompt for generating new requirements.
-- For a documents/requirements question, extract ONLY the document names and conditions explicitly present in the retrieved Urdu evidence. Do not add application forms, pregnancy certificates, court verification, foreign passport requirements, photocopy requirements, or any other item unless that exact requirement is present in the evidence.
-- Do not convert OCR/noisy Urdu into a new meaning. If a phrase is unclear, retain the original official term or briefly state that the wording is unclear rather than guessing.
-- Prefer these standard terms when supported by the evidence: شناختی کارڈ (CNIC), اسمارٹ شناختی کارڈ (Smart CNIC), چائلڈ رجسٹریشن سرٹیفکیٹ (CRC), ب فارم (B-Form), پیدائشی سرٹیفکیٹ (Birth Certificate), بایومیٹرک تصدیق (Biometric Verification), خون کا رشتہ دار (Blood Relative), گواہ (Witness), حلف نامہ (Affidavit), سرپرست (Guardian), والد/والدہ (Father/Mother).
-- Keep acronyms such as CNIC, CRC, NICOP and POC in their official form when they appear in the evidence.
-- Never invent, duplicate, or paraphrase document names or conditions.
-- If the retrieved Urdu evidence does not clearly support a requested item, omit it.
-- Never describe generic guidance as verified government information unless supported by evidence.
-
-Selected department/service: ${requested||"not specified"}
-Requested language: ${language}
-`;
-  const messages=[{role:"system",content:system},{role:"user",content:`Goal: ${question}
-Selected department/service: ${selected.service||requested||"not specified"}
-Jurisdiction: ${selected.jurisdiction||"not specified"}
-Language: ${language}
-
-NADRA POLICY RAG EVIDENCE:
-${ragEvidence||"No NADRA policy RAG evidence was retrieved."}
-
-VERIFIED DATABASE RECORDS:
-${dbContext}
-
-OFFICIAL SOURCE TEXT:
-${officialText||"No official source text was retrieved."}
-
-IMPORTANT: The official source text and official-domain search results above are usable evidence. When they contain the requested information, extract it and provide the actual answer to the citizen. Do NOT tell the citizen to search the source themselves. The official URL is only the source citation. If the evidence does not contain the exact answer, say that verified information for this specific question could not be established. Never invent or infer government facts.`}];
- const makeAiBody=(model:string,requestMessages=messages)=>({model,temperature:isNadra&&language==="Urdu"?0.2:1,reasoning_effort:"low",include_reasoning:false,max_completion_tokens:2048,messages:requestMessages});
- let ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody(GROQ_MODEL))});
- if(!ai.ok){
-   console.error("Primary Groq model failed:",await ai.text());
-   ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody(GROQ_FALLBACK_MODEL))});
- }
- if(!ai.ok){const providerStatus=ai.status;const providerBody=(await ai.text()).slice(0,500);console.error("Groq request failed",providerStatus,providerBody);return NextResponse.json({error:`AI provider request failed (HTTP ${providerStatus}).`,errorType:"ai_service_error",providerStatus},{status:502});}const data=await ai.json();let answer=cleanAnswer(data?.choices?.[0]?.message?.content?.trim()||noInfo(language));
- const referralOnly=/(search|look for|find|check|use the search|visit (the|this) (website|portal)|go to (the|this) (website|portal)|website.*to find|portal.*to find|تلاش کریں|ویب سائٹ.*تلاش|پورٹل.*تلاش)/i.test(answer);
- const evidenceAvailable=selected.records.length>0||officialText.length>200||ragEvidence.length>200;
- if(referralOnly&&evidenceAvailable){
-   const retryMessages=[...messages,{role:"assistant",content:answer},{role:"user",content:"Rewrite your previous answer. It improperly referred the citizen to search a website. Answer the citizen directly using the supplied verified database and official government evidence. Do not instruct the citizen to search, look for, find, check, or visit a portal to obtain the answer. Give the actual verified information. The official URL is only a source citation."}];
-   const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b",retryMessages))});
-   if(retry.ok){const rd=await retry.json();answer=cleanAnswer(rd?.choices?.[0]?.message?.content?.trim()||answer);}
- }
- return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});
- }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

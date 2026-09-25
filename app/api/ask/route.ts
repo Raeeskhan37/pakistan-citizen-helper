@@ -91,6 +91,39 @@ function detectService(q:string,requested:string):string|null{
  }
  return best;
 }
+function detectTargetJurisdiction(q:string):string|null{
+ const text=normalize(q);
+ const data:Array<[string,string[]]>=[
+  ["Punjab",["punjab","پنجاب"]],
+  ["Sindh",["sindh","sind","سندھ"]],
+  ["Khyber Pakhtunkhwa",["khyber pakhtunkhwa","kpk","kp","خیبر پختونخوا","خیبرپختونخوا"]],
+  ["Islamabad Capital Territory",["islamabad","ict","اسلام آباد","اسلامباد"]],
+  ["Balochistan",["balochistan","بلوچستان"]],
+  ["Azad Jammu and Kashmir",["ajk","azad kashmir","آزاد کشمیر","آزاد جموں و کشمیر"]],
+  ["Gilgit-Baltistan",["gilgit","gilgit baltistan","گلگت","گلگت بلتستان"]]
+ ];
+ const escaped=(x:string)=>x.replace(/[.*+?^{}()|[\\]\\]/g,"\\\\$&");
+ for(const [name,terms] of data){
+  for(const t of terms){
+   const x=normalize(t);
+   if(x.length<=2)continue;
+   const e=escaped(x);
+   if(new RegExp(`(?:^|\\\\s)(?:in|for|from|within|of)\\\\s+${e}(?:$|\\\\s|[,.!?])`,"i").test(text))return name;
+   if(new RegExp(`(?:^|\\\\s)${e}\\\\s+(?:mein|me|requirements|requirement|death|birth|certificate|documents|document|province|union council)(?:$|\\\\s|[,.!?])`,"i").test(text))return name;
+   if(text.includes(`${x} mein`)||text.includes(`${x} میں`))return name;
+  }
+ }
+ // Ignore explicit exclusion phrases, then accept a single remaining jurisdiction.
+ let candidateText=text
+  .replace(/(?:do not|don't|dont|not|without|except|exclude|excluding)\\s+(?:give me|include|use|show|provide)?\\s*(?:the\\s+)?(?:requirements?|documents?|information|details)?\\s*(?:for\\s+)?(?:punjab|sindh|kpk|kp|khyber pakhtunkhwa|islamabad|ict|balochistan|ajk|azad kashmir|gilgit|gilgit baltistan)\\b/gi," ")
+  .replace(/(?:شامل نہ کریں|شامل نہ کرو|نہ دیں|نہ بتائیں|کے بغیر)\\s*(?:پنجاب|سندھ|خیبر پختونخوا|خیبرپختونخوا|اسلام آباد|بلوچستان|آزاد کشمیر|گلگت بلتستان)?/g," ");
+ const found:string[]=[];
+ for(const [name,terms] of data)for(const t of terms){
+  const x=normalize(t);
+  if(x.length>2 && candidateText.includes(x) && !found.includes(name))found.push(name);
+ }
+ return found.length===1?found[0]:null;
+}
 function detectJurisdiction(q:string):string|null{const text=normalize(q);const data:Array<[string,string[]]>= [["Punjab",["punjab","پنجاب"]],["Sindh",["sindh","sind","سندھ"]],["Khyber Pakhtunkhwa",["khyber pakhtunkhwa","kpk","kp","خیبر پختونخوا","خیبرپختونخوا"]],["Islamabad Capital Territory",["islamabad","ict","اسلام آباد","اسلامباد"]],["Balochistan",["balochistan","بلوچستان"]],["Azad Jammu and Kashmir",["ajk","azad kashmir","آزاد کشمیر","آزاد جموں و کشمیر"]],["Gilgit-Baltistan",["gilgit","gilgit baltistan","گلگت","گلگت بلتستان"]]];for(const [name,terms] of data)for(const t of terms){const x=normalize(t);if(x==="kp"||x==="kpk"||x==="ict"||x==="ajk"){if(new RegExp(`(^|\\s)${x}(?=\\s|$|[,.!?])`,"i").test(text))return name;}else if(text.includes(x))return name;}return null;}
 function topicScore(topic:string|null,r:VerifiedRecord):number{if(!topic)return 0;const title=normalize(r.title),cat=normalize(r.category),content=normalize(`${r.content||""} ${r.content_urdu||""}`);let s=0;for(const a of TOPICS[topic]||[]){const x=normalize(a);if(title.includes(x))s+=30;else if(cat.includes(x))s+=20;else if(content.includes(x))s+=8;}return s;}
 function generalScore(q:string,r:VerifiedRecord):number{const text=normalize(`${r.category||""} ${r.title||""} ${r.content||""} ${r.content_urdu||""}`),title=normalize(r.title);let s=0;for(const token of normalize(q).split(/\s+/).filter(x=>x.length>=2&&!STOP.has(x))){if(text.includes(token))s+=2;if(title.includes(token))s+=6;}return s;}
@@ -211,7 +244,7 @@ export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
  const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,category,title,content,service_name_urdu,province,title_urdu,content_urdu,official_department,official_source_title,official_source_url,last_verified,active&active=eq.true&order=last_verified.desc`;const db=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`},cache:"no-store"});if(!db.ok){console.error(await db.text());return NextResponse.json({error:"Unable to retrieve verified information from Supabase."},{status:500});}
- const all=(await db.json()) as VerifiedRecord[];const selected=selectRecords(question,requested,all);
+ const all=(await db.json()) as VerifiedRecord[];const selected=selectRecords(question,requested,all);\n const civilTargetJurisdiction=detectTargetJurisdiction(question);
  const detectedQuestionService=detectService(question,"");
  if(detectedQuestionService && !belongsToDepartment(detectedQuestionService,requested)){
    return NextResponse.json({answer:language==="Urdu"?"یہ سوال منتخب شعبے سے متعلق نہیں لگتا۔ براہ کرم اسی شعبے سے متعلق سوال پوچھیں۔":"This question does not appear to belong to the selected government department. Please ask a question related to the selected department.",source:null});

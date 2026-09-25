@@ -277,6 +277,10 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - If the question is ambiguous, ask ONE short clarifying question.
 - Do not mix unrelated services or requirements into the answer.
 - Use simple Pakistani Urdu when the requested language is Urdu.
+- For NADRA Urdu answers, preserve official NADRA terminology from the Urdu RAG evidence. Do NOT translate official terms into awkward literal Urdu.
+- Prefer these standard terms when supported by the evidence: شناختی کارڈ (CNIC), اسمارٹ شناختی کارڈ (Smart CNIC), چائلڈ رجسٹریشن سرٹیفکیٹ (CRC), ب فارم (B-Form), پیدائشی سرٹیفکیٹ (Birth Certificate), بایومیٹرک تصدیق (Biometric Verification), خون کا رشتہ دار (Blood Relative), گواہ (Witness), حلف نامہ (Affidavit), سرپرست (Guardian), والد/والدہ (Father/Mother).
+- Keep acronyms such as CNIC, CRC, NICOP and POC in their official form when they appear in the evidence.
+- Do not invent, duplicate, or paraphrase document names. If the Urdu evidence uses an English official term, keep the English term in parentheses rather than creating a literal translation.
 - Never describe generic guidance as verified government information unless supported by evidence.
 
 Selected department/service: ${requested||"not specified"}

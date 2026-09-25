@@ -28,6 +28,8 @@ let englishCache: EnglishChunk[] | null = null;
 let policyConfigCache: PolicyConfig | null = null;
 let urduCache: string[] | null = null;
 
+const URDU_ALIASES = ["شناختی کارڈ","شناختی","نیا شناختی","نئے شناختی","کاغذات","دستاویزات","ضروری","والد","والدین","خون","رشتہ دار","پیدائش","بائیومیٹرک","گواہ","سرٹیفکیٹ","یونین کونسل","شہریت"];
+
 const STOP = new Set([
   "the","is","are","was","were","how","what","where","when","which","can","could",
   "for","from","with","about","please","tell","me","give","get","my","i","do","does",
@@ -44,6 +46,8 @@ function terms(question: string) {
     .split(/\s+/)
     .filter((t) => t.length >= 2 && !STOP.has(t));
 }
+
+function qnSafe(question: string, alias: string) { return normalize(question).includes(normalize(alias)); }
 
 function score(text: string, queryTerms: string[]) {
   const n = normalize(text);
@@ -160,6 +164,9 @@ export async function retrieveNadraEvidence(
       policy.issue_date || "18 September 2026";
 
     const queryTerms = terms(query);
+    const retrievalTerms = language === "Urdu"
+      ? [...queryTerms, ...URDU_ALIASES.filter((x) => qnSafe(question, x))]
+      : queryTerms;
     const qn = normalize(question);
 
     // Policy configuration is authoritative for policy-level metadata questions.
@@ -187,11 +194,11 @@ export async function retrieveNadraEvidence(
         .map((text, index) => ({
           text,
           index,
-          score: score(text, queryTerms)
+          score: score(text, retrievalTerms)
         }))
         .filter((x) => x.score > 0)
         .sort((a, b) => b.score - a.score)
-        .slice(0, 5);
+        .slice(0, 2);
 
       if (!ranked.length) return "";
 
@@ -203,7 +210,7 @@ export async function retrieveNadraEvidence(
         "",
         ...ranked.map(
           (x, i) =>
-            `[NADRA URDU EVIDENCE ${i + 1}]\nChunk: ${x.index + 1}\nRetrieval score: ${x.score}\n\n${x.text.slice(0, 5000)}`
+            `[NADRA URDU EVIDENCE ${i + 1}]\nChunk: ${x.index + 1}\nRetrieval score: ${x.score}\n\n${x.text.slice(0, 2400)}`
         )
       ].join("\n\n");
     }
@@ -214,7 +221,7 @@ export async function retrieveNadraEvidence(
       .map((item, index) => ({
         item,
         index,
-        score: score(item.text || "", queryTerms)
+        score: score(item.text || "", retrievalTerms)
       }))
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score)
@@ -230,7 +237,7 @@ export async function retrieveNadraEvidence(
       "",
       ...ranked.map(
         (x, i) =>
-          `[NADRA POLICY EVIDENCE ${i + 1}]\nPage: ${x.item.page ?? "N/A"}\nSection: ${x.item.major_section || x.item.subsection || ""}\nRetrieval score: ${x.score}\n\n${(x.item.text || "").slice(0, 5000)}`
+          `[NADRA POLICY EVIDENCE ${i + 1}]\nPage: ${x.item.page ?? "N/A"}\nSection: ${x.item.major_section || x.item.subsection || ""}\nRetrieval score: ${x.score}\n\n${(x.item.text || "").slice(0, 2400)}`
       )
     ].join("\n\n");
   } catch (error) {

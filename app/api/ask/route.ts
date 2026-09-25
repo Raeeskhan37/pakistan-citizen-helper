@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { retrieveNadraEvidence } from "@/lib/nadra-rag";
+import { retrieveNadraEvidence } from "../../../lib/nadra-rag";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

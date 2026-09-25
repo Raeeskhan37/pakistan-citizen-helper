@@ -198,7 +198,7 @@ const registrySource=sourceForQuestion(question,selected.service,selected.jurisd
 const jurisdictionSourceHints:Record<string,string[]>={
  "Driving Licence":["kppolice.gov.pk","kprts.gov.pk","transport.kp.gov.pk","ptpkp.gov.pk"],
  "Domicile":["kp.gov.pk","cfc.kp.gov.pk"],
- "Passport & Immigration":["dgip.gov.pk"],
+ "Passport Services":["dgip.gov.pk"],
  "NADRA Services":["nadra.gov.pk"],
  "Police Services":["kppolice.gov.pk"],
  "Excise & Taxation":["kp.gov.pk"],
@@ -210,6 +210,9 @@ const jurisdictionSourceHints:Record<string,string[]>={
  "Government Jobs":["njp.gov.pk","kp.gov.pk"]
 };
 const allowedHints=jurisdictionSourceHints[requested]||[];const alternateOfficialUrls:string[]=[];
+if(requested==="Passport Services"){
+ alternateOfficialUrls.push("https://www.dgip.gov.pk/passport/ordinary-passport.php","https://www.dgip.gov.pk/passport/process.php","https://www.dgip.gov.pk/eServices/online-passport.php");
+}
 if(requested==="Government Jobs"){alternateOfficialUrls.push("https://www.njp.gov.pk/index.php/jobs","https://www.njp.gov.pk/index.php/jobs/live","https://www.njp.gov.pk/index.php/jobs/search");}
 if(requested==="Education & Scholarships"){
  if(normalize(question).includes("need based")||normalize(question).includes("financial need")||normalize(question).includes("undergraduate"))
@@ -275,6 +278,10 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - If evidence is insufficient for the exact topic, clearly say verified information for that specific topic could not be established.
 - For NADRA Urdu document lists, prefer a short numbered list over a table unless the evidence clearly supports a table. This reduces accidental column/header reinterpretation.
 - If sources conflict, state the conflict briefly rather than guessing.
+- For Passport Services questions, prefer the retrieved DGI&P official source text over general knowledge.
+- For passport document questions, distinguish adults (18+), minors, first-time/new passport, renewal, lost/damaged passport, and online/overseas categories when the official evidence does so. Do not mix requirements between categories.
+- If the citizen asks a general "new passport" question without specifying age, answer the general adult requirement first and clearly identify any minor-specific requirements separately.
+- For Urdu passport answers, preserve official DGI&P terminology such as CNIC/NICOP, CRC/B-Form, FRC, NOC, Foreign Passport, and Guardianship Certificate rather than inventing literal translations.
 - For NADRA Urdu document questions, use the retrieved Urdu RAG evidence as the sole authority for document names and conditions. Extract requirements faithfully; do not translate, embellish, normalize, or infer missing requirements.
 - For NADRA Urdu document questions, do not use general model knowledge, English policy text, or unrelated official pages to fill gaps in the Urdu evidence.
 - If a retrieved phrase is unclear or appears OCR-corrupted, preserve the official term as retrieved or say the exact requirement is unclear. Never replace it with a guessed meaning.

@@ -118,10 +118,11 @@ function selectRecords(q:string,requested:string,records:VerifiedRecord[]){
  return{records:finalRecords.slice(0,8).map(x=>x.r),topic,service,jurisdiction,questionService};
 }
 function context(records:VerifiedRecord[],language:"English"|"Urdu"):string{return records.slice(0,4).map((r,i)=>{const info=language==="Urdu"?(r.content_urdu||r.content||""):(r.content||r.content_urdu||"");return `RECORD ${i+1}\nService: ${language==="Urdu"?(r.service_name_urdu||r.service_name||""):(r.service_name||"")}\nCategory: ${r.category||""}\nJurisdiction: ${r.province||""}\nTitle: ${language==="Urdu"?(r.title_urdu||r.title||""):(r.title||"")}\nVerified Information: ${info.slice(0,2200)}\nOfficial Department: ${r.official_department||""}\nOfficial Source: ${r.official_source_title||""}\nOfficial URL: ${r.official_source_url||""}\nLast Verified: ${r.last_verified||""}`}).join("\n\n");}
+
 function cleanAnswer(text:string):string{
- return text
-  .replace(/<br\s*\/?\s*>/gi,"\n")
-  .replace(/<\/?(?:p|div|span|table|thead|tbody|tr|th|td|strong|b|em|i|ul|ol|li|blockquote)[^>]*>/gi," ")
+ return String(text||"")
+  .replace(/<br\\s*\\/?>/gi,"\\n")
+  .replace(/<\\/?(?:p|div|span|table|thead|tbody|tr|th|td|strong|b|em|i|ul|ol|li|blockquote)[^>]*>/gi," ")
   .replace(/<[^>]+>/g,"")
   .replace(/&nbsp;|&#160;|&#xA0;/gi," ")
   .replace(/&amp;/gi,"&")
@@ -129,12 +130,13 @@ function cleanAnswer(text:string):string{
   .replace(/&gt;/gi,">")
   .replace(/&quot;/gi,'"')
   .replace(/&#39;|&apos;/gi,"'")
-  .replace(/[\u200B-\u200D\uFEFF]/g,"")
-  .replace(/\u00A0/g," ")
-  .replace(/[ \t]+\n/g,"\n")
-  .replace(/\n{3,}/g,"\n\n")
+  .replace(/[\\u200B-\\u200D\\uFEFF]/g,"")
+  .replace(/\\u00A0/g," ")
+  .replace(/[ \\t]+\\n/g,"\\n")
+  .replace(/\\n{3,}/g,"\\n\\n")
   .trim();
 }
+
 function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت، اس مخصوص سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ یا دستیاب سرکاری ماخذ میں کافی معلومات موجود نہیں ہیں۔ میں غیر مصدقہ طریقہ یا فیس نہیں بتاؤں گا۔":"Sorry, sufficient verified government information is not currently available for this specific question. I will not invent a procedure, document requirement, fee, or deadline.";}
 function sourceForQuestion(question:string,service:string|null,jurisdiction:string|null,requested:string=""){
  const req=normalize(canonicalDepartment(requested));
@@ -278,165 +280,171 @@ const departmentDomains:Record<string,string[]>={
  "Passport Services":["dgip.gov.pk"],
  "NADRA Services":["nadra.gov.pk"]
 };
+
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
 let civilRegistrationEvidence="";
-if(requested==="Union Council"){
-  const nq=normalize(question);
-  const isBirth=nq.includes("birth")||nq.includes("پیدائش")||nq.includes("پیدائشی");
-  const isDeath=nq.includes("death")||nq.includes("وفات")||nq.includes("موت")||nq.includes("ڈیتھ");
-  const j=selected.jurisdiction;
+const nq=normalize(question);
+const isBirth=nq.includes("birth")||nq.includes("پیدائش")||nq.includes("پیدائشی");
+const isDeath=nq.includes("death")||nq.includes("وفات")||nq.includes("موت")||nq.includes("ڈیتھ");
+const isCivilRegistration=requested==="Union Council"&&(isBirth||isDeath);
 
-  if(isBirth){
-    if(j==="Punjab"){
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — PUNJAB BIRTH REGISTRATION
+if(isBirth){
+ if(selected.jurisdiction==="Punjab"){
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Punjab
 Source: https://lgcd.punjab.gov.pk/faq
-For birth registration within 60 days:
-1. Copy of parents' NIC/CNIC.
-2. Birth certificate/slip issued by the hospital or traditional birth attendant.
-3. Union Council-provided form, completed with signature and thumb impression.
-Registration is free; PKR 100 is charged for issuance of the NADRA computerized birth registration certificate.`;
-    } else if(j==="Khyber Pakhtunkhwa"){
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — KP BIRTH REGISTRATION
-Source: https://lgkp.gov.pk/page/crvs
-Required:
-1. Form-A application supplied by the concerned council, filled with signature and thumb impression.
-2. Attested copy of parent(s)' or guardian's CNIC; for a foreigner, passport; for a refugee, residence permit.
-3. Birth certificate or immunization card issued by a health facility, or school certificate, if available.`;
-    } else if(j){
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — ${j.toUpperCase()} BIRTH REGISTRATION
-A sufficiently specific birth-certificate document checklist was not established from the retrieved official evidence for this jurisdiction. Do not invent one.`;
-    } else {
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — PUNJAB BIRTH REGISTRATION
-Source: https://lgcd.punjab.gov.pk/faq
-For birth registration within 60 days:
 1. Copy of parents' NIC/CNIC.
 2. Birth certificate/slip issued by the hospital or traditional birth attendant.
 3. Union Council-provided form, completed with signature and thumb impression.
 Registration is free; PKR 100 is charged for issuance of the NADRA computerized birth registration certificate.
-
-OFFICIAL VERIFIED EVIDENCE — KP BIRTH REGISTRATION
+`;
+ } else if(selected.jurisdiction==="Khyber Pakhtunkhwa"){
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Khyber Pakhtunkhwa
 Source: https://lgkp.gov.pk/page/crvs
-Required:
-1. Form-A application supplied by the concerned council, filled with signature and thumb impression.
+1. Form-A application supplied by the concerned council, completed with signature and thumb impression.
 2. Attested copy of parent(s)' or guardian's CNIC; for a foreigner, passport; for a refugee, residence permit.
-3. Birth certificate or immunization card issued by a health facility, or school certificate, if available.
+3. Birth certificate or immunization card issued by a health facility, or school certificate if available.
+`;
+ } else if(selected.jurisdiction==="Islamabad Capital Territory"){
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Islamabad Capital Territory
+Source: https://ictadministration.gov.pk/birth-certificate/
+The retrieved official service provides birth-registration information requirements. No additional physical-document checklist is asserted here unless explicitly listed by the source.
+`;
+ } else if(selected.jurisdiction==="Sindh"){
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Sindh
+Source: https://www.sindh.gov.pk/
+The retrieved official source identifies civil registration as a local-council service but does not establish a specific birth-certificate document checklist.
+`;
+ } else if(selected.jurisdiction==="Balochistan"){
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Balochistan
+Source: https://balochistan.gov.pk/
+The retrieved official source does not establish a specific birth-certificate document checklist.
+`;
+ } else {
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Punjab
+Source: https://lgcd.punjab.gov.pk/faq
+1. Copy of parents' NIC/CNIC.
+2. Birth certificate/slip issued by the hospital or traditional birth attendant.
+3. Union Council-provided form, completed with signature and thumb impression.
 
-For Sindh, Balochistan, and Islamabad Capital Territory, a sufficiently specific birth-certificate document checklist was not established from the retrieved official evidence.`;
-    }
-  } else if(isDeath){
-    if(j==="Punjab"){
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — PUNJAB DEATH REGISTRATION
-Source: https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf
-For death reported within one year, the notified rules require Form-B at the concerned registration office with:
-1. Copy of CNIC of the applicant and deceased.
-2. Hospital death slip showing cause of death, if death occurred in a hospital.
-3. Burial slip issued by the graveyard management committee, if available.
-
-For late registration after one year and up to seven years, the rules add:
-4. Relative's affidavit on PKR 300 stamp paper, witnessed by two persons present at burial.
-5. Copies of CNIC or birth certificate of the deceased and the relative making the application.
-6. Hospital death slip where applicable.
-
-Note: the Ghorkan certificate/parchi is documentary evidence referenced in the Punjab FAQ; it should not be presented as a separate mandatory Punjab item unless the official source makes it mandatory.`;
-    } else if(j==="Khyber Pakhtunkhwa"){
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — KP DEATH REGISTRATION
+OFFICIAL VERIFIED EVIDENCE — Khyber Pakhtunkhwa
 Source: https://lgkp.gov.pk/page/crvs
-Required/possible evidence:
-1. Form-D, filled out, verified, signed and thumb-printed.
-2. Applicant's Computerized National Identity Card number.
-3. Documentary evidence may be required, including a certificate/parchi issued by the Ghorkan or person in charge of the graveyard where the deceased was buried.
-The official source does not state that every listed documentary item is mandatory in every case.`;
-    } else if(j==="Islamabad Capital Territory"){
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — ISLAMABAD CAPITAL TERRITORY DEATH REGISTRATION
+1. Form-A application supplied by the concerned council, completed with signature and thumb impression.
+2. Attested copy of parent(s)' or guardian's CNIC; for a foreigner, passport; for a refugee, residence permit.
+3. Birth certificate or immunization card issued by a health facility, or school certificate if available.
+
+OFFICIAL VERIFIED EVIDENCE — Islamabad Capital Territory
+Source: https://ictadministration.gov.pk/birth-certificate/
+The retrieved official service does not establish a specific additional physical-document checklist here.
+
+OFFICIAL VERIFIED EVIDENCE — Sindh
+Source: https://www.sindh.gov.pk/
+The retrieved official source does not establish a specific birth-certificate document checklist.
+
+OFFICIAL VERIFIED EVIDENCE — Balochistan
+Source: https://balochistan.gov.pk/
+The retrieved official source does not establish a specific birth-certificate document checklist.
+`;
+ }
+}
+
+if(isDeath){
+ if(selected.jurisdiction==="Punjab"){
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Punjab
+Source: https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf
+For death reported within one year: Form-B; copy of applicant's CNIC and deceased's CNIC; hospital death slip showing cause of death if death occurred in a hospital; burial slip issued by the graveyard management committee if available.
+For late registration after one year and up to seven years: an affidavit by a relative on PKR 300 stamp paper witnessed by two persons present at burial; copies of CNIC or birth certificate of the deceased and the relative; hospital death slip where applicable.
+`;
+ } else if(selected.jurisdiction==="Khyber Pakhtunkhwa"){
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Khyber Pakhtunkhwa
+Source: https://lgkp.gov.pk/page/crvs
+1. Form-D, completed, verified, signed and thumb-printed.
+2. Applicant's CNIC number.
+3. Documentary evidence may include a certificate/parchi issued by the Ghorkan or person in charge of the graveyard where the deceased was buried.
+`;
+ } else if(selected.jurisdiction==="Islamabad Capital Territory"){
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Islamabad Capital Territory
 Source: https://ictadministration.gov.pk/death-registration/
-The ICT Administration lists information required for a death certificate:
+The official service lists information to be provided rather than a separate physical-document checklist:
 1. Deceased's name and nationality.
 2. Husband/father/mother's name and occupation.
 3. Address.
 4. Religion, sex and caste.
 5. Date, time and cause of death, and age.
-6. Name and address of the person making the report.
-7. Date of the report.
-The page states submission at Citizen Facilitation Center, G-11/4, Islamabad, with a stated processing time of 7 days.
-These are listed as information requirements; the source does not separately identify a physical-document checklist.`;
-    } else if(j==="Sindh"){
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — SINDH DEATH REGISTRATION
+6. Name and address of the person reporting the death.
+7. Date of report.
+The service states submission at Citizen Facilitation Center, G-11/4, Islamabad, with a stated processing time of 7 days.
+`;
+ } else if(selected.jurisdiction==="Sindh"){
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Sindh
 Source: https://www.sindh.gov.pk/
-Sindh Government identifies civil registration, including death registration, as a local-council service through the Civil Registration Management System.
-No specific death-certificate document checklist was established from the retrieved official source. Do not invent one.`;
-    } else if(j==="Balochistan"){
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — BALOCHISTAN DEATH REGISTRATION
+The retrieved official Sindh source identifies death registration as a local-council civil-registration service but does not provide a specific document checklist.
+No verified Sindh document list is asserted.
+`;
+ } else if(selected.jurisdiction==="Balochistan"){
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Balochistan
 Source: https://balochistan.gov.pk/wp-content/uploads/2024/10/Balochistan-Local-Government-Act-2010.pdf
-The Balochistan Local Government Act identifies registration/certification of births, marriages and deaths as a Union Council function.
-No specific death-certificate document checklist was established from the retrieved official source. Do not invent one.`;
-    } else if(j){
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — ${j.toUpperCase()} DEATH REGISTRATION
-No specific death-certificate document checklist was established from the retrieved official evidence for this jurisdiction. Do not invent one.`;
-    } else {
-      civilRegistrationEvidence=`OFFICIAL VERIFIED EVIDENCE — PUNJAB DEATH REGISTRATION
+The Act identifies registration/certification of deaths as a Union Council function, but the retrieved official source does not provide a specific document checklist.
+No verified Balochistan document list is asserted.
+`;
+ } else {
+  civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — Punjab
 Source: https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf
-Within one year:
-1. Form-B.
-2. Copy of applicant's CNIC and deceased's CNIC.
-3. Hospital death slip showing cause of death, if applicable.
-4. Burial slip, if available.
-Late registration after one year and up to seven years adds a relative's PKR 300 stamp-paper affidavit witnessed by two persons present at burial, copies of CNIC or birth certificate of the deceased and relative, and hospital death slip where applicable.
+For death reported within one year: Form-B; applicant's and deceased's CNIC copies; hospital death slip showing cause of death if applicable; burial slip if available.
+For late registration after one year and up to seven years: relative's affidavit on PKR 300 stamp paper witnessed by two persons present at burial; copies of CNIC or birth certificate of deceased and relative; hospital death slip where applicable.
 
-OFFICIAL VERIFIED EVIDENCE — KHYBER PAKHTUNKHWA DEATH REGISTRATION
+OFFICIAL VERIFIED EVIDENCE — Khyber Pakhtunkhwa
 Source: https://lgkp.gov.pk/page/crvs
-1. Form-D, filled, verified, signed and thumb-printed.
+1. Form-D, completed, verified, signed and thumb-printed.
 2. Applicant's CNIC number.
-3. Documentary evidence may be required, including a graveyard/Ghorkan certificate or parchi.
+3. Documentary evidence may include a graveyard/Ghorkan certificate or parchi.
 
-OFFICIAL VERIFIED EVIDENCE — ISLAMABAD CAPITAL TERRITORY DEATH REGISTRATION
+OFFICIAL VERIFIED EVIDENCE — Islamabad Capital Territory
 Source: https://ictadministration.gov.pk/death-registration/
-The ICT source lists required information: deceased's name/nationality; husband/father/mother and occupation; address; religion/sex/caste; date, time and cause of death; age; reporter's name/address; and date of report. It states submission at Citizen Facilitation Center, G-11/4, Islamabad, with a stated 7-day processing time. This is information required, not a separate physical-document checklist.
+The official service lists information to be provided rather than a separate physical-document checklist:
+1. Deceased's name and nationality.
+2. Husband/father/mother's name and occupation.
+3. Address.
+4. Religion, sex and caste.
+5. Date, time and cause of death, and age.
+6. Name and address of the person reporting the death.
+7. Date of report.
+The service states submission at Citizen Facilitation Center, G-11/4, Islamabad, with a stated processing time of 7 days.
 
-OFFICIAL VERIFIED EVIDENCE — SINDH DEATH REGISTRATION
+OFFICIAL VERIFIED EVIDENCE — Sindh
 Source: https://www.sindh.gov.pk/
-No specific death-certificate document checklist was established from the retrieved official source.
+The retrieved official source does not provide a specific death-certificate document checklist.
 
-OFFICIAL VERIFIED EVIDENCE — BALOCHISTAN DEATH REGISTRATION
+OFFICIAL VERIFIED EVIDENCE — Balochistan
 Source: https://balochistan.gov.pk/wp-content/uploads/2024/10/Balochistan-Local-Government-Act-2010.pdf
-No specific death-certificate document checklist was established from the retrieved official source.`;
-    }
-  }
+The retrieved official source does not provide a specific death-certificate document checklist.
+`;
+ }
 }
-const isCivilRegistration=requested==="Union Council" && civilRegistrationEvidence.length>0;
-const officialUrls=isNadra?[]:isCivilRegistration?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
+
+const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
 let officialText="";
 for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}
 const domains=isNadra?[]:(departmentDomains[canonicalDepartment(requested)]||[]);
-const skipSearch=isCivilRegistration;
+const skipSearch=requested==="Union Council" && civilRegistrationEvidence.length>0;
 if(domains.length && !skipSearch){
  const searchText=await fetchOfficialSearch(question,domains);
  if(searchText)officialText+=searchText;
 }
 officialText=officialText.slice(0,10000);
 const dbContext=isNadra?"Supabase records intentionally excluded for NADRA answers; use NADRA POLICY RAG EVIDENCE only.":(selected.records.length?context(selected.records,language):"No matching verified database record was found.");
-  if(civilRegistrationEvidence) officialText=civilRegistrationEvidence;
-
- if(isCivilRegistration && language==="English"){
-   const civilAnswer=cleanAnswer(
-     civilRegistrationEvidence
-       .replace(/^OFFICIAL VERIFIED EVIDENCE — /gm,"### ")
-       .replace(/^Source: /gm,"**Source:** ")
-   );
-   return NextResponse.json({
-     answer:civilAnswer,
-     source:{
-       department:sourceMeta.department,
-       title:sourceMeta.title,
-       url:sourceUrl,
-       lastVerified:selected.records[0]?.last_verified||"",
-       province:selected.jurisdiction||selected.records[0]?.province||""
-     },
-     agent:true,
-     goalFocused:true,
-     webSearch:false
-   });
- }
-
+  if(civilRegistrationEvidence) officialText=civilRegistrationEvidence+"\\n\\n"+officialText;
  if(!selected.records.length&&!officialText&&!ragEvidence)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the central verified government information agent inside Pakistan Citizen Helper.
 
@@ -451,3 +459,76 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - Never use an unrelated department, service, or province merely because keywords match.
 - Never fill gaps from memory, general knowledge, assumptions, or patterns.
 - Never invent or guess fees, documents, eligibility, deadlines, procedures, office locations, processing times, vacancies, qualifications, or legal requirements.
+- If official evidence contains the answer, GIVE THAT ANSWER. Do not tell the citizen to search, look for, find, check, or visit another government website to obtain the answer.
+- The official source URL is a citation for the answer, not a substitute for the answer.
+- For current vacancies, fees, requirements, offices, or other changing information, use retrieved current official evidence and state the relevant information and date when available.
+- For Government Jobs, summarize matching current vacancies from official government evidence when available. Do not merely tell the citizen to search NJP.
+- For procedures, provide the actual verified procedure steps available in the evidence.
+- For documents, list the verified documents.
+- For fees, give the verified fee and relevant processing information.
+- For eligibility, give the verified eligibility criteria.
+- For status/tracking, give the verified tracking method and relevant official details.
+- For parent/father/mother information questions, verify against NADRA's official website before answering.
+- If evidence is insufficient for the exact topic, clearly say verified information for that specific topic could not be established.
+- For NADRA Urdu document lists, prefer a short numbered list over a table unless the evidence clearly supports a table. This reduces accidental column/header reinterpretation.
+- If sources conflict, state the conflict briefly rather than guessing.
+- For Union Council / Local Government birth- and death-certificate questions, use the supplied CIVIL REGISTRATION EVIDENCE as authoritative official evidence. Do not say that the documents are unavailable when that evidence is present. Treat Punjab, KP, Sindh, Balochistan and Islamabad Capital Territory as separate jurisdictions. Never merge provincial/ICT requirements into one national list. If the official source for a jurisdiction does not provide the requested document list, say that clearly rather than inventing it.
+- For a generic death-certificate question without a province, present the available evidence separately for Punjab, Khyber Pakhtunkhwa, Islamabad Capital Territory, Sindh, and Balochistan. Do not merge jurisdictions. Where an official source does not provide a specific checklist, say so clearly and do not invent one.
+- Prefer supplied direct official evidence over live site search for civil-registration questions so the response is fast and deterministic.
+- Output formatting: use clean Markdown only. Do not output HTML tags such as <br>, HTML entities, zero-width characters, non-breaking spaces, or escaped markup. Use normal spaces and simple numbered lists/tables.
+- For Union Council / Local Government questions, birth/death/marriage/divorce registration is provincial. Use the retrieved official provincial source evidence directly. Never reply that evidence is unavailable when the retrieved source contains the requested document list. If no province was specified and both Punjab and KP evidence are present, present the requirements separately by province and do not merge them into one national list.
+- For Passport Services questions, prefer the retrieved DGI&P official source text over general knowledge.
+- For passport document questions, distinguish adults (18+), minors, first-time/new passport, renewal, lost/damaged passport, and online/overseas categories when the official evidence does so. Do not mix requirements between categories.
+- If the citizen asks a general "new passport" question without specifying age, answer the general adult requirement first and clearly identify any minor-specific requirements separately.
+- For Urdu passport answers, preserve official DGI&P terminology such as CNIC/NICOP, CRC/B-Form, FRC, NOC, Foreign Passport, and Guardianship Certificate rather than inventing literal translations.
+- For NADRA Urdu document questions, use the retrieved Urdu RAG evidence as the sole authority for document names and conditions. Extract requirements faithfully; do not translate, embellish, normalize, or infer missing requirements.
+- For NADRA Urdu document questions, do not use general model knowledge, English policy text, or unrelated official pages to fill gaps in the Urdu evidence.
+- If a retrieved phrase is unclear or appears OCR-corrupted, preserve the official term as retrieved or say the exact requirement is unclear. Never replace it with a guessed meaning.
+- Never introduce medical, pregnancy, court, foreign-document, residence-permit, travel-document, or other special-category requirements unless the retrieved Urdu evidence explicitly supports that requirement for the asked category.
+- If the question is ambiguous, ask ONE short clarifying question.
+- Do not mix unrelated services or requirements into the answer.
+- Use simple Pakistani Urdu when the requested language is Urdu.
+- For NADRA Urdu answers, preserve the wording and terminology of the Urdu RAG evidence. Do NOT creatively translate, reinterpret, expand, or rewrite policy requirements.
+- Treat the Urdu RAG text as a source document, not as a prompt for generating new requirements.
+- For a documents/requirements question, extract ONLY the document names and conditions explicitly present in the retrieved Urdu evidence. Do not add application forms, pregnancy certificates, court verification, foreign passport requirements, photocopy requirements, or any other item unless that exact requirement is present in the evidence.
+- Do not convert OCR/noisy Urdu into a new meaning. If a phrase is unclear, retain the original official term or briefly state that the wording is unclear rather than guessing.
+- Prefer these standard terms when supported by the evidence: شناختی کارڈ (CNIC), اسمارٹ شناختی کارڈ (Smart CNIC), چائلڈ رجسٹریشن سرٹیفکیٹ (CRC), ب فارم (B-Form), پیدائشی سرٹیفکیٹ (Birth Certificate), بایومیٹرک تصدیق (Biometric Verification), خون کا رشتہ دار (Blood Relative), گواہ (Witness), حلف نامہ (Affidavit), سرپرست (Guardian), والد/والدہ (Father/Mother).
+- Keep acronyms such as CNIC, CRC, NICOP and POC in their official form when they appear in the evidence.
+- Never invent, duplicate, or paraphrase document names or conditions.
+- If the retrieved Urdu evidence does not clearly support a requested item, omit it.
+- Never describe generic guidance as verified government information unless supported by evidence.
+
+Selected department/service: ${requested||"not specified"}
+Requested language: ${language}
+`;
+  const messages=[{role:"system",content:system},{role:"user",content:`Goal: ${question}
+Selected department/service: ${selected.service||requested||"not specified"}
+Jurisdiction: ${selected.jurisdiction||"not specified"}
+Language: ${language}
+
+NADRA POLICY RAG EVIDENCE:
+${ragEvidence||"No NADRA policy RAG evidence was retrieved."}
+
+VERIFIED DATABASE RECORDS:
+${dbContext}
+
+OFFICIAL SOURCE TEXT:
+${officialText||"No official source text was retrieved."}
+
+IMPORTANT: The official source text and official-domain search results above are usable evidence. When they contain the requested information, extract it and provide the actual answer to the citizen. Do NOT tell the citizen to search the source themselves. The official URL is only the source citation. If the evidence does not contain the exact answer, say that verified information for this specific question could not be established. Never invent or infer government facts.`}];
+ const makeAiBody=(model:string,requestMessages=messages)=>({model,temperature:isNadra&&language==="Urdu"?0.2:1,reasoning_effort:"low",include_reasoning:false,max_completion_tokens:2048,messages:requestMessages});
+ let ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody(GROQ_MODEL))});
+ if(!ai.ok){
+   console.error("Primary Groq model failed:",await ai.text());
+   ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody(GROQ_FALLBACK_MODEL))});
+ }
+ if(!ai.ok){const providerStatus=ai.status;const providerBody=(await ai.text()).slice(0,500);console.error("Groq request failed",providerStatus,providerBody);return NextResponse.json({error:`AI provider request failed (HTTP ${providerStatus}).`,errorType:"ai_service_error",providerStatus},{status:502});}const data=await ai.json();let answer=cleanAnswer(data?.choices?.[0]?.message?.content||"")||noInfo(language);
+ const referralOnly=/(search|look for|find|check|use the search|visit (the|this) (website|portal)|go to (the|this) (website|portal)|website.*to find|portal.*to find|تلاش کریں|ویب سائٹ.*تلاش|پورٹل.*تلاش)/i.test(answer);
+ const evidenceAvailable=selected.records.length>0||officialText.length>200||ragEvidence.length>200;
+ if(referralOnly&&evidenceAvailable){
+   const retryMessages=[...messages,{role:"assistant",content:answer},{role:"user",content:"Rewrite your previous answer. It improperly referred the citizen to search a website. Answer the citizen directly using the supplied verified database and official government evidence. Do not instruct the citizen to search, look for, find, check, or visit a portal to obtain the answer. Give the actual verified information. The official URL is only a source citation."}];
+   const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b",retryMessages))});
+   if(retry.ok){const rd=await retry.json();answer=cleanAnswer(rd?.choices?.[0]?.message?.content||"")||answer;}
+ }
+ return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});
+ }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

@@ -118,6 +118,17 @@ function selectRecords(q:string,requested:string,records:VerifiedRecord[]){
  return{records:finalRecords.slice(0,8).map(x=>x.r),topic,service,jurisdiction,questionService};
 }
 function context(records:VerifiedRecord[],language:"English"|"Urdu"):string{return records.slice(0,4).map((r,i)=>{const info=language==="Urdu"?(r.content_urdu||r.content||""):(r.content||r.content_urdu||"");return `RECORD ${i+1}\nService: ${language==="Urdu"?(r.service_name_urdu||r.service_name||""):(r.service_name||"")}\nCategory: ${r.category||""}\nJurisdiction: ${r.province||""}\nTitle: ${language==="Urdu"?(r.title_urdu||r.title||""):(r.title||"")}\nVerified Information: ${info.slice(0,2200)}\nOfficial Department: ${r.official_department||""}\nOfficial Source: ${r.official_source_title||""}\nOfficial URL: ${r.official_source_url||""}\nLast Verified: ${r.last_verified||""}`}).join("\n\n");}
+function cleanAnswer(text:string):string{
+ return text
+  .replace(/<br\\s*\\/?\\s*>/gi,"\\n")
+  .replace(/<\\/?(?:p|div|span|table|thead|tbody|tr|th|td|strong|b|em|i|ul|ol|li|blockquote)[^>]*>/gi," ")
+  .replace(/<[^>]+>/g,"")
+  .replace(/&nbsp;|&#160;|&#xA0;/gi," ")
+  .replace(/&amp;/gi,"&").replace(/&lt;/gi,"<").replace(/&gt;/gi,">")
+  .replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'")
+  .replace(/[\\u200B-\\u200D\\uFEFF]/g,"").replace(/\\u00A0/g," ")
+  .replace(/[ \\t]+\\n/g,"\\n").replace(/\\n{3,}/g,"\\n\\n").trim();
+}
 function noInfo(language:"English"|"Urdu"){return language==="Urdu"?"معذرت، اس مخصوص سوال کے لیے ہمارے تصدیق شدہ سرکاری ریکارڈ یا دستیاب سرکاری ماخذ میں کافی معلومات موجود نہیں ہیں۔ میں غیر مصدقہ طریقہ یا فیس نہیں بتاؤں گا۔":"Sorry, sufficient verified government information is not currently available for this specific question. I will not invent a procedure, document requirement, fee, or deadline.";}
 function sourceForQuestion(question:string,service:string|null,jurisdiction:string|null,requested:string=""){
  const req=normalize(canonicalDepartment(requested));
@@ -263,18 +274,6 @@ const departmentDomains:Record<string,string[]>={
 };
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
   let civilRegistrationEvidence="";
-  if(requested==="Union Council" && (normalize(question).includes("death certificate") || normalize(question).includes("death") || normalize(question).includes("ڈیتھ") || normalize(question).includes("وفات") || normalize(question).includes("موت"))){
-    civilRegistrationEvidence=`
-OFFICIAL VERIFIED EVIDENCE — PUNJAB
-Source: https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf
-For death reported within one year: Form-B plus copies of the applicant's and deceased's CNICs, hospital death slip showing cause of death when applicable, and burial slip when available.
-For late registration after one year and up to seven years: the Punjab rules add a relative's affidavit on PKR 300 stamp paper witnessed by two persons present at burial, copies of CNIC or birth certificate of the deceased and relative, and hospital death slip where applicable.
-
-OFFICIAL VERIFIED EVIDENCE — KP
-Source: https://lgkp.gov.pk/page/crvs
-Death registration requires Form-D, the applicant's CNIC number, and documentary evidence where applicable, including a graveyard/Ghorkan certificate or parchi. KP's official registration page also lists death registration as a Union Council service with a 2-day stated time limit.
-`;
-  }
   if(requested==="Union Council"){
     const nq=normalize(question);
     const isBirth=nq.includes("birth")||nq.includes("پیدائش")||nq.includes("پیدائشی");
@@ -311,6 +310,18 @@ For late registration after one year and up to seven years, the 2025 rules add a
 OFFICIAL VERIFIED EVIDENCE — KP LOCAL GOVERNMENT
 Source: https://lgkp.gov.pk/page/crvs
 KP Local Government states that the applicant must fill Form-D, verify the entries, sign and thumb-print it, and provide the applicant's CNIC number. The applicant may also be required to provide documentary evidence, including a certificate/parchi issued by the Ghorkan or person in charge of the graveyard where the deceased was buried.
+
+OFFICIAL VERIFIED EVIDENCE — ISLAMABAD CAPITAL TERRITORY
+Source: https://ictadministration.gov.pk/death-registration/
+ICT Administration lists information required for a death certificate as: deceased's name/nationality, husband/father/mother and occupation details, address, religion/sex/caste, date/time/cause of death, age, name/address of the person making the report, and date of report. Submission is at Citizen Facilitation Center, G-11/4, Islamabad; stated processing time is 7 days.
+
+OFFICIAL VERIFIED EVIDENCE — SINDH
+Source: https://www.sindh.gov.pk/
+Sindh Government identifies civil registration as a local-council service and uses the Civil Registration Management System for birth, marriage, divorce and death registration. The retrieved official source does not provide a sufficiently specific death-certificate document checklist. Do not invent one.
+
+OFFICIAL VERIFIED EVIDENCE — BALOCHISTAN
+Source: https://balochistan.gov.pk/wp-content/uploads/2024/10/Balochistan-Local-Government-Act-2010.pdf
+The Balochistan Local Government Act identifies registration/certification of births, marriages and deaths as a Union Council function. The retrieved official source does not provide a sufficiently specific death-certificate document checklist. Do not invent one.
 `;
     }
   }const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
@@ -353,9 +364,9 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - For NADRA Urdu document lists, prefer a short numbered list over a table unless the evidence clearly supports a table. This reduces accidental column/header reinterpretation.
 - If sources conflict, state the conflict briefly rather than guessing.
 - For Union Council / Local Government birth- and death-certificate questions, use the supplied CIVIL REGISTRATION EVIDENCE as authoritative official evidence. Do not say that the documents are unavailable when that evidence is present. Treat Punjab, KP, Sindh, Balochistan and Islamabad Capital Territory as separate jurisdictions. Never merge provincial/ICT requirements into one national list. If the official source for a jurisdiction does not provide the requested document list, say that clearly rather than inventing it.
-- For a generic death-certificate question without a province, provide the available Punjab and KP requirements and clearly state that requirements vary by jurisdiction.
+- For a generic death-certificate question without a province, provide a clearly separated jurisdiction overview for Punjab, KP, Islamabad Capital Territory, Sindh, and Balochistan. Give the verified document/information list where an official source provides one. Where official evidence does not provide a document checklist, explicitly say "No specific document checklist was established from the retrieved official source" rather than omitting the jurisdiction or inventing requirements.
 - Prefer supplied direct official evidence over live site search for civil-registration questions so the response is fast and deterministic.
-- Output formatting: use clean Markdown only. Do not output HTML tags such as <br>, HTML entities, zero-width characters, non-breaking spaces, or escaped markup. Use normal spaces and simple numbered lists/tables.
+- Output formatting: use clean Markdown only. Do not output HTML tags such as <br>, HTML entities, zero-width characters, non-breaking spaces, or escaped markup. Use normal spaces and simple numbered lists/tables. The server will sanitize any accidental HTML before returning the answer.
 - For Union Council / Local Government questions, birth/death/marriage/divorce registration is provincial. Use the retrieved official provincial source evidence directly. Never reply that evidence is unavailable when the retrieved source contains the requested document list. If no province was specified and both Punjab and KP evidence are present, present the requirements separately by province and do not merge them into one national list.
 - For Passport Services questions, prefer the retrieved DGI&P official source text over general knowledge.
 - For passport document questions, distinguish adults (18+), minors, first-time/new passport, renewal, lost/damaged passport, and online/overseas categories when the official evidence does so. Do not mix requirements between categories.
@@ -402,13 +413,13 @@ IMPORTANT: The official source text and official-domain search results above are
    console.error("Primary Groq model failed:",await ai.text());
    ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody(GROQ_FALLBACK_MODEL))});
  }
- if(!ai.ok){const providerStatus=ai.status;const providerBody=(await ai.text()).slice(0,500);console.error("Groq request failed",providerStatus,providerBody);return NextResponse.json({error:`AI provider request failed (HTTP ${providerStatus}).`,errorType:"ai_service_error",providerStatus},{status:502});}const data=await ai.json();let answer=data?.choices?.[0]?.message?.content?.trim()||noInfo(language);
+ if(!ai.ok){const providerStatus=ai.status;const providerBody=(await ai.text()).slice(0,500);console.error("Groq request failed",providerStatus,providerBody);return NextResponse.json({error:`AI provider request failed (HTTP ${providerStatus}).`,errorType:"ai_service_error",providerStatus},{status:502});}const data=await ai.json();let answer=cleanAnswer(data?.choices?.[0]?.message?.content?.trim()||noInfo(language));
  const referralOnly=/(search|look for|find|check|use the search|visit (the|this) (website|portal)|go to (the|this) (website|portal)|website.*to find|portal.*to find|تلاش کریں|ویب سائٹ.*تلاش|پورٹل.*تلاش)/i.test(answer);
  const evidenceAvailable=selected.records.length>0||officialText.length>200||ragEvidence.length>200;
  if(referralOnly&&evidenceAvailable){
    const retryMessages=[...messages,{role:"assistant",content:answer},{role:"user",content:"Rewrite your previous answer. It improperly referred the citizen to search a website. Answer the citizen directly using the supplied verified database and official government evidence. Do not instruct the citizen to search, look for, find, check, or visit a portal to obtain the answer. Give the actual verified information. The official URL is only a source citation."}];
    const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b",retryMessages))});
-   if(retry.ok){const rd=await retry.json();answer=rd?.choices?.[0]?.message?.content?.trim()||answer;}
+   if(retry.ok){const rd=await retry.json();answer=cleanAnswer(rd?.choices?.[0]?.message?.content?.trim()||answer);}
  }
  return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true});
  }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

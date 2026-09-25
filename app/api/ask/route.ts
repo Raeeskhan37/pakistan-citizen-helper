@@ -55,6 +55,10 @@ function belongsToDepartment(service:string,department:string):boolean{
  const s=normalize(service), d=canonicalDepartment(department);
  if(!s||!d)return true;
  if(normalize(d)===normalize(service))return true;
+ // Civil-registration services such as birth, death, marriage and divorce certificates
+ // belong to Union Council / Local Government, even though they are grouped under
+ // "Other Services" in the generic service detector.
+ if(d==="Union Council" && ["Other Services","Birth Certificate","Death Certificate","Marriage Certificate","Divorce Certificate"].includes(service)) return true;
  return (DEPARTMENT_ALIASES[d]||[]).some(a=>s===normalize(a)||s.includes(normalize(a))||normalize(a).includes(s));
 }
 

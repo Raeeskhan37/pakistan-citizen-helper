@@ -102,27 +102,17 @@ function detectTargetJurisdiction(q:string):string|null{
   ["Azad Jammu and Kashmir",["ajk","azad kashmir","آزاد کشمیر","آزاد جموں و کشمیر"]],
   ["Gilgit-Baltistan",["gilgit","gilgit baltistan","گلگت","گلگت بلتستان"]]
  ];
- const escaped=(x:string)=>x.replace(/[.*+?^{}()|[\\]\\]/g,"\\\\$&");
+ const esc=(x:string)=>x.replace(/[.*+?^$(){}|[\\]\\]/g,"\\$&");
  for(const [name,terms] of data){
   for(const t of terms){
    const x=normalize(t);
    if(x.length<=2)continue;
-   const e=escaped(x);
-   if(new RegExp(`(?:^|\\\\s)(?:in|for|from|within|of)\\\\s+${e}(?:$|\\\\s|[,.!?])`,"i").test(text))return name;
-   if(new RegExp(`(?:^|\\\\s)${e}\\\\s+(?:mein|me|requirements|requirement|death|birth|certificate|documents|document|province|union council)(?:$|\\\\s|[,.!?])`,"i").test(text))return name;
-   if(text.includes(`${x} mein`)||text.includes(`${x} میں`))return name;
+   const e=esc(x);
+   if(new RegExp("(?:^|\\s)(?:in|for|from|within|of)\\s+"+e+"(?:$|\\s|[,.!?])","i").test(text))return name;
+   if(text.includes(x+" mein")||text.includes(x+" میں"))return name;
   }
  }
- // Ignore explicit exclusion phrases, then accept a single remaining jurisdiction.
- let candidateText=text
-  .replace(/(?:do not|don't|dont|not|without|except|exclude|excluding)\\s+(?:give me|include|use|show|provide)?\\s*(?:the\\s+)?(?:requirements?|documents?|information|details)?\\s*(?:for\\s+)?(?:punjab|sindh|kpk|kp|khyber pakhtunkhwa|islamabad|ict|balochistan|ajk|azad kashmir|gilgit|gilgit baltistan)\\b/gi," ")
-  .replace(/(?:شامل نہ کریں|شامل نہ کرو|نہ دیں|نہ بتائیں|کے بغیر)\\s*(?:پنجاب|سندھ|خیبر پختونخوا|خیبرپختونخوا|اسلام آباد|بلوچستان|آزاد کشمیر|گلگت بلتستان)?/g," ");
- const found:string[]=[];
- for(const [name,terms] of data)for(const t of terms){
-  const x=normalize(t);
-  if(x.length>2 && candidateText.includes(x) && !found.includes(name))found.push(name);
- }
- return found.length===1?found[0]:null;
+ return null;
 }
 function detectJurisdiction(q:string):string|null{const text=normalize(q);const data:Array<[string,string[]]>= [["Punjab",["punjab","پنجاب"]],["Sindh",["sindh","sind","سندھ"]],["Khyber Pakhtunkhwa",["khyber pakhtunkhwa","kpk","kp","خیبر پختونخوا","خیبرپختونخوا"]],["Islamabad Capital Territory",["islamabad","ict","اسلام آباد","اسلامباد"]],["Balochistan",["balochistan","بلوچستان"]],["Azad Jammu and Kashmir",["ajk","azad kashmir","آزاد کشمیر","آزاد جموں و کشمیر"]],["Gilgit-Baltistan",["gilgit","gilgit baltistan","گلگت","گلگت بلتستان"]]];for(const [name,terms] of data)for(const t of terms){const x=normalize(t);if(x==="kp"||x==="kpk"||x==="ict"||x==="ajk"){if(new RegExp(`(^|\\s)${x}(?=\\s|$|[,.!?])`,"i").test(text))return name;}else if(text.includes(x))return name;}return null;}
 function topicScore(topic:string|null,r:VerifiedRecord):number{if(!topic)return 0;const title=normalize(r.title),cat=normalize(r.category),content=normalize(`${r.content||""} ${r.content_urdu||""}`);let s=0;for(const a of TOPICS[topic]||[]){const x=normalize(a);if(title.includes(x))s+=30;else if(cat.includes(x))s+=20;else if(content.includes(x))s+=8;}return s;}

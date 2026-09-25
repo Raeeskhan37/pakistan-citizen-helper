@@ -262,6 +262,18 @@ const departmentDomains:Record<string,string[]>={
  "NADRA Services":["nadra.gov.pk"]
 };
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
+  if(requested==="Union Council" && (normalize(question).includes("death certificate") || normalize(question).includes("death") || normalize(question).includes("ڈیتھ") || normalize(question).includes("وفات") || normalize(question).includes("موت"))){
+    civilRegistrationEvidence=`
+OFFICIAL VERIFIED EVIDENCE — PUNJAB
+Source: https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf
+For death reported within one year: Form-B plus copies of the applicant's and deceased's CNICs, hospital death slip showing cause of death when applicable, and burial slip when available.
+For late registration after one year and up to seven years: the Punjab rules add a relative's affidavit on PKR 300 stamp paper witnessed by two persons present at burial, copies of CNIC or birth certificate of the deceased and relative, and hospital death slip where applicable.
+
+OFFICIAL VERIFIED EVIDENCE — KP
+Source: https://lgkp.gov.pk/page/crvs
+Death registration requires Form-D, the applicant's CNIC number, and documentary evidence where applicable, including a graveyard/Ghorkan certificate or parchi. KP's official registration page also lists death registration as a Union Council service with a 2-day stated time limit.
+`;
+  }
   let civilRegistrationEvidence="";
   if(requested==="Union Council"){
     const nq=normalize(question);
@@ -305,7 +317,8 @@ KP Local Government states that the applicant must fill Form-D, verify the entri
 let officialText="";
 for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}
 const domains=isNadra?[]:(departmentDomains[canonicalDepartment(requested)]||[]);
-if(domains.length){
+const skipSearch=requested==="Union Council" && civilRegistrationEvidence.length>0;
+if(domains.length && !skipSearch){
  const searchText=await fetchOfficialSearch(question,domains);
  if(searchText)officialText+=searchText;
 }
@@ -340,6 +353,8 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - For NADRA Urdu document lists, prefer a short numbered list over a table unless the evidence clearly supports a table. This reduces accidental column/header reinterpretation.
 - If sources conflict, state the conflict briefly rather than guessing.
 - For Union Council / Local Government birth- and death-certificate questions, use the supplied CIVIL REGISTRATION EVIDENCE as authoritative official evidence. Do not say that the documents are unavailable when that evidence is present. Treat Punjab, KP, Sindh, Balochistan and Islamabad Capital Territory as separate jurisdictions. Never merge provincial/ICT requirements into one national list. If the official source for a jurisdiction does not provide the requested document list, say that clearly rather than inventing it.
+- For a generic death-certificate question without a province, provide the available Punjab and KP requirements and clearly state that requirements vary by jurisdiction.
+- Prefer supplied direct official evidence over live site search for civil-registration questions so the response is fast and deterministic.
 - Output formatting: use clean Markdown only. Do not output HTML tags such as <br>, HTML entities, zero-width characters, non-breaking spaces, or escaped markup. Use normal spaces and simple numbered lists/tables.
 - For Union Council / Local Government questions, birth/death/marriage/divorce registration is provincial. Use the retrieved official provincial source evidence directly. Never reply that evidence is unavailable when the retrieved source contains the requested document list. If no province was specified and both Punjab and KP evidence are present, present the requirements separately by province and do not merge them into one national list.
 - For Passport Services questions, prefer the retrieved DGI&P official source text over general knowledge.

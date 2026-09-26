@@ -44,6 +44,9 @@ const departments: Department[] = [
   { id: "jobs", name: "Government Jobs", urdu: "سرکاری ملازمتیں", icon: "💼", description: "Official government recruitment", services: [
     { id: "federal", name: "Federal Government Jobs", icon: "🇵🇰", description: "Federal vacancies", question: "Where can I find official federal government jobs?" }, { id: "provincial", name: "Provincial Government Jobs", icon: "🏛️", description: "Provincial vacancies", question: "Where can I find official provincial government jobs?" }, { id: "application", name: "How to Apply", icon: "📝", description: "Application guidance", question: "How can I apply for a government job?" },
   ]},
+  { id: "vaccination", name: "Vaccination for Travelling Abroad", urdu: "بیرونِ ملک سفر کے لیے ویکسینیشن", icon: "💉", description: "Travel vaccination, polio and yellow fever information", services: [
+    { id: "travel-vaccination", name: "Travel Vaccination", icon: "💉", description: "Vaccination requirements for international travel", question: "What vaccinations are required for travelling abroad from Pakistan?" }, { id: "polio", name: "Polio Vaccination", icon: "🧪", description: "Polio vaccination and certificate information", question: "How can I get a polio vaccination certificate for international travel?" }, { id: "yellow-fever", name: "Yellow Fever", icon: "🧪", description: "Yellow fever vaccination and certificate information", question: "How can I get a yellow fever vaccination certificate for international travel?" }, { id: "hajj-umrah", name: "Hajj & Umrah", icon: "🕋", description: "Vaccination information for Hajj and Umrah travel", question: "What vaccinations are required for Hajj or Umrah from Pakistan?" },
+  ]},
 ];
 
 export default function Home() {

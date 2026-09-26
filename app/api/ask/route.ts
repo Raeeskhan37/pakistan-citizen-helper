@@ -654,6 +654,13 @@ export async function POST(request:NextRequest){try{
  else if(workingJurisdiction && !selected.jurisdiction){selected.jurisdiction=workingJurisdiction;}
  const civilTargetJurisdiction=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
 
+ // EARLY DOMICILE ROUTE: use verified provincial evidence for domicile questions.
+ if(requested==="Domicile" && (workingTargetJurisdiction||workingJurisdiction)==="Punjab"){
+  const answer=language==="Urdu"
+   ?"پنجاب میں ڈومیسائل کے لیے CNIC/Form-B، والد/شوہر کا CNIC، پیدائش یا اسکول سرٹیفکیٹ، بینک رسید، 2 تصاویر، اور جائیداد کی دستاویز یا یوٹیلیٹی بل درکار ہو سکتے ہیں۔ درخواست e-Khidmat Markaz یا متعلقہ Domicile Branch/Assistant Commissioner دفتر کے ذریعے دی جا سکتی ہے۔ پنجاب حکومت کے مطابق Domicile Management کے لیے سہولت مراکز اور آن لائن طریقہ موجود ہے۔"
+   :"For a Punjab domicile certificate, official Punjab government information lists these documents: CNIC/Form-B, father’s or husband’s NIC, birth certificate or school certificate, bank receipt, two photographs, and property documents or a utility bill. Applications can be submitted through the Domicile Branch/facilitation center, and Punjab also provides an online Domicile Management option. The Punjab government describes a process in which the application/documents are checked, the domicile is processed by the concerned office, and the certificate is issued after approval.";
+  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Domicile",title:"Punjab Government — Domicile Certificate",url:"https://hed.punjab.gov.pk/student-affairs",lastVerified:"",province:"Punjab"},agent:true,goalFocused:true});
+ }
  // EARLY LAND & REVENUE ROUTE: keep Fard/Mutation/Registry/SDC queries out of generic AI routing.
  if(requested==="Land & Revenue"){
   const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);

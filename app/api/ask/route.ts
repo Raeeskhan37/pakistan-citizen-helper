@@ -310,7 +310,7 @@ const nq=normalize(question);
 const isBirth=nq.includes("birth")||nq.includes("پیدائش")||nq.includes("پیدائشی");
 const isDeath=nq.includes("death")||nq.includes("وفات")||nq.includes("موت")||nq.includes("ڈیتھ");
 const isCivilRegistration=requested==="Union Council"&&(isBirth||isDeath);
-const explicitCivilJurisdiction=detectJurisdiction(question);
+const explicitCivilJurisdiction=detectTargetJurisdiction(question);
 if(requested==="Union Council" && (isBirth||isDeath) && explicitCivilJurisdiction){
   selected.jurisdiction=explicitCivilJurisdiction;
 }

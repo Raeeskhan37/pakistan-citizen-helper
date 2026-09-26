@@ -202,6 +202,36 @@ Police Mobile Khidmat Markaz لرنر، تجدید، انٹرنیشنل، ڈپل
  return (language==="Urdu"?ur:en)[jurisdiction]||en.Punjab;
 }
 
+
+function exciseEvidence(question:string,jurisdiction:string,language:"English"|"Urdu"):string{
+ const q=normalize(question);
+ const isToken=q.includes("token")||q.includes("motor vehicle tax")||q.includes("vehicle tax")||q.includes("ٹوکن");
+ const isRegistration=q.includes("new registration")||q.includes("vehicle registration")||q.includes("register a vehicle")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
+ const isTransfer=q.includes("transfer")||q.includes("ownership")||q.includes("ملکیت")||q.includes("منتقلی");
+ const isPayment=q.includes("pay")||q.includes("payment")||q.includes("online payment")||q.includes("ادائیگی");
+ if(jurisdiction==="Punjab" && isRegistration) return language==="Urdu"
+  ? "## پنجاب — نئی گاڑی کی رجسٹریشن\n\nسرکاری پنجاب ایکسائز کے مطابق اصل خریدار کے نام نئی رجسٹریشن کے لیے:\n1. Form-F\n2. مالک کے CNIC کی کاپی\n3. گاڑی کا اصل Sales Certificate\n4. گاڑی کی اصل Sales Invoice\n5. رجسٹریشن فیس، نمبر پلیٹ فیس اور قابلِ اطلاق ٹیکس\n\n**ماخذ:** https://excise.punjab.gov.pk/index.php/node/39"
+  : "## Punjab — New Vehicle Registration\n\nThe official Punjab Excise page lists these requirements for registration in the name of the original purchaser:\n1. Form-F\n2. Copy of the owner's CNIC\n3. Original Sales Certificate of the vehicle\n4. Original Sales Invoice of the vehicle\n5. Payment of registration fee, number plate fee and other applicable taxes\n\n**Source:** https://excise.punjab.gov.pk/index.php/node/39";
+ if(jurisdiction==="Punjab" && isTransfer) return language==="Urdu"
+  ? "## پنجاب — گاڑی کی ملکیت کی منتقلی\n\nسرکاری پنجاب ایکسائز کے مطابق:\n1. مقررہ T.O. Form\n2. فروخت کنندہ کے CNIC کی کاپی\n3. خریدار کے CNIC کی کاپی\n4. گواہوں کی فوٹو کاپیاں\n5. اصل Registration Certificate، جس میں Token Tax کی تازہ ادائیگی موجود ہو\n6. File Return Scheme کے تحت رجسٹرڈ گاڑی کی اصل Registration File\n7. مقررہ فارم پر درخواست\n\n**Transfer Fee:** Motorcycle/Scooter PKR 550؛ HTV PKR 5,500؛ 1000cc تک PKR 2,750؛ 1001–1800cc PKR 5,500؛ 1800cc سے زیادہ PKR 11,000۔\n\n**ePay SOP:** 17-digit PSID generate ہوتا ہے، online banking سے payment کی جاتی ہے، پھر seller اور purchaser کی biometric verification اور approval مراحل کے بعد status DELIVERED ہوتا ہے۔\n\n**ماخذ:** https://excise.punjab.gov.pk/index.php/node/39\nhttps://excise.punjab.gov.pk/system/files/TRANSFER%20OF%20OWNERSHIP%20%28TO%29%20THROUGH%20EPAY_0.pdf"
+  : "## Punjab — Transfer of Vehicle Ownership\n\nThe official Punjab Excise page lists:\n1. Prescribed T.O. Form\n2. Copy of seller's CNIC\n3. Copy of purchaser's CNIC\n4. Photocopies of witnesses\n5. Original Registration Certificate with updated Token Tax payment\n6. Original Registration File where applicable under the File Return Scheme\n7. Application on the prescribed form\n\n**Transfer fees:** Motorcycle/Scooter PKR 550; HTV PKR 5,500; up to 1000cc PKR 2,750; above 1000cc up to 1800cc PKR 5,500; above 1800cc PKR 11,000.\n\n**ePay workflow:** the official SOP states that a 17-digit PSID is generated, payment can be made through online banking, then seller and purchaser biometrics are processed followed by approval phases and final DELIVERED status.\n\n**Sources:** https://excise.punjab.gov.pk/index.php/node/39\nhttps://excise.punjab.gov.pk/system/files/TRANSFER%20OF%20OWNERSHIP%20%28TO%29%20THROUGH%20EPAY_0.pdf";
+ if(jurisdiction==="Punjab" && isToken) return language==="Urdu"
+  ? "## پنجاب — موٹر وہیکل ٹوکن ٹیکس\n\nپنجاب ایکسائز کے سرکاری صفحے پر MVT 2026-27 کے ٹوکن ٹیکس ریٹس درج ہیں۔ مکمل سال کا ٹوکن ٹیکس 31 اگست تک ادا کرنے پر سالانہ ٹوکن ٹیکس پر 10% رعایت درج ہے۔ پنجاب ایکسائز کی سرکاری سروسز میں Online Payment of Excise Dues بھی شامل ہے۔\n\n**ماخذ:** https://excise.punjab.gov.pk/motorvehicle_tax\nhttps://excise.punjab.gov.pk/services"
+  : "## Punjab — Motor Vehicle Token Tax\n\nPunjab Excise publishes current motor-vehicle token-tax rates, including MVT 2026-27. It states that a 10% rebate on annual token tax is allowed when the full year's tax is paid on or before 31 August of the financial year. Punjab Excise also lists Online Payment of Excise Dues among its official services.\n\n**Sources:** https://excise.punjab.gov.pk/motorvehicle_tax\nhttps://excise.punjab.gov.pk/services";
+ if(jurisdiction==="Sindh" && (isToken||isPayment)) return language==="Urdu"
+  ? "## سندھ — ایکسائز اینڈ ٹیکسیشن\n\nسرکاری سندھ ایکسائز ٹیکس پورٹل کے مطابق موٹر وہیکل ٹیکس کے لیے PSID پر مبنی ادائیگی کا طریقہ موجود ہے۔ طریقہ کار میں 12 ہندسوں کا PSID استعمال ہوتا ہے، جو 24 گھنٹے تک قابل استعمال ہوتا ہے، اور ادائیگی معاون 1LINK ذرائع سے کی جا سکتی ہے۔\n\n**ماخذ:** https://taxportal.excise.gos.pk/home/faq"
+  : "## Sindh — Excise & Taxation\n\nThe official Sindh Excise tax portal provides a PSID-based motor-vehicle-tax payment process. The published procedure uses a 12-digit PSID valid for 24 hours, with payment through supported 1LINK channels.\n\n**Source:** https://taxportal.excise.gos.pk/home/faq";
+ if(jurisdiction==="Khyber Pakhtunkhwa" && (isToken||isPayment)) return language==="Urdu"
+  ? "## خیبر پختونخوا — ایکسائز اینڈ ٹیکسیشن\n\nسرکاری KP ایکسائز محکمہ موٹر وہیکل ٹیکس اور اس کے ریٹس کی معلومات فراہم کرتا ہے۔ موجودہ سرکاری ثبوت مکمل آن لائن ادائیگی کا طریقہ ثابت نہیں کرتا، اس لیے غیر مصدقہ مراحل شامل نہیں کیے گئے۔\n\n**ماخذ:** https://kpexcise.gov.pk/new/mvtax/"
+  : "## Khyber Pakhtunkhwa — Excise & Taxation\n\nThe official KP Excise department publishes motor-vehicle-tax information and rates. The current official evidence does not establish a complete online payment workflow, so unsupported payment steps are not added.\n\n**Source:** https://kpexcise.gov.pk/new/mvtax/";
+ if(jurisdiction==="Punjab" && isPayment) return language==="Urdu"
+  ? "## پنجاب — ایکسائز آن لائن ادائیگی\n\nپنجاب ایکسائز کی سرکاری سروسز میں Online Payment of Excise Dues درج ہے۔ گاڑی کے متعلق درست payable amount متعلقہ ٹیکس اور گاڑی کی تفصیلات پر منحصر ہے۔\n\n**ماخذ:** https://excise.punjab.gov.pk/services"
+  : "## Punjab — Online Excise Payment\n\nPunjab Excise lists Online Payment of Excise Dues among its official services. The payable amount depends on the vehicle and applicable taxes.\n\n**Source:** https://excise.punjab.gov.pk/services";
+ return language==="Urdu"
+  ? "## ایکسائز اینڈ ٹیکسیشن\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔"
+  : "## Excise & Taxation\n\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new registration, or ownership transfer.";
+}
+
 import { retrieveNadraEvidence } from "../../../lib/nadra-rag";
 
 export const runtime = "nodejs";
@@ -618,6 +648,16 @@ const departmentDomains:Record<string,string[]>={
 
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
 
+
+if(requested==="Excise & Taxation"){
+ const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+ if(ej){
+  const answer=exciseEvidence(question,ej,language);
+  const urls=answer.match(/https?:\\/\\/[^\\s)]+/g)||[];
+  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Excise & Taxation",title:"Official Excise & Taxation source",url:urls[0]||"",lastVerified:"",province:ej},agent:true,goalFocused:true,webSearch:false});
+ }
+ return NextResponse.json({answer:language==="Urdu"?"## ایکسائز اینڈ ٹیکسیشن\\n\\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔":"## Excise & Taxation\\n\\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new registration, or ownership transfer.",source:null,agent:true,goalFocused:true,webSearch:false});
+}
 if(requested==="Police Services"){
  const pj=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
  if(pj){

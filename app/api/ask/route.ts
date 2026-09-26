@@ -575,7 +575,6 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  const isOwnership=q.includes("ownership")||q.includes("owner")||q.includes("ملکیت");
  const isSDC=q.includes("service delivery centre")||q.includes("service delivery center")||q.includes("sdc")||q.includes("ایس ڈی سی")||q.includes("سروس ڈیلیوری سنٹر")||q.includes("سروس ڈیلیوری سینٹر");
  const hasLandTopic=isFard||isMutation||isRegistry||isOwnership||isSDC||q.includes("land")||q.includes("property")||q.includes("revenue")||q.includes("زمین")||q.includes("جائیداد")||q.includes("ریونیو")||q.includes("رجسٹری")||q.includes("انتقال")||q.includes("لینڈ ریکارڈ");
- const hasLandTopic=isFard||isMutation||isRegistry||isOwnership||isSDC||q.includes("land")||q.includes("property")||q.includes("revenue")||q.includes("زمین")||q.includes("جائیداد")||q.includes("ریونیو")||q.includes("رجسٹری")||q.includes("انتقال")||q.includes("لینڈ ریکارڈ");
  if(language==="Urdu"){
   if(isPunjab){
    if(isMutation)return "## پنجاب — انتقال (Mutation / Intiqal)\n\nPLRA کے مطابق انتقال زمین کی ملکیت میں تبدیلی کو سرکاری لینڈ ریکارڈ میں درج کرنے کا عمل ہے۔ متعلقہ Arazi Record Centre (ARC) پر CNIC کی بایومیٹرک تصدیق کے بعد ٹوکن لیا جاتا ہے، مطلوبہ دستاویزات اور جائیداد کی تفصیلات جمع کی جاتی ہیں، مقررہ فیس/ٹیکس ادا کیے جاتے ہیں، اور متعلقہ Revenue Officer کے سامنے بیان/تصدیق کے بعد انتقال منظور کیا جاتا ہے۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";

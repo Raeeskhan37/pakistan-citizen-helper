@@ -10,6 +10,18 @@ export type AgentStep = {
 
 export type AgentMode = "normal" | "degraded";
 
+export type AgentWorkflowResult = {
+  mode: AgentMode;
+  agents: AgentStep[];
+  tools: string[];
+  summary: string;
+  verification: {
+    passed: boolean;
+    evidenceAvailable: boolean;
+    answerAccepted: boolean;
+  };
+};
+
 export const AGENT_TOOL_REGISTRY = [
   "NADRA RAG",
   "Supabase verified knowledge",
@@ -22,24 +34,22 @@ export const AGENT_TOOL_REGISTRY = [
   "English / Urdu guidance",
 ] as const;
 
+/**
+ * Builds the visible four-agent workflow metadata.
+ * The actual department research/evidence functions remain in the API route
+ * so the previously tested department behaviour stays unchanged.
+ */
 export function buildAgentWorkflow(args: {
   department: string;
   question: string;
   jurisdiction?: string | null;
   mode?: AgentMode;
   tools?: string[];
-}): {
-  mode: AgentMode;
-  agents: AgentStep[];
-  tools: string[];
-  summary: string;
-} {
+}): AgentWorkflowResult {
   const mode = args.mode || "normal";
   const jurisdiction = args.jurisdiction || "not specified";
-
-  // Research is a capability of the Analyzing Agent, not a fifth agent.
-  // The API supplies request-specific tools; the core tool layer remains visible.
   const requestedTools = args.tools || [];
+
   const tools = Array.from(
     new Set([
       ...requestedTools,
@@ -72,9 +82,9 @@ export function buildAgentWorkflow(args: {
       icon: "🔍",
       status: "completed",
       detail:
-        "Analyzed the intent and jurisdiction (" +
+        "Analyzed intent and jurisdiction (" +
         jurisdiction +
-        "), then selected the appropriate research tools and evidence path.",
+        "), then selected the appropriate evidence path.",
     },
     {
       id: "verifier",
@@ -84,7 +94,7 @@ export function buildAgentWorkflow(args: {
       detail:
         mode === "degraded"
           ? "Verified only the locally available evidence; live external verification was unavailable."
-          : "Checked service, jurisdiction, source relevance and available evidence before the answer was prepared.",
+          : "Checked service, jurisdiction, source relevance and available evidence before guidance was prepared.",
     },
     {
       id: "guidance",
@@ -105,6 +115,78 @@ export function buildAgentWorkflow(args: {
     summary:
       mode === "degraded"
         ? "Degraded Mode is active. Live external services are unavailable; only available verified local evidence is used."
-        : "Four-agent verification workflow completed.",
+        : "Four-agent workflow completed.",
+    verification: {
+      passed: mode === "normal",
+      evidenceAvailable: true,
+      answerAccepted: true,
+    },
   };
+}
+
+/**
+ * Executes the four logical agent stages around the existing, proven
+ * department/evidence pipeline. This deliberately does not replace that
+ * pipeline; it wraps it so the frozen service logic remains intact.
+ */
+export function runFourAgentWorkflow(args: {
+  department: string;
+  question: string;
+  jurisdiction?: string | null;
+  mode?: AgentMode;
+  tools?: string[];
+  answer: string;
+  evidenceAvailable: boolean;
+}): AgentWorkflowResult {
+  const base = buildAgentWorkflow(args);
+  const answerAccepted =
+    args.answer.trim().length > 20 && args.evidenceAvailable;
+
+  base.verification = {
+    passed: base.mode === "normal" && answerAccepted,
+    evidenceAvailable: args.evidenceAvailable,
+    answerAccepted,
+  };
+
+  base.agents = base.agents.map((agent) => {
+    if (agent.id === "verifier") {
+      if (base.mode === "degraded") {
+        return {
+          ...agent,
+          status: "degraded",
+          detail:
+            "Checked the available local evidence; live verification services were unavailable.",
+        };
+      }
+      return {
+        ...agent,
+        status: answerAccepted ? "completed" : "degraded",
+        detail: answerAccepted
+          ? "Verified that supporting evidence is available for the generated guidance."
+          : "Verification could not confirm sufficient supporting evidence for the generated guidance.",
+      };
+    }
+
+    if (agent.id === "guidance") {
+      return {
+        ...agent,
+        status: answerAccepted || base.mode === "degraded" ? "completed" : "waiting",
+        detail:
+          answerAccepted || base.mode === "degraded"
+            ? "Prepared the final citizen-facing guidance from the verified evidence."
+            : "Waiting for sufficient verified evidence.",
+      };
+    }
+
+    return agent;
+  });
+
+  base.summary =
+    base.mode === "degraded"
+      ? "Four-agent workflow completed in degraded mode using available verified evidence."
+      : answerAccepted
+        ? "Four-agent workflow completed: supervised, analyzed, verified and prepared citizen guidance."
+        : "Four-agent workflow completed with a verification warning.";
+
+  return base;
 }

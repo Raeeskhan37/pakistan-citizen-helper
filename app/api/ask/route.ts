@@ -653,106 +653,10 @@ if(requested==="Excise & Taxation"){
  const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  if(ej){
   const answer=exciseEvidence(question,ej,language);
-  const urls:string[]=[];
-  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Excise & Taxation",title:"Official Excise & Taxation source",url:urls[0]||"",lastVerified:"",province:ej},agent:true,goalFocused:true,webSearch:false});
+  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Excise & Taxation",title:"Official Excise & Taxation source",url:"",lastVerified:"",province:ej},agent:true,goalFocused:true,webSearch:false});
  }
- return NextResponse.json({answer:language==="Urdu"?"## ایکسائز اینڈ ٹیکسیشن\\n\\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔":"## Excise & Taxation\\n\\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new registration, or ownership transfer.",source:null,agent:true,goalFocused:true,webSearch:false});
+ return NextResponse.json({answer:language==="Urdu"?"## ایکسائز اینڈ ٹیکسیشن\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔":"## Excise & Taxation\n\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new vehicle registration, or ownership transfer.",source:null,agent:true,goalFocused:true,webSearch:false});
 }
-if(requested==="Police Services"){
- const pj=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
- if(pj){
-  const answer=policeEvidence(question,pj);
-  const firstUrl=(answer.match(/https?:\/\/[^\s)]+/g)||[])[0]||"";
-  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Police Services",title:"Official police service source",url:firstUrl,lastVerified:"",province:pj},agent:true,goalFocused:true,webSearch:false});
- }
-}
-
-if(requested==="Driving Licence"){
- const dj=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
- if(dj){
-  const answer=drivingEvidence(question,dj,language);
-  const firstUrl=(answer.match(/https?:\/\/[^\s)]+/g)||[])[0]||"";
-  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Driving Licence",title:"Official driving licence source",url:firstUrl,lastVerified:"",province:dj},agent:true,goalFocused:true,webSearch:false});
- }
-}
-
-
-if(requested==="Government Jobs"){
- const answer=governmentJobsEvidence(question,language);
- const firstUrl=(answer.match(/https?:\/\/[^\\s)]+/g)||[])[0]||"";
- return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Government Jobs",title:"National Jobs Portal",url:firstUrl,lastVerified:"",province:"Pakistan"},agent:true,goalFocused:true,webSearch:false});
-}
-
-let civilRegistrationEvidence="";
-const nq=normalize(question);
-const isBirth=nq.includes("birth")||nq.includes("پیدائش")||nq.includes("پیدائشی");
-const isDeath=nq.includes("death")||nq.includes("وفات")||nq.includes("موت")||nq.includes("ڈیتھ");
-const isCivilRegistration=requested==="Union Council"&&(isBirth||isDeath);
-const explicitCivilJurisdiction=detectTargetJurisdiction(question);
-if(requested==="Union Council" && (isBirth||isDeath) && explicitCivilJurisdiction){
-  selected.jurisdiction=explicitCivilJurisdiction;
-}
-
-const civilSources={
- Punjab:"https://lgcd.punjab.gov.pk/faq",
- PunjabDeath:"https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf",
- KP:"https://lgkp.gov.pk/page/crvs",
- ICTBirth:"https://ictadministration.gov.pk/birth-certificate/",
- ICTDeath:"https://ictadministration.gov.pk/death-registration/",
- Sindh:"https://www.sindh.gov.pk/",
- Balochistan:"https://balochistan.gov.pk/wp-content/uploads/2024/10/Balochistan-Local-Government-Act-2010.pdf"
-} as const;
-
-if(isCivilRegistration){
- const j=selected.jurisdiction;
- const generic=!j;
- const kind=isBirth?"birth":"death";
- const en:Record<string,string>={
-  Punjab:kind==="birth"
-   ? "### Punjab\\n1. Copy of the parents' NIC/CNIC.\\n2. Birth certificate or birth slip issued by the hospital or traditional birth attendant.\\n3. Union Council-provided registration form, completed with signature and thumb impression.\\n\\nSource: "+civilSources.Punjab
-   : "### Punjab\\n**Death reported within one year:**\\n1. Form-B.\\n2. Copy of the applicant's CNIC.\\n3. Copy of the deceased's CNIC.\\n4. Hospital death slip showing cause of death, if the death occurred in a hospital.\\n5. Burial slip, if available.\\n\\n**Late registration after one year and up to seven years:**\\n1. Affidavit by a relative on PKR 300 stamp paper, witnessed by two persons present at the burial.\\n2. Copies of the CNIC or birth certificate of the deceased and the relative making the application.\\n3. Hospital death slip where applicable.\\n\\nSource: "+civilSources.PunjabDeath,
-  "Khyber Pakhtunkhwa":kind==="birth"
-   ? "### Khyber Pakhtunkhwa\\n1. Form-A supplied by the concerned council, completed with signature and thumb impression.\\n2. Attested copy of the parent(s)' or guardian's CNIC; for a foreigner, passport; for a refugee, residence permit.\\n3. Birth certificate or immunization card issued by a health facility, or school certificate if available.\\n\\nSource: "+civilSources.KP
-   : "### Khyber Pakhtunkhwa\\n1. Form-D, completed, verified, signed and thumb-printed.\\n2. Applicant's CNIC number.\\n3. Documentary evidence may include a certificate or parchi issued by the Ghorkan or person in charge of the graveyard.\\n\\nSource: "+civilSources.KP,
-  "Islamabad Capital Territory":kind==="birth"
-   ? "### Islamabad Capital Territory (ICT)\\nThe official birth-registration page provides the required information/documents for registration.\\n1. Father's full name and CNIC information.\\n2. Child's name, sex, place of birth, date and hour of birth.\\n3. Hospital/clinic and attending doctor or midwife details.\\n4. Mother's name, address and CNIC/nationality details.\\n5. Father's residential address and occupation.\\n6. Name and address of the person making the report and date of report.\\n\\nSource: "+civilSources.ICTBirth
-   : "### Islamabad Capital Territory (ICT)\\nThe official page lists required information rather than a separate physical-document checklist.\\n1. Deceased's name and nationality.\\n2. Husband/father/mother's name and occupation.\\n3. Address of the deceased.\\n4. Religion, sex and caste.\\n5. Date, time and cause of death, and age.\\n6. Name and address of the person reporting the death.\\n7. Date of report.\\n\\nSubmission: Citizen Facilitation Center, G-11/4, Islamabad. The official page states a 7-day processing time.\\n\\nSource: "+civilSources.ICTDeath,
-  Sindh:"### Sindh\\nThe available official source does not establish a specific document checklist for "+(kind==="birth"?"birth":"death")+"-certificate registration. No unverified documents are added.\\n\\nSource: "+civilSources.Sindh,
-  Balochistan:"### Balochistan\\nThe available official source does not establish a specific document checklist for "+(kind==="birth"?"birth":"death")+"-certificate registration. No unverified documents are added.\\n\\nSource: "+civilSources.Balochistan
- };
- const ur:Record<string,string>={
-  Punjab:kind==="birth"
-   ? "### پنجاب\\n1. والدین کے NIC/CNIC کی کاپی۔\\n2. ہسپتال یا روایتی برتھ اٹینڈنٹ کی طرف سے جاری کردہ پیدائش کا سرٹیفکیٹ/سلِپ۔\\n3. یونین کونسل کا فراہم کردہ رجسٹریشن فارم، دستخط اور انگوٹھے کے نشان کے ساتھ۔\\n\\nماخذ: "+civilSources.Punjab
-   : "### پنجاب\\n**ایک سال کے اندر رپورٹ ہونے والی وفات:**\\n1. فارم-B۔\\n2. درخواست دہندہ کے CNIC کی کاپی۔\\n3. متوفی کے CNIC کی کاپی۔\\n4. اگر وفات ہسپتال میں ہوئی ہو تو ہسپتال کی ڈیتھ سلِپ۔\\n5. اگر دستیاب ہو تو تدفین کی سلِپ۔\\n\\n**ایک سال سے زیادہ اور سات سال تک تاخیر سے رجسٹریشن:**\\n1. رشتہ دار کا PKR 300 اسٹامپ پیپر پر حلف نامہ، تدفین کے وقت موجود دو افراد کی گواہی کے ساتھ۔\\n2. متوفی اور درخواست دینے والے رشتہ دار کے CNIC یا برتھ سرٹیفکیٹ کی نقول۔\\n3. جہاں قابل اطلاق ہو ہسپتال کی ڈیتھ سلِپ۔\\n\\nماخذ: "+civilSources.PunjabDeath,
-  "Khyber Pakhtunkhwa":kind==="birth"
-   ? "### خیبر پختونخوا\\n1. فارم-A، متعلقہ کونسل سے حاصل کردہ، دستخط اور انگوٹھے کے نشان کے ساتھ۔\\n2. والدین/سرپرست کے CNIC کی تصدیق شدہ کاپی؛ غیر ملکی کے لیے پاسپورٹ، اور پناہ گزین کے لیے رہائشی اجازت نامہ۔\\n3. صحت کے ادارے کا پیدائشی سرٹیفکیٹ یا امیونائزیشن کارڈ، یا دستیاب ہو تو اسکول سرٹیفکیٹ۔\\n\\nماخذ: "+civilSources.KP
-   : "### خیبر پختونخوا\\n1. فارم-D، مکمل، تصدیق شدہ، دستخط شدہ اور انگوٹھے کے نشان کے ساتھ۔\\n2. درخواست دہندہ کا CNIC نمبر۔\\n3. دستیاب دستاویزی ثبوت، مثلاً گورکن یا قبرستان کے ذمہ دار کی طرف سے جاری کردہ سرٹیفکیٹ یا پرچی۔\\n\\nماخذ: "+civilSources.KP,
-  "Islamabad Capital Territory":kind==="birth"
-   ? "### اسلام آباد کیپیٹل ٹیریٹری (ICT)\\nسرکاری ماخذ رجسٹریشن کے لیے مطلوبہ معلومات/دستاویزات فراہم کرتا ہے۔\\n1. والد کا نام اور CNIC کی معلومات۔\\n2. بچے کا نام، جنس، جائے پیدائش، تاریخ اور وقت پیدائش۔\\n3. ہسپتال/کلینک اور ڈاکٹر یا مڈوائف کی تفصیل۔\\n4. والدہ کا نام، پتہ اور CNIC/قومیت کی معلومات۔\\n5. والد کا رہائشی پتہ اور پیشہ۔\\n6. رپورٹ کرنے والے شخص کا نام، پتہ اور رپورٹ کی تاریخ۔\\n\\nماخذ: "+civilSources.ICTBirth
-   : "### اسلام آباد کیپیٹل ٹیریٹری (ICT)\\nسرکاری صفحہ الگ فزیکل ڈاکیومنٹ چیک لسٹ کے بجائے مطلوبہ معلومات بتاتا ہے۔\\n1. متوفی کا نام اور قومیت۔\\n2. شوہر/والد/والدہ کا نام اور پیشہ۔\\n3. متوفی کا پتہ۔\\n4. مذہب، جنس اور ذات۔\\n5. تاریخ، وقت، وجۂ وفات اور عمر۔\\n6. رپورٹ کرنے والے شخص کا نام اور پتہ۔\\n7. رپورٹ کی تاریخ۔\\n\\nجمع کرانے کی جگہ: Citizen Facilitation Center, G-11/4, Islamabad۔ سرکاری صفحے پر 7 دن کا processing time درج ہے۔\\n\\nماخذ: "+civilSources.ICTDeath,
-  Sindh:"### سندھ\\nدستیاب سرکاری ماخذ میں "+(kind==="birth"?"پیدائشی":"ڈیتھ")+" سرٹیفکیٹ کے لیے مخصوص دستاویزات کی فہرست قائم نہیں ہوتی۔ غیر مصدقہ دستاویزات شامل نہیں کی جائیں گی۔\\n\\nماخذ: "+civilSources.Sindh,
-  Balochistan:"### بلوچستان\\nدستیاب سرکاری ماخذ میں "+(kind==="birth"?"پیدائشی":"ڈیتھ")+" سرٹیفکیٹ کے لیے مخصوص دستاویزات کی فہرست قائم نہیں ہوتی۔ غیر مصدقہ دستاویزات شامل نہیں کی جائیں گی۔\\n\\nماخذ: "+civilSources.Balochistan
- };
- const order=["Punjab","Khyber Pakhtunkhwa","Islamabad Capital Territory","Sindh","Balochistan"];
- const textByJ=language==="Urdu"?ur:en;
- const items=generic?order:order.filter(x=>x===j);
- const answer=(generic
-   ? (language==="Urdu"?"## تصدیق شدہ سرکاری معلومات\\n\\n":"## Verified official information\\n\\n")
-   : "")+items.map(x=>textByJ[x]).join("\\n\\n");
- const first=j&&textByJ[j]?(
-   j==="Punjab"?(kind==="death"?civilSources.PunjabDeath:civilSources.Punjab):
-   j==="Khyber Pakhtunkhwa"?civilSources.KP:
-   j==="Islamabad Capital Territory"?(kind==="death"?civilSources.ICTDeath:civilSources.ICTBirth):
-   j==="Sindh"?civilSources.Sindh:civilSources.Balochistan):null;
- return NextResponse.json({
-  answer,
-  source:first?{department:"Union Council / Local Government",title:"Official civil-registration source",url:first,lastVerified:"",province:j||""}:null,
-  agent:true,
-  goalFocused:true,
-  webSearch:false
- });
-}
-
 const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
 let officialText="";
 for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}

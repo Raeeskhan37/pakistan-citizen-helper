@@ -515,6 +515,25 @@ For other police services, use the relevant official Islamabad Police service pa
 Police requirements vary by province/territory. Specific documents, fees and processing times should not be invented without current official evidence.`;
 }
 
+
+function governmentJobsEvidence(question:string,language:"English"|"Urdu"):string{
+ const q=normalize(question);
+ const isApply=q.includes("apply")||q.includes("application")||q.includes("how to apply")||q.includes("اپلائی")||q.includes("درخواست");
+ const isAccount=q.includes("register")||q.includes("signup")||q.includes("sign up")||q.includes("account")||q.includes("رجسٹر")||q.includes("اکاؤنٹ");
+ const isPassword=q.includes("password")||q.includes("forgot")||q.includes("پاس ورڈ");
+ const isSearch=q.includes("search")||q.includes("vacanc")||q.includes("jobs")||q.includes("job")||q.includes("نوکری")||q.includes("ملازمت");
+ if(language==="Urdu"){
+  if(isPassword)return "## سرکاری نوکریاں — National Jobs Portal\n\nپاس ورڈ بھول جانے کی صورت میں NJP کے لاگ اِن صفحے پر **Forgot Password** استعمال کریں۔\n\n**سرکاری ماخذ:** https://njp.gov.pk/help";
+  if(isAccount)return "## سرکاری نوکریاں — National Jobs Portal\n\nNJP پر اکاؤنٹ بنانے کے لیے **Register** کریں اور CNIC، ای میل اور پاس ورڈ کی معلومات فراہم کر کے تصدیقی عمل مکمل کریں۔ موجودہ NJP ہیلپ کے مطابق candidate profile بنانے کے لیے CNIC اور PAK-ID verification استعمال ہوتی ہے۔\n\n**سرکاری ماخذ:** https://njp.gov.pk/register\nhttps://njp.gov.pk/help";
+  if(isApply)return "## سرکاری نوکریاں — National Jobs Portal\n\nNJP پر سرکاری نوکری کے لیے:\n1. **Live Jobs** میں دستیاب آسامی تلاش کریں۔\n2. مطلوبہ job کھولیں اور **Apply** منتخب کریں۔\n3. اپنی CV/profile کے مطلوبہ حصے مکمل کریں۔\n4. Closing Date سے پہلے application submit کریں۔\n\n**سرکاری ماخذ:** https://njp.gov.pk/help";
+  if(isSearch)return "## سرکاری نوکریاں — National Jobs Portal\n\nNJP پر **Live Jobs** اور **Upcoming Jobs** دستیاب ہیں۔ Job Search میں keyword یا organization کے ذریعے سرکاری vacancies تلاش کی جا سکتی ہیں۔\n\n**سرکاری ماخذ:** https://www.njp.gov.pk/index.php/jobs";
+ }
+ if(isPassword)return "## Government Jobs — National Jobs Portal\n\nIf you forgot your password, use **Forgot Password** on the NJP login page to receive a reset code and set a new password.\n\n**Official source:** https://njp.gov.pk/help";
+ if(isAccount)return "## Government Jobs — National Jobs Portal\n\nTo create an NJP candidate account, select **Register** and complete the verification process. The current NJP registration/help pages require candidate details including CNIC and email, with PAK-ID verification used in the candidate-profile process.\n\n**Official sources:** https://njp.gov.pk/register\nhttps://njp.gov.pk/help";
+ if(isApply)return "## Government Jobs — National Jobs Portal\n\nTo apply for a government job through NJP:\n1. Open **Live Jobs** and find the vacancy.\n2. Open the job details and click **Apply**.\n3. Complete the required CV/profile sections.\n4. Submit the application before the closing date.\n\n**Official source:** https://njp.gov.pk/help";
+ return "## Government Jobs — National Jobs Portal\n\nNJP provides government job search through **Live Jobs** and **Upcoming Jobs**. You can search vacancies by keyword or organization and open the job details for the application process.\n\n**Official source:** https://www.njp.gov.pk/index.php/jobs";
+}
+
 export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
@@ -528,7 +547,7 @@ export async function POST(request:NextRequest){try{
  const detectedQuestionService=detectService(question,"");
  if(detectedQuestionService && !belongsToDepartment(detectedQuestionService,requested)){
  const qn=normalize(question);
- const directDepartmentMatch=(requested==="FBR / Taxation"&&(qn.includes("fbr")||qn.includes("ntn")||qn.includes("iris")||qn.includes("income tax")||qn.includes("tax return")))||(requested==="Government Jobs"&&(qn.includes("government job")||qn.includes("national jobs portal")||qn.includes("njp")||qn.includes("vacancy")))||(requested==="Excise & Taxation"&&(qn.includes("excise")||qn.includes("vehicle")||qn.includes("token tax")||qn.includes("vehicle registration")||qn.includes("ownership transfer")))||(requested==="Land & Revenue"&&(qn.includes("land")||qn.includes("fard")||qn.includes("mutation")||qn.includes("intiqal")||qn.includes("revenue")))||(requested==="Police Services"&&(qn.includes("police")||qn.includes("fir")||qn.includes("character certificate")||qn.includes("police clearance")||qn.includes("verification")))||(requested==="Education & Scholarships"&&(qn.includes("scholarship")||qn.includes("hec")||qn.includes("education")))||(requested==="Driving Licence"&&(qn.includes("driving")||qn.includes("learner")||qn.includes("license")||qn.includes("licence")||qn.includes("ڈرائیونگ")||qn.includes("لائسنس")));
+ const directDepartmentMatch=(requested==="FBR / Taxation"&&(qn.includes("fbr")||qn.includes("ntn")||qn.includes("iris")||qn.includes("income tax")||qn.includes("tax return")))||(requested==="Government Jobs"&&(qn.includes("government job")||qn.includes("government jobs")||qn.includes("national jobs portal")||qn.includes("njp")||qn.includes("vacancy")||qn.includes("job")||qn.includes("apply for a job")||qn.includes("job application")||qn.includes("نوکری")||qn.includes("ملازمت")||qn.includes("درخواست")))||(requested==="Excise & Taxation"&&(qn.includes("excise")||qn.includes("vehicle")||qn.includes("token tax")||qn.includes("vehicle registration")||qn.includes("ownership transfer")))||(requested==="Land & Revenue"&&(qn.includes("land")||qn.includes("fard")||qn.includes("mutation")||qn.includes("intiqal")||qn.includes("revenue")))||(requested==="Police Services"&&(qn.includes("police")||qn.includes("fir")||qn.includes("character certificate")||qn.includes("police clearance")||qn.includes("verification")))||(requested==="Education & Scholarships"&&(qn.includes("scholarship")||qn.includes("hec")||qn.includes("education")))||(requested==="Driving Licence"&&(qn.includes("driving")||qn.includes("learner")||qn.includes("license")||qn.includes("licence")||qn.includes("ڈرائیونگ")||qn.includes("لائسنس")));
  if(!directDepartmentMatch)return NextResponse.json({answer:language==="Urdu"?"یہ سوال منتخب شعبے سے متعلق نہیں لگتا۔ براہ کرم اسی شعبے سے متعلق سوال پوچھیں۔":"This question does not appear to belong to the selected government department. Please ask a question related to the selected department.",source:null});
 }
 const isNadra=requested==="NADRA Services";
@@ -614,6 +633,13 @@ if(requested==="Driving Licence"){
   const firstUrl=(answer.match(/https?:\/\/[^\s)]+/g)||[])[0]||"";
   return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Driving Licence",title:"Official driving licence source",url:firstUrl,lastVerified:"",province:dj},agent:true,goalFocused:true,webSearch:false});
  }
+}
+
+
+if(requested==="Government Jobs"){
+ const answer=governmentJobsEvidence(question,language);
+ const firstUrl=(answer.match(/https?:\/\/[^\\s)]+/g)||[])[0]||"";
+ return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Government Jobs",title:"National Jobs Portal",url:firstUrl,lastVerified:"",province:"Pakistan"},agent:true,goalFocused:true,webSearch:false});
 }
 
 let civilRegistrationEvidence="";

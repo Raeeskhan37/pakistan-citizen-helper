@@ -653,7 +653,7 @@ if(requested==="Excise & Taxation"){
  const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  if(ej){
   const answer=exciseEvidence(question,ej,language);
-  const urls=answer.match(/https?:\\/\\/[^\\s)]+/g)||[];
+  const urls:string[]=[];
   return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Excise & Taxation",title:"Official Excise & Taxation source",url:urls[0]||"",lastVerified:"",province:ej},agent:true,goalFocused:true,webSearch:false});
  }
  return NextResponse.json({answer:language==="Urdu"?"## ایکسائز اینڈ ٹیکسیشن\\n\\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔":"## Excise & Taxation\\n\\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new registration, or ownership transfer.",source:null,agent:true,goalFocused:true,webSearch:false});

@@ -85,17 +85,120 @@ function workingDepartmentTerms(department:string):string[] {
  const out:string[]=[]; for(const k of Object.keys(groups)){for(const term of groups[k]){if(q.includes(normalize(term))){if(out.indexOf(k)<0)out.push(k);break;}}} if(out.length===0)out.push("general driving licence"); return out;
 }
 function drivingEvidence(question:string,jurisdiction:string,language:"English"|"Urdu"):string{
- const cats=drivingCategories(question).join(", ");
+ const cats=drivingCategories(question);
+ const has=(name:string)=>cats.indexOf(name)>=0;
  const en:Record<string,string>={
-  Punjab:"## Punjab — Driving Licence\n**Official authority:** Punjab DLIMS 2.0.\n\nThe official DLIMS provides learner, regular and international driving licence services. The online workflow includes account/login, application form, PSID generation and payment, followed by applicable processing/approval steps. Categories include motorcycle, car/jeep, LTV, HTV and PSV. Exact fees depend on the selected category and should be taken from the current official DLIMS fee structure.\n\nRequested category: "+cats+"\n\nSource: https://dlims.punjab.gov.pk/",
-  Sindh:"## Sindh — Driving Licence\n**Official authority:** Sindh Police — Driving License Sindh (DLS).\n\nThe official computerized process includes online application/registration, DLS front desk, screening/registration, medical examination, fee payment, written/oral computer test, road test where applicable, and final licence receipt. The official source identifies a valid original CNIC, physical fitness and minimum age 18 for the general process. Categories include motorcycle, motor car, LTV and HTV.\n\nRequested category: "+cats+"\n\nSources: https://dls.gos.pk/ and https://dls.gos.pk/pro-comp-lic.html",
-  "Khyber Pakhtunkhwa":"## Khyber Pakhtunkhwa — Driving Licence\n**Official authorities:** KP Transport Department, KPITB and relevant licensing authorities.\n\nThe original working agent identifies the **Dastak App** as the primary digital route for KP transport/driving-licence services. The documented system covers learner, LTV, HTV and international driving licences and may involve applicant profile, CNIC/NADRA verification, required documents, officer verification/approval, payment and licence processing. KP Police Police Sahulat Markaz also provides specific driving-related services including learner permit, traffic learner certificate and duplicate driving licence. Exact documents, fees and steps should only be stated when supported by current official evidence.\n\nRequested category: "+cats+"\n\nSources: https://transport.kp.gov.pk/public-service.php and https://apipsm.kppolice.gov.pk/psm/VideoTutorial",
-  Balochistan:"## Balochistan — Driving Licence\n**Official authority:** Balochistan Police / Police Mobile Khidmat Markaz.\n\nThe official service covers learner driving licence, renewal, international driving licence, duplicate licence and endorsement. For learner licence it lists original CNIC with one copy, traffic rules/code book, and medical certificate for applicants aged 50 or above. Published learner ages include 18 for motorcycle/motor car and 21 for LTV; learner licence validity is six months.\n\nDo not treat learner requirements as the complete regular-licence procedure unless official evidence supports additional steps.\n\nSource: https://pkm.balochistanpolice.gov.pk/public/home/services",
-  "Islamabad Capital Territory":"## Islamabad Capital Territory — Driving Licence\n**Official authority:** Islamabad Traffic Police (ITP).\n\nThe official ITP-DLIMS provides new driving licence, learner permit, driving tests, renewal, duplicate licence and international driving permit facilities. Specific documents, fees and processing times should only be stated when supported by current official ITP evidence.\n\nSource: https://dlims.islamabadpolice.gov.pk/",
-  "Azad Jammu and Kashmir":"## Azad Jammu and Kashmir — Driving Licence\nThe official Traffic Police AJ&K portal provides licence procedure, verification, application tracking, office locations, DLMS forms, medical form, fee challan, licence fee details, theory book and traffic signs.\n\nSource: https://trafficpolice.ajk.gov.pk/",
-  "Gilgit-Baltistan":"## Gilgit-Baltistan — Driving Licence\nThe official DLMIS provides regular licence application, renewal, duplicate licence, international driving licence, medical form and licensing-centre information.\n\nSource: https://dlmis.gbp.gov.pk/"
+  Punjab:`## Punjab — Driving Licence
+**Official authority:** Punjab DLIMS 2.0.
+
+**For the requested service:** ${has("learner")?"Learner licence information is requested.":has("renewal")?"Renewal information is requested.":has("duplicate")?"Duplicate/replacement information is requested.":has("international")?"International driving licence information is requested.":"General driving licence information is requested."}
+
+The official DLIMS provides learner, regular and international driving licence services. The online workflow includes account/login, application form, PSID generation and payment, followed by applicable processing/approval steps.
+
+**Licence categories:** motorcycle, car/jeep, LTV, HTV and PSV.
+
+For exact documents or fees, only the current official DLIMS evidence should be used for the selected service/category.
+
+**Source:** https://dlims.punjab.gov.pk/
+**Fee structure:** https://dlims.punjab.gov.pk/fee_structure`,
+  Sindh:`## Sindh — Driving Licence
+**Official authority:** Sindh Police — Driving License Sindh (DLS).
+
+**Requested service:** ${has("learner")?"Learner licence":has("renewal")?"Renewal":has("duplicate")?"Duplicate/replacement":has("international")?"International driving licence":"General driving licence"}.
+
+The official computerized process includes:
+1. DLS online application/registration.
+2. Appearance at the DLS front desk.
+3. Screening and registration.
+4. Medical examination.
+5. Fee payment.
+6. Written/oral computer test.
+7. Road test where applicable.
+8. Final licence receipt.
+
+The official source identifies a valid original CNIC, physical fitness and minimum age 18 for the general process. Categories include motorcycle, motor car, LTV and HTV.
+
+**Sources:** https://dls.gos.pk/ and https://dls.gos.pk/pro-comp-lic.html`,
+  "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Driving Licence
+**Official authorities:** KP Transport Department, KPITB and relevant licensing authorities.
+
+The original working agent identifies the **Dastak App** as the primary digital route for KP transport/driving-licence services. The documented system covers learner, LTV, HTV and international driving licences.
+
+The digital workflow may include applicant profile, CNIC/NADRA verification, required documents/attachments, officer verification/approval, payment and licence processing. KP Police Police Sahulat Markaz also provides specific driving services including learner permit, traffic learner certificate and duplicate driving licence.
+
+**Requested category/service:** ${cats.join(", ")}.
+
+Exact documents, fees and steps should only be stated when supported by current official evidence.
+
+**Sources:**
+https://transport.kp.gov.pk/public-service.php
+https://apipsm.kppolice.gov.pk/psm/VideoTutorial`,
+  Balochistan:`## Balochistan — Driving Licence
+**Official authority:** Balochistan Police / Police Mobile Khidmat Markaz.
+
+The official service covers learner driving licence, renewal, international driving licence, duplicate licence and endorsement.
+
+**Learner licence evidence:**
+- Original CNIC and one copy.
+- Traffic rules/code book.
+- Medical certificate for applicants aged 50 or above.
+- Published learner age: 18 years for motorcycle/motor car and 21 years for LTV.
+- Learner licence validity: six months.
+
+These learner requirements should not be presented as the complete regular-licence procedure.
+
+**Source:** https://pkm.balochistanpolice.gov.pk/public/home/services`,
+  "Islamabad Capital Territory":`## Islamabad Capital Territory — Driving Licence
+**Official authority:** Islamabad Traffic Police (ITP).
+
+The official ITP-DLIMS provides:
+- New driving licence
+- Learner permit
+- Driving tests
+- Renewal
+- Duplicate licence
+- International driving permit
+
+For ${has("learner")?"learner permit":has("renewal")?"renewal":has("duplicate")?"duplicate licence":has("international")?"international driving permit":"general driving licence"} questions, the exact documents, fees and processing time should only be stated when supported by current official ITP evidence.
+
+**Official portal:** https://dlims.islamabadpolice.gov.pk/`,
+  "Azad Jammu and Kashmir":`## Azad Jammu and Kashmir — Driving Licence
+The official Traffic Police AJ&K portal provides licence procedure, verification, application tracking, office locations, DLMS forms, medical form, fee challan, licence fee details, theory book and traffic signs.
+
+Use the official procedure/form for the selected licence category.
+
+**Source:** https://trafficpolice.ajk.gov.pk/`,
+  "Gilgit-Baltistan":`## Gilgit-Baltistan — Driving Licence
+The official DLMIS provides regular licence application, renewal, duplicate licence, international driving licence, medical form and licensing-centre information. The regular application covers categories including motorcycle, motor car, LTV, HTV and other listed vehicle classes.
+
+**Source:** https://dlmis.gbp.gov.pk/`
  };
- const ur:Record<string,string>={Punjab:"## پنجاب — ڈرائیونگ لائسنس\nسرکاری DLIMS 2.0 میں لرنر، ریگولر اور انٹرنیشنل ڈرائیونگ لائسنس کی سہولیات موجود ہیں۔ درست فیس منتخب کیٹیگری کے موجودہ سرکاری فیس اسٹرکچر سے لینی چاہیے۔\n\nماخذ: https://dlims.punjab.gov.pk/",Sindh:"## سندھ — ڈرائیونگ لائسنس\nسرکاری DLS کے مطابق عمل میں آن لائن رجسٹریشن، فرنٹ ڈیسک، اسکریننگ/رجسٹریشن، میڈیکل، فیس، تحریری/کمپیوٹر ٹیسٹ، جہاں لاگو ہو روڈ ٹیسٹ اور لائسنس کی وصولی شامل ہے۔\n\nماخذ: https://dls.gos.pk/","Khyber Pakhtunkhwa":"## خیبر پختونخوا — ڈرائیونگ لائسنس\nسرکاری معلومات کے مطابق Dastak App KP ٹرانسپورٹ/ڈرائیونگ لائسنس خدمات کا اہم ڈیجیٹل ذریعہ ہے۔ Police Sahulat Markaz بھی مخصوص ڈرائیونگ خدمات فراہم کرتا ہے۔\n\nماخذ: https://transport.kp.gov.pk/public-service.php",Balochistan:"## بلوچستان — ڈرائیونگ لائسنس\nPolice Mobile Khidmat Markaz لرنر، تجدید، انٹرنیشنل، ڈپلیکیٹ اور اینڈورسمنٹ خدمات فراہم کرتا ہے۔\n\nماخذ: https://pkm.balochistanpolice.gov.pk/public/home/services","Islamabad Capital Territory":"## اسلام آباد — ڈرائیونگ لائسنس\nاسلام آباد ٹریفک پولیس کا ITP-DLIMS نیا لائسنس، لرنر پرمٹ، ٹیسٹ، تجدید، ڈپلیکیٹ اور انٹرنیشنل ڈرائیونگ پرمٹ کی سہولیات فراہم کرتا ہے۔\n\nماخذ: https://dlims.islamabadpolice.gov.pk/","Azad Jammu and Kashmir":"## آزاد جموں و کشمیر — ڈرائیونگ لائسنس\nسرکاری Traffic Police AJ&K پورٹل پر لائسنس طریقہ کار، تصدیق، ٹریکنگ، فارم، میڈیکل فارم، فیس چالان اور فیس کی معلومات موجود ہیں۔\n\nماخذ: https://trafficpolice.ajk.gov.pk/","Gilgit-Baltistan":"## گلگت بلتستان — ڈرائیونگ لائسنس\nسرکاری DLMIS پر ریگولر لائسنس، تجدید، ڈپلیکیٹ، انٹرنیشنل لائسنس، میڈیکل فارم اور لائسنسنگ مراکز کی معلومات موجود ہیں۔\n\nماخذ: https://dlmis.gbp.gov.pk/"};
+ const ur:Record<string,string>={
+  Punjab:`## پنجاب — ڈرائیونگ لائسنس
+سرکاری DLIMS 2.0 میں لرنر، ریگولر اور انٹرنیشنل ڈرائیونگ لائسنس کی سہولیات موجود ہیں۔ کیٹیگریز میں موٹر سائیکل، کار/جیپ، LTV، HTV اور PSV شامل ہیں۔
+لرنر، تجدید، ڈپلیکیٹ یا انٹرنیشنل لائسنس کے لیے درست موجودہ فیس اور دستاویزات سرکاری DLIMS کی متعلقہ معلومات کے مطابق ہی بتائی جانی چاہئیں۔
+ماخذ: https://dlims.punjab.gov.pk/
+فیس اسٹرکچر: https://dlims.punjab.gov.pk/fee_structure`,
+  Sindh:`## سندھ — ڈرائیونگ لائسنس
+سرکاری DLS کے مطابق عمل میں آن لائن رجسٹریشن، فرنٹ ڈیسک، اسکریننگ/رجسٹریشن، میڈیکل، فیس، تحریری/کمپیوٹر ٹیسٹ، جہاں لاگو ہو روڈ ٹیسٹ اور لائسنس کی وصولی شامل ہے۔
+عمومی عمل کے لیے اصل CNIC، جسمانی فٹنس اور کم از کم عمر 18 سال درج ہے۔ کیٹیگریز میں موٹر سائیکل، موٹر کار، LTV اور HTV شامل ہیں۔
+ماخذ: https://dls.gos.pk/`,
+  "Khyber Pakhtunkhwa":`## خیبر پختونخوا — ڈرائیونگ لائسنس
+سرکاری معلومات کے مطابق Dastak App KP ٹرانسپورٹ/ڈرائیونگ لائسنس خدمات کا اہم ڈیجیٹل ذریعہ ہے۔ سسٹم میں لرنر، LTV، HTV اور انٹرنیشنل ڈرائیونگ لائسنس شامل ہیں۔ Police Sahulat Markaz مخصوص ڈرائیونگ خدمات بھی فراہم کرتا ہے، جن میں لرنر پرمٹ اور ڈپلیکیٹ لائسنس شامل ہیں۔
+ماخذ: https://transport.kp.gov.pk/public-service.php`,
+  Balochistan:`## بلوچستان — ڈرائیونگ لائسنس
+Police Mobile Khidmat Markaz لرنر، تجدید، انٹرنیشنل، ڈپلیکیٹ اور اینڈورسمنٹ خدمات فراہم کرتا ہے۔ لرنر کے لیے اصل CNIC اور ایک کاپی، ٹریفک رولز/کوڈ بک، اور 50 سال یا اس سے زیادہ عمر میں میڈیکل سرٹیفکیٹ درج ہے۔
+ماخذ: https://pkm.balochistanpolice.gov.pk/public/home/services`,
+  "Islamabad Capital Territory":`## اسلام آباد — ڈرائیونگ لائسنس
+اسلام آباد ٹریفک پولیس کا ITP-DLIMS نیا لائسنس، لرنر پرمٹ، ڈرائیونگ ٹیسٹ، تجدید، ڈپلیکیٹ اور انٹرنیشنل ڈرائیونگ پرمٹ کی سہولیات فراہم کرتا ہے۔
+ماخذ: https://dlims.islamabadpolice.gov.pk/`,
+  "Azad Jammu and Kashmir":`## آزاد جموں و کشمیر — ڈرائیونگ لائسنس
+سرکاری Traffic Police AJ&K پورٹل پر لائسنس طریقہ کار، تصدیق، ٹریکنگ، دفاتر، فارم، میڈیکل فارم، فیس چالان اور ٹریفک علامات کی معلومات موجود ہیں۔
+ماخذ: https://trafficpolice.ajk.gov.pk/`,
+  "Gilgit-Baltistan":`## گلگت بلتستان — ڈرائیونگ لائسنس
+سرکاری DLMIS پر ریگولر لائسنس، تجدید، ڈپلیکیٹ، انٹرنیشنل لائسنس، میڈیکل فارم اور لائسنسنگ مراکز کی معلومات موجود ہیں۔
+ماخذ: https://dlmis.gbp.gov.pk/`
+ };
  return (language==="Urdu"?ur:en)[jurisdiction]||en.Punjab;
 }
 

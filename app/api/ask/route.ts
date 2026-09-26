@@ -62,7 +62,7 @@ function workingDetectTargetJurisdiction(question:string): WorkingJurisdiction|n
 
 function workingDepartmentDomains(department:string,jurisdiction:string|null):string[] {
   const base=WORKING_AGENT_DEPARTMENT_DOMAINS[department]||["gov.pk"];
-  if(jurisdiction && WORKING_AGENT_DOMAINS[jurisdiction]) return [...new Set([...WORKING_AGENT_DOMAINS[jurisdiction],...base])];
+  if(jurisdiction && WORKING_AGENT_DOMAINS[jurisdiction]) { const merged:string[]=WORKING_AGENT_DOMAINS[jurisdiction].concat(base); const out:string[]=[]; for(const item of merged){ if(out.indexOf(item)<0) out.push(item); } return out; }
   return base;
 }
 

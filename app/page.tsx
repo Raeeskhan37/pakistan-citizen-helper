@@ -47,6 +47,9 @@ const departments: Department[] = [
   { id: "vaccination", name: "Vaccination for Travelling Abroad", urdu: "بیرونِ ملک سفر کے لیے ویکسینیشن", icon: "💉", description: "Travel vaccination, polio and yellow fever information", services: [
     { id: "travel-vaccination", name: "Travel Vaccination", icon: "💉", description: "Vaccination requirements for international travel", question: "What vaccinations are required for travelling abroad from Pakistan?" }, { id: "polio", name: "Polio Vaccination", icon: "🧪", description: "Polio vaccination and certificate information", question: "How can I get a polio vaccination certificate for international travel?" }, { id: "yellow-fever", name: "Yellow Fever", icon: "🧪", description: "Yellow fever vaccination and certificate information", question: "How can I get a yellow fever vaccination certificate for international travel?" }, { id: "hajj-umrah", name: "Hajj & Umrah", icon: "🕋", description: "Vaccination information for Hajj and Umrah travel", question: "What vaccinations are required for Hajj or Umrah from Pakistan?" },
   ]},
+  { id: "arms-licence", name: "Arms Licence", urdu: "اسلحہ لائسنس", icon: "🔐", description: "Arms licence application, renewal and government procedures", services: [
+    { id: "application", name: "Arms Licence Application", icon: "📝", description: "Arms licence application information", question: "How can I apply for an arms licence?" }, { id: "renewal", name: "Arms Licence Renewal", icon: "🔄", description: "Arms licence renewal information", question: "How can I renew an arms licence?" }, { id: "documents", name: "Required Documents", icon: "📄", description: "Documents required for an arms licence", question: "What documents are required for an arms licence?" }, { id: "procedure", name: "Procedure", icon: "📋", description: "Arms licence application procedure", question: "What is the procedure for obtaining an arms licence?" },
+  ]},
 ];
 
 export default function Home() {

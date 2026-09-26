@@ -261,7 +261,7 @@ function canonicalDepartment(v:string):string{
   "domicile":"Domicile","driving licence":"Driving Licence","police services":"Police Services",
   "protector & overseas employment":"Protector & Overseas Employment","protector of emigrants":"Protector & Overseas Employment",
   "excise & taxation":"Excise & Taxation","education & scholarships":"Education & Scholarships",
-  "land & revenue":"Land & Revenue","fbr / taxation":"FBR / Taxation","government jobs":"Government Jobs"
+  "land & revenue":"Land & Revenue","fbr / taxation":"FBR / Taxation","government jobs":"Government Jobs","vaccination for travelling abroad":"Vaccination for Travelling Abroad"
  };
  return map[x]||v;
 }
@@ -643,6 +643,80 @@ function educationEvidence(question:string,jurisdiction:string|null,language:"En
  return "## Education & Scholarships\n\nPlease specify the education service, for example HEC scholarship, Need-Based Scholarship, Punjab PEEF, Honhaar Scholarship, eligibility, or how to apply.";
 }
 
+function isVaccinationPilgrimQuestion(question:string):boolean{
+ const q=normalize(question);
+ return /hajj|haj|حج|umrah|umra|عمرہ/.test(q);
+}
+
+function isVaccinationUmrahQuestion(question:string):boolean{
+ return /umrah|umra|عمرہ/.test(normalize(question));
+}
+
+function isSaudiVaccinationWorkVisaQuestion(question:string):boolean{
+ const q=normalize(question);
+ const saudi=/saudi|saudia|saudi arabia|سعودی/.test(q);
+ const work=/work visa|employment visa|employment|work permit|worker|working|job visa|iqama|job|ملازمت|ورک ویزا|اقامہ/.test(q);
+ const vaccination=/vaccine|vaccination|vaccinated|immunization|immunisation|ویکسین|ویکسینیشن/.test(q);
+ return saudi&&work&&vaccination;
+}
+
+function vaccinationPilgrimResponse(question:string,language:"English"|"Urdu"){
+ const umrah=isVaccinationUmrahQuestion(question);
+ const answer=umrah
+  ? (language==="Urdu"
+    ? `عمرہ کے لیے ویکسینیشن
+
+عمرہ کے لیے موجودہ سعودی وزارتِ صحت کی سرکاری صحت کی ضروریات پر عمل کرنا ضروری ہے۔
+
+میننجوکوکل ویکسین اور پاکستان سے آنے والے مسافروں کے لیے متعلقہ پولیو شرائط موجودہ سرکاری سعودی دستاویز کے مطابق پوری کی جائیں۔`
+    : `Umrah Vaccination Requirements
+
+Follow the current Saudi Ministry of Health official Umrah health requirements.
+
+The applicable meningococcal vaccination and Pakistan-specific polio requirements should be completed according to the current official document.`)
+  : (language==="Urdu"
+    ? `حج کے لیے ویکسینیشن
+
+سعودی وزارتِ صحت کی موجودہ سرکاری حج صحت ضروریات کے مطابق حج کے لیے متعلقہ ویکسینیشن اور صحت کی شرائط پوری کرنا ضروری ہے۔
+
+میننجوکوکل ویکسین اور پاکستان سے آنے والے مسافروں کے لیے متعلقہ پولیو شرائط سرکاری سعودی دستاویز کے مطابق پوری کی جائیں۔
+
+موسمی فلو اور COVID-19 سے متعلق معلومات کو صرف اسی صورت میں لازمی قرار دیا جائے جب موجودہ سرکاری دستاویز واضح طور پر ایسا کہے۔`
+    : `Hajj Vaccination Requirements
+
+Follow the current Saudi Ministry of Health official Hajj health requirements.
+
+The applicable meningococcal vaccination requirement and Pakistan-specific polio requirements should be completed according to the current official document.
+
+Influenza and COVID-19 should not automatically be described as mandatory unless the current official document explicitly says so.`);
+
+ const source=umrah
+  ? {department:"Vaccination for Travelling Abroad",title:"Saudi MOH — Umrah Health Requirements",url:"https://www.moh.gov.sa/en/HealthAwareness/Pilgrims-Health/Documents/Health-Regulations-Umrah-EN.pdf"}
+  : {department:"Vaccination for Travelling Abroad",title:"Saudi MOH — Hajj Health Requirements",url:"https://www.moh.gov.sa/HealthAwareness/Pilgrims-Health/Documents/Hajj-Health-Requirements-English-language.pdf"};
+
+ return NextResponse.json({answer:cleanAnswer(answer),source,agent:true,goalFocused:true,webSearch:false});
+}
+
+function vaccinationWorkVisaResponse(language:"English"|"Urdu"){
+ const answer=language==="Urdu"
+  ? `## سعودی ورک ویزا — ویکسینیشن
+
+دستیاب سرکاری شواہد یہ ثابت نہیں کرتے کہ ہر پاکستانی کے لیے عام سعودی employment visa پر ایک مخصوص ویکسین لازمی ہے۔
+
+حج یا عمرہ کی ویکسینیشن شرائط کو عام employment visa پر لاگو نہیں کیا جانا چاہیے۔
+
+موجودہ medical اور health-screening requirements متعلقہ سعودی اور پاکستانی سرکاری حکام سے verify کی جائیں۔`
+  : `## Ordinary Saudi Work Visa — Vaccination
+
+The available official evidence does not establish that every Pakistani travelling on an ordinary Saudi employment visa must receive a specific vaccine.
+
+Do not transfer Hajj or Umrah vaccination requirements to ordinary employment visas.
+
+Current medical and health-screening requirements should be checked against current Saudi and Pakistani official requirements.`;
+
+ return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Vaccination for Travelling Abroad",title:"Government of Pakistan / BEOE — Work Visa Vaccination Policy",url:"https://beoe.gov.pk/files/policyguideliness/51.pdf"},agent:true,goalFocused:true,webSearch:false});
+}
+
 export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
@@ -653,6 +727,16 @@ export async function POST(request:NextRequest){try{
  if(workingTargetJurisdiction){selected.jurisdiction=workingTargetJurisdiction;}
  else if(workingJurisdiction && !selected.jurisdiction){selected.jurisdiction=workingJurisdiction;}
  const civilTargetJurisdiction=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
+
+ // EARLY VACCINATION ROUTE: import the proven Streamlit Hajj/Umrah/work-visa handling without changing frozen departments.
+ if(requested==="Vaccination for Travelling Abroad"){
+  if(isVaccinationPilgrimQuestion(question)){
+   return vaccinationPilgrimResponse(question,language);
+  }
+  if(isSaudiVaccinationWorkVisaQuestion(question)){
+   return vaccinationWorkVisaResponse(language);
+  }
+ }
 
  // EARLY DOMICILE ROUTE: use verified provincial evidence for domicile questions.
  if(requested==="Domicile" && (workingTargetJurisdiction||workingJurisdiction)==="Punjab"){
@@ -693,7 +777,7 @@ export async function POST(request:NextRequest){try{
  const detectedQuestionService=detectService(question,"");
  if(detectedQuestionService && !belongsToDepartment(detectedQuestionService,requested)){
  const qn=normalize(question);
- const directDepartmentMatch=(requested==="FBR / Taxation"&&(qn.includes("fbr")||qn.includes("ntn")||qn.includes("iris")||qn.includes("income tax")||qn.includes("tax return")||qn.includes("sales tax")||qn.includes("sales-tax")||qn.includes("gst")||qn.includes("tax registration")||qn.includes("taxpayer registration")||qn.includes("withholding tax")||qn.includes("income tax return")))||(requested==="Government Jobs"&&(qn.includes("government job")||qn.includes("government jobs")||qn.includes("national jobs portal")||qn.includes("njp")||qn.includes("vacancy")||qn.includes("job")||qn.includes("apply for a job")||qn.includes("job application")||qn.includes("نوکری")||qn.includes("ملازمت")||qn.includes("درخواست")))||(requested==="Excise & Taxation"&&(qn.includes("excise")||qn.includes("vehicle")||qn.includes("token tax")||qn.includes("vehicle registration")||qn.includes("ownership transfer")))||(requested==="Land & Revenue"&&(qn.includes("land")||qn.includes("fard")||qn.includes("mutation")||qn.includes("intiqal")||qn.includes("revenue")))||(requested==="Police Services"&&(qn.includes("police")||qn.includes("fir")||qn.includes("character certificate")||qn.includes("police clearance")||qn.includes("verification")))||(requested==="Education & Scholarships"&&(qn.includes("scholarship")||qn.includes("hec")||qn.includes("education")))||(requested==="Driving Licence"&&(qn.includes("driving")||qn.includes("learner")||qn.includes("license")||qn.includes("licence")||qn.includes("ڈرائیونگ")||qn.includes("لائسنس")));
+ const directDepartmentMatch=(requested==="FBR / Taxation"&&(qn.includes("fbr")||qn.includes("ntn")||qn.includes("iris")||qn.includes("income tax")||qn.includes("tax return")||qn.includes("sales tax")||qn.includes("sales-tax")||qn.includes("gst")||qn.includes("tax registration")||qn.includes("taxpayer registration")||qn.includes("withholding tax")||qn.includes("income tax return")))||(requested==="Government Jobs"&&(qn.includes("government job")||qn.includes("government jobs")||qn.includes("national jobs portal")||qn.includes("njp")||qn.includes("vacancy")||qn.includes("job")||qn.includes("apply for a job")||qn.includes("job application")||qn.includes("نوکری")||qn.includes("ملازمت")||qn.includes("درخواست")))||(requested==="Excise & Taxation"&&(qn.includes("excise")||qn.includes("vehicle")||qn.includes("token tax")||qn.includes("vehicle registration")||qn.includes("ownership transfer")))||(requested==="Land & Revenue"&&(qn.includes("land")||qn.includes("fard")||qn.includes("mutation")||qn.includes("intiqal")||qn.includes("revenue")))||(requested==="Police Services"&&(qn.includes("police")||qn.includes("fir")||qn.includes("character certificate")||qn.includes("police clearance")||qn.includes("verification")))||(requested==="Education & Scholarships"&&(qn.includes("scholarship")||qn.includes("hec")||qn.includes("education")))||(requested==="Driving Licence"&&(qn.includes("driving")||qn.includes("learner")||qn.includes("license")||qn.includes("licence")||qn.includes("ڈرائیونگ")||qn.includes("لائسنس")))||(requested==="Vaccination for Travelling Abroad"&&(qn.includes("vaccination")||qn.includes("vaccine")||qn.includes("polio")||qn.includes("yellow fever")||qn.includes("hajj")||qn.includes("haj")||qn.includes("umrah")||qn.includes("umra")||qn.includes("ویکسین")||qn.includes("حج")||qn.includes("عمرہ")));
  if(!directDepartmentMatch)return NextResponse.json({answer:language==="Urdu"?"یہ سوال منتخب شعبے سے متعلق نہیں لگتا۔ براہ کرم اسی شعبے سے متعلق سوال پوچھیں۔":"This question does not appear to belong to the selected government department. Please ask a question related to the selected department.",source:null});
 }
 if(requested==="Education & Scholarships"){
@@ -820,7 +904,7 @@ if(requested==="FBR / Taxation"){
 }
 if(requested==="Protector & Overseas Employment"){alternateOfficialUrls.push("https://beoe.gov.pk/");}
 const departmentDomains:Record<string,string[]>={
- "Government Jobs":["njp.gov.pk"],
+  "Vaccination for Travelling Abroad":["nhsrc.gov.pk","nih.org.pk","moh.gov.sa"], "Government Jobs":["njp.gov.pk"],
  "Education & Scholarships":["hec.gov.pk"],
  "Land & Revenue":selected.jurisdiction==="Khyber Pakhtunkhwa"?["revenue.kp.gov.pk"]:["punjab-zameen.gov.pk"],
  "Protector & Overseas Employment":["beoe.gov.pk"],
@@ -855,7 +939,7 @@ if(domains.length && !skipSearch){
  if(searchText)officialText+=searchText;
 }
 officialText=officialText.slice(0,10000);
-const dbContext=isNadra?"Supabase records intentionally excluded for NADRA answers; use NADRA POLICY RAG EVIDENCE only.":(selected.records.length?context(selected.records,language):"No matching verified database record was found.");
+const isVaccination=requested==="Vaccination for Travelling Abroad"; const dbContext=isNadra?"Supabase records intentionally excluded for NADRA answers; use NADRA POLICY RAG EVIDENCE only.":isVaccination?"Supabase records intentionally excluded for vaccination answers; use verified official health/travel sources only.":(selected.records.length?context(selected.records,language):"No matching verified database record was found.");
  if(!selected.records.length&&!officialText&&!ragEvidence)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the central verified government information agent inside Pakistan Citizen Helper.
 

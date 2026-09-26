@@ -552,6 +552,15 @@ Sources: https://islamabadpolice.gov.pk/ and https://pkm.islamabadpolice.gov.pk/
 Requested service: ${service}.
 Specific documents, fees and processing times should not be invented without current official evidence.`;
 }
+if(requested==="Police Services"){
+ const pj=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
+ if(pj){
+  const answer=policeEvidence(question,pj);
+  const firstUrl=(answer.match(/https?:\/\/[^\s)]+/g)||[])[0]||"";
+  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Police Services",title:"Official police service source",url:firstUrl,lastVerified:"",province:pj},agent:true,goalFocused:true,webSearch:false});
+ }
+}
+
 if(requested==="Driving Licence"){
  const dj=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
  if(dj){

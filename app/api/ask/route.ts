@@ -223,11 +223,11 @@ The KP Right to Public Services Commission describes issuance through the Arms L
 **Official source:** https://www.kprts.gov.pk/services/issuance-of-arms-license/`,
   "Balochistan":`## Balochistan — Arms Licence
 
-The Government of Balochistan Home Department identifies arms licensing as a provincial service and publishes the Balochistan Arms Act 2022 and current arms-licence renewal notices.
+The Government of Balochistan Home Department lists Arms License as a provincial service and states that its online service supports applying for a new licence, tracking an application and renewing an existing licence. The department also publishes arms-licence notices, including a revised SOP for renewal.
 
-For a current application or renewal, only the applicable provincial Home Department procedure should be stated when supported by official evidence.
+The retrieved official evidence does not establish a complete current checklist of documents, fees or eligibility conditions for a new licence, so those details are not added here.
 
-**Official sources:** https://home.balochistan.gov.pk/ and https://balochistan.gov.pk/departments-acts/`,
+**Official source:** https://home.balochistan.gov.pk/`,
   "Azad Jammu and Kashmir":`## Azad Jammu and Kashmir — Arms Licence
 
 The official AJK E-Facilitation Center lists Arms License as a service for acquiring an arms licence in AJK. It identifies the AJK Interior Department as the issuance authority and lists a computerized certificate issuance fee of Rs. 1,500; the service page also lists an application form and fitness certificate.
@@ -235,14 +235,18 @@ The official AJK E-Facilitation Center lists Arms License as a service for acqui
 **Official source:** https://efc.ajk.gov.pk/instructionservice/3`,
   "Punjab":`## Punjab — Arms Licence
 
-Punjab government district portals identify Arms Licensing Branches and list services including new-arm-licence issuance, revalidation/renewal, duplicate copies, transfer, correction, verification and cancellation. Punjab e-Khidmat Markaz also provides renewal of Federal Arms Licenses issued by the Federal Government.
+Punjab government district portals identify Arms Licensing Branches and list functions such as new-arms-licence issuance, renewal/revalidation, duplicate copies, transfer, correction, verification and cancellation. Some district portals also publish local status information; for example, an official Rawalpindi district page currently states that the Arm License service is banned there.
 
-For a new Punjab licence, the exact current district procedure should be confirmed from the relevant official Punjab Arms Licensing Branch rather than inferred from another province.
+Because current availability and procedure can vary by district and may change, the retrieved official evidence does not establish one province-wide checklist for a new Punjab licence. The app therefore does not invent documents, fees or a single application procedure.
 
-**Official sources:** https://punjab.gov.pk/DGKhan_ALO and https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/federal-arms-license-fal`,
+**Official sources:** https://bhakkar.punjab.gov.pk/arms_licensing_branch and https://rawalpindi.punjab.gov.pk/forms`,
   "Gilgit-Baltistan":`## Gilgit-Baltistan — Arms Licence
 
-A sufficiently detailed current GB Arms Licence procedure was not established from the retrieved official evidence. Verified information for the exact GB procedure could not be established without inventing requirements.`
+A sufficiently detailed current GB Arms Licence procedure was not established from the retrieved official government evidence. The official GB government site provides general government information and laws/notifications, but the retrieved material did not establish the current application steps, documents or fees for an arms licence.
+
+To avoid inventing requirements, those details are not stated here.
+
+**Official sources:** https://gilgitbaltistan.gov.pk/ and https://www.gilgitbaltistan.gov.pk/pages/laws`
  };
  const ur:Record<string,string>={
   "Islamabad Capital Territory":`## اسلام آباد — اسلحہ لائسنس
@@ -262,7 +266,9 @@ KP Right to Public Services Commission کے مطابق Arms License Branch می�
 **سرکاری ماخذ:** https://www.kprts.gov.pk/services/issuance-of-arms-license/`,
   "Balochistan":`## بلوچستان — اسلحہ لائسنس
 
-حکومت بلوچستان کا Home Department اسلحہ لائسنسنگ کو صوبائی سروس کے طور پر ظاہر کرتا ہے اور Balochistan Arms Act 2022 اور موجودہ renewal notices شائع کرتا ہے۔ موجودہ درخواست یا تجدید کے لیے صرف مصدقہ سرکاری طریقہ کار ہی بیان کیا جائے گا۔
+حکومت بلوچستان کے Home Department کی سرکاری ویب سائٹ Arms License کو صوبائی سروس کے طور پر درج کرتی ہے اور بتاتی ہے کہ آن لائن سروس کے ذریعے نئے لائسنس کے لیے درخواست، درخواست کا اسٹیٹس ٹریک اور موجودہ لائسنس کی تجدید کی جا سکتی ہے۔ محکمہ اسلحہ لائسنس کی renewal سے متعلق موجودہ SOP/نوٹس بھی شائع کرتا ہے۔
+
+نئے لائسنس کے مکمل موجودہ دستاویزات، فیس یا اہلیت کی فہرست دستیاب سرکاری شواہد سے واضح طور پر ثابت نہیں ہوئی، اس لیے یہ تفصیلات شامل نہیں کی گئیں۔
 
 **سرکاری ماخذ:** https://home.balochistan.gov.pk/`,
   "Azad Jammu and Kashmir":`## آزاد جموں و کشمیر — اسلحہ لائسنس
@@ -272,14 +278,18 @@ AJK E-Facilitation Center اسلحہ لائسنس کو سروس کے طور پر
 **سرکاری ماخذ:** https://efc.ajk.gov.pk/instructionservice/3`,
   "Punjab":`## پنجاب — اسلحہ لائسنس
 
-پنجاب کے سرکاری ضلعی پورٹلز Arms Licensing Branches کو متعلقہ دفاتر کے طور پر ظاہر کرتے ہیں اور نئی لائسنس issuance، revalidation/renewal، duplicate، transfer، correction، verification اور cancellation جیسی خدمات درج کرتے ہیں۔ پنجاب e-Khidmat Markaz وفاقی حکومت کے جاری کردہ Federal Arms License کی renewal سروس بھی فراہم کرتا ہے۔
+پنجاب کے سرکاری ضلعی پورٹلز Arms Licensing Branches کو متعلقہ دفاتر کے طور پر ظاہر کرتے ہیں اور نئی لائسنس issuance، renewal/revalidation، duplicate، transfer، correction، verification اور cancellation جیسی خدمات درج کرتے ہیں۔ بعض اضلاع موجودہ مقامی صورتحال بھی الگ سے شائع کرتے ہیں؛ مثال کے طور پر Rawalpindi کے سرکاری صفحے پر اس وقت Arm License سروس کو banned بتایا گیا ہے۔
 
-نئے پنجاب لائسنس کے لیے کسی دوسرے صوبے کے طریقہ کار کو پنجاب پر لاگو نہیں کیا جائے گا۔
+موجودہ دستیاب سرکاری شواہد سے پورے پنجاب کے لیے نئی درخواست کی ایک مشترکہ موجودہ دستاویزاتی فہرست یا طریقہ کار ثابت نہیں ہوتا، اس لیے غیر مصدقہ تفصیلات شامل نہیں کی گئیں۔
 
-**سرکاری ماخذ:** https://punjab.gov.pk/DGKhan_ALO`,
+**سرکاری ماخذ:** https://bhakkar.punjab.gov.pk/arms_licensing_branch اور https://rawalpindi.punjab.gov.pk/forms`,
   "Gilgit-Baltistan":`## گلگت بلتستان — اسلحہ لائسنس
 
-دستیاب سرکاری شواہد سے گلگت بلتستان کے مخصوص موجودہ Arms Licence طریقہ کار کی مکمل تصدیق نہیں ہو سکی۔ غیر مصدقہ دستاویزات یا فیس شامل نہیں کی جائیں گی۔`
+دستیاب سرکاری شواہد سے گلگت بلتستان کے موجودہ Arms Licence طریقہ کار کی مکمل تصدیق نہیں ہو سکی۔ سرکاری GB ویب سائٹ پر عمومی قوانین/نوٹیفکیشن موجود ہیں، لیکن دستیاب مواد سے موجودہ درخواست کے مراحل، دستاویزات یا فیس واضح طور پر ثابت نہیں ہوئی۔
+
+غیر مصدقہ تقاضے شامل نہیں کیے گئے۔
+
+**سرکاری ماخذ:** https://gilgitbaltistan.gov.pk/`
  };
  if(!jurisdiction) return {answer:language==="Urdu"?"## اسلحہ لائسنس\n\nپاکستان میں اسلحہ لائسنس کا طریقہ کار صوبے/علاقے کے مطابق مختلف ہے۔ براہ کرم صوبہ یا علاقہ بتائیں تاکہ متعلقہ سرکاری طریقہ کار دیا جا سکے۔":"## Arms Licence\n\nArms-licensing procedure is jurisdiction-specific in Pakistan. Please specify the province or territory so the applicable official procedure can be provided without mixing provincial rules.",sources:[]};
  const answer=(language==="Urdu"?ur:en)[jurisdiction]||en.Punjab;
@@ -287,10 +297,10 @@ AJK E-Facilitation Center اسلحہ لائسنس کو سروس کے طور پر
   "Islamabad Capital Territory":["https://ictadministration.gov.pk/new-arms-license/"],
   "Sindh":["https://home.sindh.gov.pk/faqs"],
   "Khyber Pakhtunkhwa":["https://www.kprts.gov.pk/services/issuance-of-arms-license/"],
-  "Balochistan":["https://home.balochistan.gov.pk/","https://balochistan.gov.pk/departments-acts/"],
+  "Balochistan":["https://home.balochistan.gov.pk/"],
   "Azad Jammu and Kashmir":["https://efc.ajk.gov.pk/instructionservice/3"],
-  "Punjab":["https://punjab.gov.pk/DGKhan_ALO","https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/federal-arms-license-fal"],
-  "Gilgit-Baltistan":["https://gilgitbaltistan.gov.pk/"]
+  "Punjab":["https://bhakkar.punjab.gov.pk/arms_licensing_branch","https://rawalpindi.punjab.gov.pk/forms"],
+  "Gilgit-Baltistan":["https://gilgitbaltistan.gov.pk/","https://www.gilgitbaltistan.gov.pk/pages/laws"]
  };
  return {answer,sources:sources[jurisdiction]||[]};
 }

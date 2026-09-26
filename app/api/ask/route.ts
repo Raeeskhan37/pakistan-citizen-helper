@@ -1,4 +1,86 @@
 import { NextRequest, NextResponse } from "next/server";
+
+// Ported from the working pakistan-citizen-ai-agent routing/research architecture.
+export const WORKING_AGENT_JURISDICTIONS = ["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad Capital Territory","Azad Jammu and Kashmir","Gilgit-Baltistan"] as const;
+export type WorkingJurisdiction = typeof WORKING_AGENT_JURISDICTIONS[number];
+
+export const WORKING_AGENT_DOMAINS: Record<string,string[]> = {
+  "Punjab":["lgcd.punjab.gov.pk","punjab.gov.pk"],
+  "Sindh":["lgdsindh.gov.pk","sindh.gov.pk"],
+  "Khyber Pakhtunkhwa":["lgkp.gov.pk","kp.gov.pk","kprts.gov.pk"],
+  "Balochistan":["lgrd.gob.pk","balochistan.gov.pk"],
+  "Islamabad Capital Territory":["ictadministration.gov.pk","islamabad.gov.pk"],
+  "Azad Jammu and Kashmir":["ajk.gov.pk"],
+  "Gilgit-Baltistan":["gilgitbaltistan.gov.pk"],
+};
+
+export const WORKING_AGENT_DEPARTMENT_DOMAINS: Record<string,string[]> = {
+  "NADRA Services":["nadra.gov.pk"], "Passport Services":["dgip.gov.pk"],
+  "Protector & Overseas Employment":["beoe.gov.pk"],
+  "Vaccination for Travelling Abroad":["nhsrc.gov.pk","nih.org.pk","moh.gov.sa"],
+  "FBR / Taxation":["fbr.gov.pk"], "Education & Scholarships":["hec.gov.pk"],
+  "Government Jobs":["njp.gov.pk"], "Police Services":["punjabpolice.gov.pk","kppolice.gov.pk"],
+  "Excise & Taxation":["excise.punjab.gov.pk","kpexcise.gov.pk"],
+  "Land & Revenue":["punjab-zameen.gov.pk","revenue.kp.gov.pk"],
+  "Domicile":["gov.pk","cfc.kp.gov.pk"],
+  "Driving Licence":["dlims.punjab.gov.pk","dls.gos.pk","kppolice.gov.pk","dlims.islamabadpolice.gov.pk"],
+  "Union Council":["lgcd.punjab.gov.pk","lgkp.gov.pk","ictadministration.gov.pk","sindh.gov.pk","balochistan.gov.pk"],
+};
+
+const WORKING_CITY_JURISDICTIONS: Record<string,WorkingJurisdiction> = {
+  lahore:"Punjab",rawalpindi:"Punjab",faisalabad:"Punjab",multan:"Punjab",gujranwala:"Punjab",sialkot:"Punjab",bahawalpur:"Punjab",sargodha:"Punjab",
+  karachi:"Sindh",hyderabad:"Sindh",sukkur:"Sindh",larkana:"Sindh",nawabshah:"Sindh",mirpur khas:"Sindh",thatta:"Sindh",dadu:"Sindh",
+  peshawar:"Khyber Pakhtunkhwa",mardan:"Khyber Pakhtunkhwa",swat:"Khyber Pakhtunkhwa",mingora:"Khyber Pakhtunkhwa",abbottabad:"Khyber Pakhtunkhwa",mansehra:"Khyber Pakhtunkhwa",kohat:"Khyber Pakhtunkhwa",bannu:"Khyber Pakhtunkhwa",nowshera:"Khyber Pakhtunkhwa",swabi:"Khyber Pakhtunkhwa",malakand:"Khyber Pakhtunkhwa",dir:"Khyber Pakhtunkhwa",
+  quetta:"Balochistan",gwadar:"Balochistan",turbat:"Balochistan",khuzdar:"Balochistan",chaman:"Balochistan",sibi:"Balochistan",zhob:"Balochistan",
+  islamabad:"Islamabad Capital Territory",muzaffarabad:"Azad Jammu and Kashmir",rawalakot:"Azad Jammu and Kashmir",gilgit:"Gilgit-Baltistan",skardu:"Gilgit-Baltistan",hunza:"Gilgit-Baltistan"
+};
+
+export function workingDetectJurisdiction(question:string): WorkingJurisdiction|null {
+  const q=(question||"").toLowerCase();
+  const explicit:[string,WorkingJurisdiction][]=[
+    ["punjab","Punjab"],["پنجاب","Punjab"],["sindh","Sindh"],["سندھ","Sindh"],
+    ["khyber pakhtunkhwa","Khyber Pakhtunkhwa"],["kpk","Khyber Pakhtunkhwa"],[" kp ","Khyber Pakhtunkhwa"],["خیبر پختونخوا","Khyber Pakhtunkhwa"],
+    ["balochistan","Balochistan"],["بلوچستان","Balochistan"],["islamabad","Islamabad Capital Territory"],["ict","Islamabad Capital Territory"],["اسلام آباد","Islamabad Capital Territory"],
+    ["ajk","Azad Jammu and Kashmir"],["azad kashmir","Azad Jammu and Kashmir"],["آزاد کشمیر","Azad Jammu and Kashmir"],["gilgit baltistan","Gilgit-Baltistan"],["gilgit-baltistan","Gilgit-Baltistan"],["gb","Gilgit-Baltistan"]
+  ];
+  for(const [term,j] of explicit) if(q.includes(term)) return j;
+  for(const [city,j] of Object.entries(WORKING_CITY_JURISDICTIONS)) if(q.includes(city)) return j;
+  return null;
+}
+
+export function workingDetectTargetJurisdiction(question:string): WorkingJurisdiction|null {
+  const q=(question||"").toLowerCase();
+  const terms:Array<[WorkingJurisdiction,string[]]>=[
+    ["Punjab",["punjab","پنجاب"]],["Sindh",["sindh","سندھ"]],["Khyber Pakhtunkhwa",["khyber pakhtunkhwa","kpk","خیبر پختونخوا"]],
+    ["Balochistan",["balochistan","بلوچستان"]],["Islamabad Capital Territory",["islamabad","ict","اسلام آباد"]],["Azad Jammu and Kashmir",["ajk","azad kashmir","آزاد کشمیر"]],["Gilgit-Baltistan",["gilgit baltistan","gilgit-baltistan","gb","گلگت"]]
+  ];
+  for(const [j,ts] of terms) for(const t of ts){
+    if(q.includes(" in "+t)||q.includes(" for "+t)||q.includes(" from "+t)||q.includes(" about "+t)||q.includes(t+" mein")||q.includes(t+" میں")||q.endsWith(t)) return j;
+  }
+  return null;
+}
+
+export function workingDepartmentDomains(department:string,jurisdiction:string|null):string[] {
+  const base=WORKING_AGENT_DEPARTMENT_DOMAINS[department]||["gov.pk"];
+  if(jurisdiction && WORKING_AGENT_DOMAINS[jurisdiction]) return [...new Set([...WORKING_AGENT_DOMAINS[jurisdiction],...base])];
+  return base;
+}
+
+export function workingDepartmentTerms(department:string):string[] {
+  const map:Record<string,string[]>={
+    "NADRA Services":["nadra","cnic","nicop","poc","crc","frc","b-form","pak identity"],
+    "Passport Services":["passport","renew passport","new passport","mrp","dgip"],
+    "Union Council":["union council","birth certificate","birth registration","death certificate","death registration","marriage certificate","marriage registration","nikah","divorce certificate"],
+    "Driving Licence":["driving licence","driving license","learner","dlims","driving test"],
+    "Police Services":["police clearance","character certificate","police verification","fir"],
+    "Protector & Overseas Employment":["protector","protector of emigrants","overseas employment","beoe"],
+    "Vaccination for Travelling Abroad":["vaccination","vaccine","polio","yellow fever","hajj","umrah"],
+    "Domicile":["domicile","permanent residence","residence certificate"],
+    "Arms Licence":["arms licence","arms license","weapon licence","gun licence"],
+    "Education & Scholarships":["scholarship","hec","education"],"Land & Revenue":["land record","fard","property","revenue"],"Excise & Taxation":["excise","vehicle","token tax","tax"],"FBR / Taxation":["fbr","tax","ntn","iris"],"Government Jobs":["government jobs","job","vacancy","njp"]
+  }; return map[department]||[];
+}
+
 import { retrieveNadraEvidence } from "../../../lib/nadra-rag";
 
 export const runtime = "nodejs";

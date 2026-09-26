@@ -721,7 +721,13 @@ if(requested==="Union Council"){
     alternateOfficialUrls.push("https://lgcd.punjab.gov.pk/faq","https://lgcd.punjab.gov.pk/system/files/Notified%20Birth%20Death%20Rules%2C%202025.pdf");
   }
 }
-if(requested==="FBR / Taxation"){\n const fq=normalize(question);\n if(fq.includes("sales tax")||fq.includes("sales-tax")||fq.includes("gst")||fq.includes("sales tax return")){\n  alternateOfficialUrls.push("https://www.fbr.gov.pk/categ/file-sales-tax-return/51148/50849/101158","https://e.fbr.gov.pk/SOP/IRIS/Filing_of_New_Sales_Tax_and_Federal_Excise_Return.pdf");\n }\n}\nif(requested==="Protector & Overseas Employment"){alternateOfficialUrls.push("https://beoe.gov.pk/");}
+if(requested==="FBR / Taxation"){
+ const fq=normalize(question);
+ if(fq.includes("sales tax")||fq.includes("sales-tax")||fq.includes("gst")||fq.includes("sales tax return")){
+  alternateOfficialUrls.push("https://www.fbr.gov.pk/categ/file-sales-tax-return/51148/50849/101158","https://e.fbr.gov.pk/SOP/IRIS/Filing_of_New_Sales_Tax_and_Federal_Excise_Return.pdf");
+ }
+}
+if(requested==="Protector & Overseas Employment"){alternateOfficialUrls.push("https://beoe.gov.pk/");}
 const departmentDomains:Record<string,string[]>={
  "Government Jobs":["njp.gov.pk"],
  "Education & Scholarships":["hec.gov.pk"],

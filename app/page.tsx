@@ -50,7 +50,7 @@ const departments: Department[] = [
   { id: "excise", name: "Excise & Taxation", urdu: "ایکسائز اینڈ ٹیکسیشن", icon: "🚗", description: "Vehicle registration and taxation", services: [
     { id: "registration", name: "Motor Vehicle Registration", icon: "🚗", description: "Register a vehicle", question: "How can I register a motor vehicle?" }, { id: "transfer", name: "Vehicle Ownership Transfer", icon: "🔁", description: "Transfer ownership", question: "How can I transfer vehicle ownership?" }, { id: "token", name: "Vehicle Token Tax", icon: "💰", description: "Vehicle tax payment", question: "How can I pay vehicle token tax?" }, { id: "verification", name: "Vehicle Verification", icon: "🔎", description: "Verify vehicle information", question: "How can I verify a vehicle?" }, { id: "renewal", name: "Vehicle Registration Renewal", icon: "🔄", description: "Renew registration", question: "How can I renew vehicle registration?" }, { id: "plate", name: "Number Plate", icon: "🔢", description: "Number plate information", question: "How can I obtain or replace a number plate?" },
   ]},
-
+];
 
 export default function Home() {
   const [language, setLanguage] = useState<"English" | "Urdu">("English");

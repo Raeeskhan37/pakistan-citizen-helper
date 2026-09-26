@@ -1048,7 +1048,7 @@ if (requested === "NADRA Services") {
       source: {
         department: "NADRA",
         title: "NADRA Registration Policy RP-6.0.2 — Fresh/New Registration 18+",
-        url: "https://www.nadra.gov.pk/identityDocument/cnic",
+        url: "https://www.nadra.gov.pk/",
         lastVerified: "21 September 2026",
         province: ""
       },

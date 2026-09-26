@@ -201,6 +201,77 @@ function expandQuestion(question: string) {
   return question + " " + additions.join(" ");
 }
 
+
+export async function getDirectAdultFreshCnicAnswer(
+  question: string,
+  language: "English" | "Urdu"
+): Promise<string | null> {
+  if (!isAdultFreshCnicQuestion(question)) return null;
+
+  try {
+    if (language === "English") {
+      const chunks = await getEnglishChunks();
+      const targeted = getTargetedEnglishAdultCnicChunks(chunks);
+      const main = targeted[0]?.text || "";
+      if (!main) return null;
+
+      return [
+        "## New CNIC / Smart CNIC — Fresh Registration (Age 18+)",
+        "",
+        "According to NADRA Registration Policy RP-6.0.2, the requirements differ depending on whether the resident citizen has a blood relative.",
+        "",
+        "### Resident citizen — having a blood relative",
+        "1. Application by the applicant.",
+        "2. Identity card number of the parent(s) or blood relative(s).",
+        "3. A verified computerized birth certificate issued by the Union Council, Municipal Committee or Cantonment, **or** the applicable foreign detailed birth certificate / S1 form issued by a Pakistan Embassy or Mission, **or** a Citizenship / Naturalization Certificate.",
+        "4. Biometric verification by a parent or sibling (above 18), **or** attestation of the CNICF in accordance with NADRA Regulation 9 (a–h).",
+        "",
+        "### Resident citizen — having no blood relative",
+        "1. Application by the applicant.",
+        "2. A verified computerized birth certificate issued by the Union Council, Municipal Committee or Cantonment, **or** a Citizenship / Naturalization Certificate.",
+        "3. Biometric witness by two ID holders above 18, together with Affidavit “B” (as per the prescribed format).",
+        "4. Attestation of the CNICF in accordance with NADRA Regulation 9 (a–h).",
+        "5. Any other document, if applicable.",
+        "",
+        "**Important:** The no-blood-relative case may require additional verification/scrutiny and more processing time. The policy also specifies a priority order for witnesses.",
+        "",
+        "**Policy:** NADRA Registration Policy RP-6.0.2 — issued 18 September 2026; effective 21 September 2026.",
+        "**Evidence:** Fresh / New Registration of 18 years or above (CNIC or SMART CNIC), page 10, CHUNK-0015."
+      ].join("\n");
+    }
+
+    const targeted = getTargetedUrduAdultCnicEvidence(await getUrduText());
+    if (!targeted) return null;
+
+    return [
+      "## نیا شناختی کارڈ / اسمارٹ شناختی کارڈ — 18 سال یا اس سے زائد عمر",
+      "",
+      "نادرا رجسٹریشن پالیسی RP-6.0.2 کے مطابق اندرونِ ملک مقیم شہری کے لیے تقاضے اس بات کے مطابق مختلف ہیں کہ خون کا رشتہ دار موجود ہے یا نہیں۔",
+      "",
+      "### خون کے رشتے دار کے ساتھ",
+      "1. درخواست گزار کی جانب سے درخواست۔",
+      "2. والدین یا خون کے رشتے دار کا شناختی کارڈ نمبر۔",
+      "3. یونین کونسل، میونسپل کمیٹی یا کنٹونمنٹ بورڈ سے جاری کردہ تصدیق شدہ کمپیوٹرائزڈ پیدائشی سرٹیفکیٹ، **یا** قابلِ اطلاق غیر ملکی تفصیلی پیدائشی سرٹیفکیٹ / پاکستان سفارت خانہ یا مشن سے جاری کردہ S1 فارم، **یا** شہریت / Naturalization Certificate۔",
+      "4. والدین یا 18 سال سے زائد عمر کے بہن/بھائی کی جانب سے بایومیٹرک تصدیق، **یا** نادرا ریگولیشن 9 (A-H) کے مطابق تصدیق کنندہ سے درخواست فارم کی تصدیق۔",
+      "",
+      "### خون کے رشتے دار کے بغیر",
+      "1. درخواست گزار کی جانب سے درخواست۔",
+      "2. یونین کونسل، میونسپل کمیٹی یا کنٹونمنٹ بورڈ سے جاری کردہ تصدیق شدہ کمپیوٹرائزڈ پیدائشی سرٹیفکیٹ، **یا** شہریت / Naturalization Certificate۔",
+      "3. دو 18 سال سے زائد عمر کے شناختی کارڈ ہولڈرز کی بایومیٹرک گواہی، حلف “B” (نادرا کے وضع کردہ مقررہ فارمیٹ) کے ساتھ۔",
+      "4. نادرا ریگولیشن 9 (A-H) کے مطابق درخواست فارم کی تصدیق۔",
+      "5. کوئی اور دستاویز، اگر ہو۔",
+      "",
+      "**اہم نوٹ:** خون کے رشتے دار کے بغیر درخواست میں اضافی تصدیق/جانچ پڑتال اور زیادہ وقت درکار ہو سکتا ہے۔ پالیسی گواہوں کی ترجیح بھی بیان کرتی ہے۔",
+      "",
+      "**پالیسی:** NADRA Registration Policy RP-6.0.2 — اجرا 18 ستمبر 2026؛ مؤثر 21 ستمبر 2026۔",
+      "**ثبوت:** 18 سال یا اس سے زائد عمر کے شہریوں کا نیا اندراج، صفحہ 11، اردو پالیسی متن۔"
+    ].join("\n");
+  } catch (error) {
+    console.error("Direct NADRA adult CNIC answer failed:", error);
+    return null;
+  }
+}
+
 export async function retrieveNadraEvidence(
   question: string,
   language: "English" | "Urdu"

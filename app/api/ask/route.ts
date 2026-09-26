@@ -569,50 +569,40 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  const q=normalize(question);
  const isPunjab=jurisdiction==="Punjab";
  const isKP=jurisdiction==="Khyber Pakhtunkhwa";
- const isFard=q.includes("fard")||q.includes("فرد")||q.includes("land record")||q.includes("زمین کا ریکارڈ");
+ const isFard=q.includes("fard")||q.includes("فرد")||q.includes("land record")||q.includes("land records")||q.includes("زمین کا ریکارڈ")||q.includes("لینڈ ریکارڈ");
  const isMutation=q.includes("mutation")||q.includes("intiqal")||q.includes("انتقال");
- const isRegistry=q.includes("registry")||q.includes("رجسٹری")||q.includes("property registration");
+ const isRegistry=q.includes("registry")||q.includes("رجسٹری")||q.includes("property registration")||q.includes("register property");
  const isOwnership=q.includes("ownership")||q.includes("owner")||q.includes("ملکیت");
- const en=(title:string,body:string,sources:string)=>`## ${title}
-
-${body}
-
-**Official sources:**
-${sources}`;
- const ur=(title:string,body:string,sources:string)=>`## ${title}
-
-${body}
-
-**سرکاری ذرائع:**
-${sources}`;
+ const isSDC=q.includes("service delivery centre")||q.includes("service delivery center")||q.includes("sdc")||q.includes("ایس ڈی سی")||q.includes("سروس ڈیلیوری سنٹر")||q.includes("سروس ڈیلیوری سینٹر");
  if(language==="Urdu"){
   if(isPunjab){
-   if(isFard||isOwnership)return ur("پنجاب — فرد اور لینڈ ریکارڈ","پنجاب لینڈ ریکارڈز اتھارٹی (PLRA) کے مطابق فرد زمین کے رقبے، مقام اور ملکیت کی تفصیلات فراہم کرتی ہے۔ فرد قریبی Arazi Record Centre (ARC)، مجاز Arazi Moawin، یا سرکاری Online Fard سروس کے ذریعے حاصل کی جا سکتی ہے۔ آن لائن فرد کے لیے شناختی اور جائیداد کی تفصیلات درکار ہوتی ہیں۔","https://www.punjab-zameen.gov.pk/fardInfo\nhttps://onlinefard.punjab-zameen.gov.pk/");
-   if(isMutation)return ur("پنجاب — انتقال (Mutation)","PLRA کے مطابق فروخت، ہبہ، وراثت یا عدالتی حکم سے ملکیت میں تبدیلی کو سرکاری لینڈ ریکارڈ میں Mutation کے طور پر درج کیا جاتا ہے۔ متعلقہ دستاویزات کی جانچ کے بعد مجاز Revenue Officer انتقال کی تصدیق/منظوری کرتا ہے اور ریکارڈ اپ ڈیٹ کیا جاتا ہے۔","https://www.punjab-zameen.gov.pk/entryMutationsInfo");
-   if(isRegistry)return ur("پنجاب — رجسٹری","PLRA کے مطابق Registry جائیداد کی ملکیت کی منتقلی کا سرکاری قانونی ریکارڈ ہے۔ رجسٹری کے عمل میں e-Stamp challan، متعلقہ فیس/ٹیکس اور e-Registration کے مراحل شامل ہیں۔","https://www.punjab-zameen.gov.pk/registryInfo");
-   return ur("پنجاب — لینڈ ریکارڈ خدمات","PLRA فرد، انتقال، رجسٹری، e-Stamping، پارٹیشن، ملکیت کی تصدیق اور دیگر لینڈ ریکارڈ خدمات فراہم کرتا ہے۔","https://www.punjab-zameen.gov.pk/");
+   if(isMutation)return "## پنجاب — انتقال (Mutation / Intiqal)\n\nPLRA کے مطابق انتقال زمین کی ملکیت میں تبدیلی کو سرکاری لینڈ ریکارڈ میں درج کرنے کا عمل ہے۔ متعلقہ Arazi Record Centre (ARC) پر CNIC کی بایومیٹرک تصدیق کے بعد ٹوکن لیا جاتا ہے، مطلوبہ دستاویزات اور جائیداد کی تفصیلات جمع کی جاتی ہیں، مقررہ فیس/ٹیکس ادا کیے جاتے ہیں، اور متعلقہ Revenue Officer کے سامنے بیان/تصدیق کے بعد انتقال منظور کیا جاتا ہے۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
+   if(isRegistry)return "## پنجاب — جائیداد کی رجسٹری\n\nPLRA کے مطابق نئی جائیداد کی رجسٹری کے لیے e-Stamp challan اور متعلقہ فیس/ٹیکس کی ادائیگی، e-Registration نظام تک رسائی، اور مطلوبہ معلومات/دستاویزات جمع کرانے کے مراحل شامل ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://www.punjab-zameen.gov.pk/registryInfo";
+   if(isFard||isOwnership)return "## پنجاب — فرد اور لینڈ ریکارڈ\n\nPLRA کے مطابق فرد زمین کے رقبے، مقام اور ملکیت کی تفصیلات فراہم کرتی ہے۔ فرد متعلقہ Arazi Record Centre (ARC)، مجاز Arazi Moawin، یا سرکاری Online Fard سروس سے حاصل کی جا سکتی ہے۔ عام طور پر اصل CNIC اور جائیداد کی تفصیلات جیسے Khewat، Khasra یا Registry درکار ہوتی ہیں۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/fardInfo\nhttps://onlinefard.punjab-zameen.gov.pk/";
+   return "## پنجاب — لینڈ ریکارڈ خدمات\n\nPLRA کی موجودہ سرکاری ویب سائٹ پر Fard، land transfer/mutation، ownership verification، registry، e-Stamp، partition اور متعلقہ land-record services دستیاب ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://www.punjab-zameen.gov.pk/";
   }
   if(isKP){
-   if(isFard||isOwnership)return ur("خیبر پختونخوا — فرد اور لینڈ ریکارڈ","خیبر پختونخوا Revenue & Estate Department کے مطابق Online Fard دستیاب ہے۔ Service Delivery Centres (SDCs) کمپیوٹرائزڈ لینڈ ریکارڈ سروسز فراہم کرتے ہیں، اور ڈیجیٹل فرد جاری کیا جاتا ہے۔","https://revenue.kp.gov.pk/\nhttps://revenue.kp.gov.pk/sdcs/\nhttps://revenue.kp.gov.pk/general-news/sop-for-digitized-fard/");
-   if(isMutation)return ur("خیبر پختونخوا — انتقال","خیبر پختونخوا کے Revenue & Estate Department کے مطابق کمپیوٹرائزڈ لینڈ ریکارڈ میں Mutations شامل ہیں۔ SDC نظام میں انتقال کی بایومیٹرک تصدیق کا نظام بھی موجود ہے۔","https://revenue.kp.gov.pk/sdcs/\nhttps://revenue.kp.gov.pk/computerization-of-land-record-in-18-districts/");
-   return ur("خیبر پختونخوا — لینڈ ریکارڈ خدمات","Revenue & Estate Department Online Fard، Fard/Mutation appointment، e-Registry، SDCs اور دیگر ڈیجیٹل لینڈ سروسز فراہم کرتا ہے۔","https://revenue.kp.gov.pk/");
+   if(isSDC)return "## خیبر پختونخوا — Land Record Service Delivery Centres (SDCs)\n\nخیبر پختونخوا Revenue & Estate Department کے مطابق SDCs کمپیوٹرائزڈ لینڈ ریکارڈ خدمات فراہم کرتے ہیں۔ ان میں فرد کا اجراء اور انتقال کی بایومیٹرک تصدیق شامل ہے۔ محکمہ Online Fard اور Fard/Mutation appointment بھی فراہم کرتا ہے۔\n\n**سرکاری ذرائع:**\nhttps://revenue.kp.gov.pk/sdcs/\nhttps://revenue.kp.gov.pk/\nhttps://revenue.kp.gov.pk/computerization-of-land-record-in-18-districts/";
+   if(isMutation)return "## خیبر پختونخوا — انتقال (Mutation)\n\nKP Revenue & Estate Department کے مطابق Mutation کمپیوٹرائزڈ land-record service ہے۔ SDC نظام میں انتقال کی بایومیٹرک تصدیق Revenue Officer کے ذریعے کی جاتی ہے، جبکہ محکمہ Fard/Mutation appointment بھی فراہم کرتا ہے۔\n\n**سرکاری ذرائع:**\nhttps://revenue.kp.gov.pk/sdcs/\nhttps://revenue.kp.gov.pk/computerization-of-land-record-in-18-districts/";
+   if(isFard||isOwnership)return "## خیبر پختونخوا — فرد اور لینڈ ریکارڈ\n\nKP Revenue & Estate Department Online Fard اور کمپیوٹرائزڈ land-record services فراہم کرتا ہے۔ SDCs کے ذریعے فرد جاری کی جاتی ہے۔\n\n**سرکاری ذرائع:**\nhttps://revenue.kp.gov.pk/\nhttps://revenue.kp.gov.pk/sdcs/";
+   return "## خیبر پختونخوا — لینڈ ریکارڈ خدمات\n\nKP Revenue & Estate Department کی سرکاری ویب سائٹ پر Online Fard، Fard/Mutation appointment، e-Registry اور Service Delivery Centres کی خدمات درج ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://revenue.kp.gov.pk/";
   }
-  return ur("Land & Revenue","براہ کرم صوبہ/علاقہ بتائیں، مثلاً پنجاب میں فرد یا انتقال، یا خیبر پختونخوا میں فرد/لینڈ ریکارڈ۔ مختلف صوبوں کے طریقہ کار مختلف ہو سکتے ہیں۔","https://www.punjab-zameen.gov.pk/\nhttps://revenue.kp.gov.pk/");
+  return "## لینڈ اینڈ ریونیو\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ سروس بتائیں، مثلاً پنجاب میں فرد یا انتقال، یا خیبر پختونخوا میں فرد، انتقال یا SDC سروس۔";
  }
  if(isPunjab){
-  if(isFard||isOwnership)return en("Punjab — Fard & Land Record","According to the Punjab Land Records Authority (PLRA), a Fard provides land area, location and ownership details. It can be obtained from an Arazi Record Centre (ARC), an authorized Arazi Moawin, or through the official Online Fard service. The official Fard guidance identifies the original CNIC and property details such as Khewat, Khasra or Registry as required information.","https://www.punjab-zameen.gov.pk/fardInfo\nhttps://onlinefard.punjab-zameen.gov.pk/");
-  if(isMutation)return en("Punjab — Mutation (Intiqal)","PLRA states that a mutation records a change in land ownership in the official land record, including transfers through sale, gift, inheritance or court order. The process includes submission, record/document verification, entry of the mutation, and attestation by the authorized Revenue Officer before the record is updated.","https://www.punjab-zameen.gov.pk/entryMutationsInfo");
-  if(isRegistry)return en("Punjab — Property Registry","PLRA describes Registry as the official legal document recording transfer of property ownership. Its published process includes e-Stamp challan/payment and access to the e-Registration system.","https://www.punjab-zameen.gov.pk/registryInfo");
-  return en("Punjab — Land & Revenue Services","PLRA provides Fard, mutation, registry, e-stamping, partition, ownership verification and other digital land-record services through its official service network.","https://www.punjab-zameen.gov.pk/");
+  if(isMutation)return "## Punjab — Mutation (Intiqal)\n\nThe Punjab Land Records Authority (PLRA) states that mutation records a change in land ownership in the official land record. The Punjab process includes CNIC biometric verification and a token at the concerned Arazi Record Centre, submission of required documents and property details, payment of applicable fees/taxes, and appearance before the authorized Revenue Officer with the relevant parties/witnesses. The Revenue Officer records statements and attests the mutation before the land record is updated.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
+  if(isRegistry)return "## Punjab — Property Registry\n\nPLRA current official guidance describes property registration through e-Stamping and the e-Registration system. The published process includes generating the e-Stamp challan, paying applicable stamp duty/taxes/registration and related fees, accessing the e-Registration portal, and submitting the required transaction information and documents.\n\n**Official source:**\nhttps://www.punjab-zameen.gov.pk/registryInfo";
+  if(isFard||isOwnership)return "## Punjab — Fard & Land Record\n\nAccording to PLRA, a Fard provides land area, location and ownership details. It can be obtained from an Arazi Record Centre, an authorized Arazi Moawin, or the official Online Fard service. PLRA states that the original CNIC and property details such as Khewat, Khasra or Registry are used for the Fard request.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/fardInfo\nhttps://onlinefard.punjab-zameen.gov.pk/";
+  return "## Punjab — Land & Revenue Services\n\nPLRA current official website lists Fard, land transfer/mutation, ownership verification, property registry, e-Stamp, partition and other land-record services.\n\n**Official source:**\nhttps://www.punjab-zameen.gov.pk/";
  }
  if(isKP){
-  if(isFard||isOwnership)return en("Khyber Pakhtunkhwa — Fard & Land Record","The KP Revenue & Estate Department provides Online Fard and computerized land-record services through its Service Delivery Centres (SDCs). Its published SOP also provides for issuance of digitized Fard through NADRA e-Sahulat franchises.","https://revenue.kp.gov.pk/\nhttps://revenue.kp.gov.pk/sdcs/\nhttps://revenue.kp.gov.pk/general-news/sop-for-digitized-fard/");
-  if(isMutation)return en("Khyber Pakhtunkhwa — Mutation","The KP Revenue & Estate Department identifies Mutation as a computerized land-record service. Its SDC system includes biometric attestation of mutations by the Revenue Officer.","https://revenue.kp.gov.pk/sdcs/\nhttps://revenue.kp.gov.pk/computerization-of-land-record-in-18-districts/");
-  return en("Khyber Pakhtunkhwa — Land & Revenue Services","The KP Revenue & Estate Department provides Online Fard, Fard/Mutation appointments, e-Registry, Service Delivery Centres and other digital land services.","https://revenue.kp.gov.pk/");
+  if(isSDC)return "## Khyber Pakhtunkhwa — Land Record Service Delivery Centres (SDCs)\n\nThe KP Revenue & Estate Department states that SDCs provide computerized land-record services. Its official SDC page specifically lists issuance of Fard and biometric attestation of mutations by the Revenue Officer. The department also provides Online Fard and Fard/Mutation appointment services.\n\n**Official sources:**\nhttps://revenue.kp.gov.pk/sdcs/\nhttps://revenue.kp.gov.pk/\nhttps://revenue.kp.gov.pk/computerization-of-land-record-in-18-districts/";
+  if(isMutation)return "## Khyber Pakhtunkhwa — Mutation\n\nThe KP Revenue & Estate Department identifies Mutation as a computerized land-record service. Its SDC system provides biometric attestation of mutations by the Revenue Officer, and the department provides an official Fard/Mutation appointment service.\n\n**Official sources:**\nhttps://revenue.kp.gov.pk/sdcs/\nhttps://revenue.kp.gov.pk/computerization-of-land-record-in-18-districts/";
+  if(isFard||isOwnership)return "## Khyber Pakhtunkhwa — Fard & Land Record\n\nThe KP Revenue & Estate Department provides Online Fard and computerized land-record services through Service Delivery Centres. Its official pages identify Fard issuance as an SDC service.\n\n**Official sources:**\nhttps://revenue.kp.gov.pk/\nhttps://revenue.kp.gov.pk/sdcs/";
+  return "## Khyber Pakhtunkhwa — Land & Revenue Services\n\nThe KP Revenue & Estate Department currently lists Online Fard, Fard/Mutation appointment, e-Registry and Service Delivery Centres among its official online land services.\n\n**Official source:**\nhttps://revenue.kp.gov.pk/";
  }
- return en("Land & Revenue","Please specify the province or territory and the service you need, such as Punjab Fard, Punjab mutation (Intiqal), or KP land record.","https://www.punjab-zameen.gov.pk/\nhttps://revenue.kp.gov.pk/");
+ return "## Land & Revenue\n\nPlease specify the province or territory and the land service you need, such as Punjab Fard, Punjab mutation (Intiqal), or KP land-record services.";
 }
-
 function educationEvidence(question:string,jurisdiction:string|null,language:"English"|"Urdu"):string{
  const q=normalize(question);
  const isApply=q.includes("apply")||q.includes("application")||q.includes("درخواست")||q.includes("اپلائی");

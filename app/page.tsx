@@ -191,6 +191,7 @@ export default function Home() {
       window.setTimeout(() => {
         clearAgentTimers();
         setLoading(false);
+        setAgentActivity(null);
       }, remaining);
     }
   };
@@ -224,16 +225,35 @@ export default function Home() {
 
         {department && <section className="view question-view"><button className="back" onClick={goHome}>← {isUrdu ? "تمام محکمے" : "All departments"}</button><div className="service-banner"><span className="service-banner-icon">{department.icon}</span><div><div className="eyebrow">{isUrdu ? "محکمہ" : "DEPARTMENT"}</div><h1>{isUrdu ? department.urdu : department.name}</h1><p>{isUrdu ? "اس محکمے سے متعلق کوئی بھی سوال پوچھیں" : "Ask any question related to this government department."}</p></div></div>
           {loading && agentActivity && <div className="agent-panel">
-  <div className="agent-panel-head"><div><span className="eyebrow">AI WORKFLOW</span><strong>Multi-Agent Activity</strong></div><span className="agent-mode">● {agentActivity.mode === "degraded" ? "DEGRADED MODE" : "LIVE MODE"}</span></div>
-  <div className="agent-steps">{agentActivity.agents.map(a => <div key={a.id} className={`agent-step ${a.status}`}><span className="agent-step-icon">{a.icon}</span><div><strong>{a.name}</strong><small>{a.detail}</small></div><span className="agent-status">{a.status === "active" ? "Working" : a.status === "completed" ? "✓" : a.status === "degraded" ? "⚠" : "…"}</span></div>)}</div>
-  <div className="agent-tools"><span>TOOLS</span>{agentActivity.tools.map(t => <b key={t}>{t}</b>)}</div>
+  <div className="agent-panel-head"><div><span className="eyebrow">AI ACTIVITY</span><strong>{agentActivity.mode === "degraded" ? "Working with limited service" : "AI is working…"}</strong></div><span className="agent-mode">{agentActivity.mode === "degraded" ? "DEGRADED" : "LIVE"}</span></div>
+  <div className="agent-steps">
+    {[
+      { key: "supervisor", text: "Understanding your request" },
+      { key: "analyzer", text: "Identifying the relevant government service" },
+      { key: "research", text: "Checking official information and relevant evidence" },
+      { key: "verifier", text: "Verifying the information and source" },
+      { key: "guidance", text: "Preparing your answer…" }
+    ].map(item => {
+      const statuses = agentActivity.agents.map(a => a.status);
+      const supervisor = statuses[0];
+      const analyzer = statuses[1];
+      const verifier = statuses[2];
+      const guidance = statuses[3];
+      const state =
+        item.key === "supervisor" ? supervisor :
+        item.key === "analyzer" ? analyzer :
+        item.key === "research" ? (analyzer === "completed" ? (verifier === "completed" ? "completed" : "active") : "waiting") :
+        item.key === "verifier" ? verifier :
+        guidance;
+      return <div key={item.key} className={`agent-step ${state}`}>
+        <span className="agent-status">{state === "completed" ? "✓" : state === "active" ? "●" : state === "degraded" ? "⚠" : "○"}</span>
+        <div><strong>{item.text}</strong><small>{state === "active" ? (item.key === "supervisor" ? "Understanding and coordinating the request." : item.key === "analyzer" ? "Analyzing intent, jurisdiction and the best evidence path." : item.key === "research" ? "Reviewing the most relevant official evidence." : item.key === "verifier" ? "Cross-checking source relevance and supporting evidence." : "Turning verified information into clear citizen guidance.") : state === "completed" ? "Completed" : "Waiting"}</small></div>
+      </div>;
+    })}
+  </div>
 </div>}
           {!answer && <><div className="question-card"><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "آپ اس محکمے کی کسی بھی سروس کے بارے میں سوال پوچھ سکتے ہیں۔" : "Ask anything about this department. You do not need to select a specific service."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? `مثلاً: ${department?.name} سے متعلق کوئی سوال پوچھیں` : `For example: What is the fee? What documents are required?`} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
-          {answer && agentActivity && <div className="agent-panel completed-panel">
-  <div className="agent-panel-head"><div><span className="eyebrow">AI WORKFLOW</span><strong>Agent Activity</strong></div><span className={`agent-mode ${agentActivity.mode === "degraded" ? "degraded-mode" : ""}`}>● {agentActivity.mode === "degraded" ? "DEGRADED MODE" : "COMPLETED"}</span></div>
-  <div className="agent-steps">{agentActivity.agents.map(a => <div key={a.id} className={`agent-step ${a.status}`}><span className="agent-step-icon">{a.icon}</span><div><strong>{a.name}</strong><small>{a.detail}</small></div><span className="agent-status">{a.status === "completed" ? "✓" : a.status === "degraded" ? "⚠" : "…"}</span></div>)}</div>
-  <div className="memory-row"><span>🧠 Short-term memory: {agentActivity.memory.shortTerm.length} recent request(s)</span><span>💾 Long-term memory: user-controlled preferences only</span></div>
-</div>}
+          
           {answer && <div className="answer-area"><div className={`answer-card ${answer.error ? "is-warning" : ""}`}>{answer.error ? <><div className="status-icon warning">!</div><div className="verified-label">{isUrdu ? "معلومات دستیاب نہیں" : "INFORMATION UNAVAILABLE"}</div><h2>{isUrdu ? "مصدقہ معلومات نہیں مل سکیں" : "Verified information is unavailable"}</h2><p>{answer.error}</p></> : <><div className="answer-top"><div className="status-icon">✓</div><div><div className="verified-label">{isUrdu ? "مصدقہ سرکاری معلومات" : "VERIFIED GOVERNMENT INFORMATION"}</div><small>{isUrdu ? "دستیاب سرکاری معلومات کی بنیاد پر" : "Based on available official information"}</small></div></div><div className="answer-text">{answer.answer}</div><button className="copy-button" onClick={copyAnswer}>{copied ? "✓ Copied" : "⧉ Copy answer"}</button></>}</div>{answer.source && <div className="source-card"><div className="source-main"><span className="source-icon">↗</span><div><span className="source-label">{isUrdu ? "سرکاری ذریعہ" : "OFFICIAL SOURCE"}</span><strong>{answer.source.title || "Official government source"}</strong><small>{answer.source.department || department.name}{answer.source.lastVerified ? ` · Verified ${answer.source.lastVerified}` : ""}</small></div></div>{answer.source.url && <a href={answer.source.url} target="_blank" rel="noreferrer">{isUrdu ? "سرکاری ویب سائٹ کھولیں" : "Visit official source"} ↗</a>}</div>}<button className="secondary" onClick={() => { setAnswer(null); setQuestion(""); }}>↻ {isUrdu ? "دوسرا سوال پوچھیں" : "Ask another question"}</button></div>}
         </section>}
 

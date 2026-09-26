@@ -134,19 +134,19 @@ function isAdultFreshCnicQuestion(question: string) {
     q.includes("شناختی");
 
   const fresh =
-    /\\bfresh\\b|\\bnew\\b|\\bregistration\\b|\\bfirst[- ]?time\\b/.test(q) ||
+    /\bfresh\b|\bnew\b|\bregistration\b|\bfirst[- ]?time\b/.test(q) ||
     q.includes("new registration") ||
     q.includes("نیا") ||
     q.includes("نئے") ||
     q.includes("اندراج");
 
   const adult =
-    /\\b18\\b|18\\+|\\badult\\b|above 18|18 years or above|18 years and above/.test(q) ||
+    /\b18\b|18\+|\badult\b|above 18|18 years or above|18 years and above/.test(q) ||
     q.includes("اٹھارہ") ||
     q.includes("بالغ");
 
   const docs =
-    /\\bdocument(s)?\\b|\\brequirement(s)?\\b|\\brequired\\b/.test(q) ||
+    /\bdocument(s)?\b|\brequirement(s)?\b|\brequired\b/.test(q) ||
     q.includes("what documents") ||
     q.includes("documents required") ||
     q.includes("دستاویز") ||

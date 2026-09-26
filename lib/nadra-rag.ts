@@ -27,6 +27,7 @@ type PolicyConfig = {
 let englishCache: EnglishChunk[] | null = null;
 let policyConfigCache: PolicyConfig | null = null;
 let urduCache: string[] | null = null;
+let urduRawCache: string | null = null;
 
 const URDU_ALIASES = ["شناختی کارڈ","شناختی","نیا شناختی","نئے شناختی","کاغذات","دستاویزات","ضروری","والد","والدین","خون","رشتہ دار","پیدائش","بائیومیٹرک","گواہ","سرٹیفکیٹ","یونین کونسل","شہریت"];
 
@@ -92,15 +93,22 @@ async function getEnglishChunks(): Promise<EnglishChunk[]> {
   return englishCache!;
 }
 
-async function getUrduChunks(): Promise<string[]> {
-  if (urduCache) return urduCache;
+async function getUrduText(): Promise<string> {
+  if (urduRawCache) return urduRawCache;
 
   const res = await fetch(URDU_TEXT_URL, { cache: "force-cache" });
   if (!res.ok) {
     throw new Error("Unable to load NADRA Urdu policy text.");
   }
 
-  const text = await res.text();
+  urduRawCache = await res.text();
+  return urduRawCache;
+}
+
+async function getUrduChunks(): Promise<string[]> {
+  if (urduCache) return urduCache;
+
+  const text = await getUrduText();
   const words = text.split(/\s+/).filter(Boolean);
   const chunks: string[] = [];
   const size = 750;
@@ -113,6 +121,50 @@ async function getUrduChunks(): Promise<string[]> {
 
   urduCache = chunks;
   return chunks;
+}
+
+function isAdultFreshCnicQuestion(question: string) {
+  const q = normalize(question);
+  const cnic = q.includes("cnic") || q.includes("smart cnic") || q.includes("شناختی");
+  const fresh = /\bfresh\b|\bnew\b|\bregistration\b/.test(q) || q.includes("نیا") || q.includes("نئے") || q.includes("اندراج");
+  const adult = /\b18\b|18\+|\badult\b/.test(q) || q.includes("اٹھارہ") || q.includes("بالغ");
+  const docs = /\bdocument(s)?\b|\brequirement(s)?\b/.test(q) || q.includes("دستاویز") || q.includes("کاغذات") || q.includes("تقاضا");
+  return cnic && fresh && adult && docs;
+}
+
+function getTargetedEnglishAdultCnicChunks(chunks: EnglishChunk[]) {
+  return chunks
+    .filter((item) =>
+      /Requirements\s*[–-]\s*Fresh\s*\/\s*New Registration of 18 years or above \(CNIC or SMART CNIC\)/i.test(item.subsection || "")
+    )
+    .concat(
+      chunks.filter((item) =>
+        /Fresh\s*\/\s*New Registration/i.test(item.subsection || "") &&
+        /18 years or above/i.test((item.subsection || "") + " " + (item.text || ""))
+      )
+    )
+    .filter((item, index, arr) =>
+      arr.findIndex((x) => x.chunk_id === item.chunk_id && x.text === item.text) === index
+    )
+    .slice(0, 2);
+}
+
+function getTargetedUrduAdultCnicEvidence(text: string) {
+  const markers = [
+    "اٹھارہ سال اور اس سے زائد عمر کے شہریو ں کا اندارج",
+    "اٹھارہ سال اور اس سے زائد عمر کے شہریوں کا اندارج"
+  ];
+
+  let start = -1;
+  for (const marker of markers) {
+    const index = text.indexOf(marker);
+    if (index >= 0 && (start < 0 || index < start)) start = index;
+  }
+
+  if (start < 0) return "";
+
+  const end = Math.min(text.length, start + 9000);
+  return text.slice(start, end).trim();
 }
 
 function expandQuestion(question: string) {
@@ -190,6 +242,21 @@ export async function retrieveNadraEvidence(
     if (language === "Urdu") {
       const chunks = await getUrduChunks();
 
+      if (isAdultFreshCnicQuestion(question)) {
+        const targeted = getTargetedUrduAdultCnicEvidence(await getUrduText());
+        if (targeted) {
+          return [
+            "SOURCE: NADRA Registration Policy 6.0.2 (Urdu)",
+            "VERSION: RP-6.0.2",
+            \`ISSUE DATE: \${issueDate}\`,
+            \`EFFECTIVE DATE: \${effectiveDate}\`,
+            "",
+            "[NADRA URDU TARGETED EVIDENCE — FRESH CNIC AGE 18+]",
+            targeted
+          ].join("\n\n");
+        }
+      }
+
       const ranked = chunks
         .map((text, index) => ({
           text,
@@ -205,17 +272,36 @@ export async function retrieveNadraEvidence(
       return [
         "SOURCE: NADRA Registration Policy 6.0.2 (Urdu)",
         "VERSION: RP-6.0.2",
-        `ISSUE DATE: ${issueDate}`,
-        `EFFECTIVE DATE: ${effectiveDate}`,
+        \`ISSUE DATE: \${issueDate}\`,
+        \`EFFECTIVE DATE: \${effectiveDate}\`,
         "",
         ...ranked.map(
           (x, i) =>
-            `[NADRA URDU EVIDENCE ${i + 1}]\nChunk: ${x.index + 1}\nRetrieval score: ${x.score}\n\n${x.text.slice(0, 2400)}`
+            \`[NADRA URDU EVIDENCE \${i + 1}]\\nChunk: \${x.index + 1}\\nRetrieval score: \${x.score}\\n\\n\${x.text.slice(0, 2400)}\`
         )
       ].join("\n\n");
     }
 
     const chunks = await getEnglishChunks();
+
+    if (isAdultFreshCnicQuestion(question)) {
+      const targeted = getTargetedEnglishAdultCnicChunks(chunks);
+      if (targeted.length) {
+        return [
+          "SOURCE: NADRA Registration Policy 6.0.2",
+          "VERSION: RP-6.0.2",
+          \`ISSUE DATE: \${issueDate}\`,
+          \`EFFECTIVE DATE: \${effectiveDate}\`,
+          "",
+          ...targeted.map(
+            (item, i) =>
+              \`[NADRA POLICY TARGETED EVIDENCE \${i + 1}]\\nPage: \${item.page ?? "N/A"}\\nSection: \${item.major_section || item.subsection || ""}\\n\\n\${(item.text || "").slice(0, 4000)}\`
+          )
+        ].join("\n\n");
+      }
+    }
+
+
 
     const ranked = chunks
       .map((item, index) => ({

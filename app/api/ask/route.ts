@@ -439,6 +439,38 @@ function webSearchDomains(question:string,service:string,jurisdiction:string|nul
   return Array.from(domains);
 }
 
+function policeEvidence(question:string,jurisdiction:string):string{
+ const q=normalize(question);
+ const service=q.includes("fir")?"FIR / FIR copy":(q.includes("character")||q.includes("clearance"))?"Character / Police Clearance Certificate":q.includes("verification")?"Police Verification":"Police Services";
+ const data:Record<string,string>={
+  Punjab:`## Punjab — Police Services
+Official authority: Punjab Police / Police Khidmat Markaz.
+Requested service: ${service}.
+Punjab Police provides Character Certificate, General Police Verification, FIR/crime reporting and other Police Khidmat Markaz services. Exact documents, fees and processing times should be taken from the relevant official service page.
+Source: https://punjabpolice.gov.pk/`,
+  Sindh:`## Sindh — Police Services
+Official authority: Sindh Police.
+Requested service: ${service}.
+Official Sindh Police material provides police character/clearance information. Exact requirements depend on the service and applicant circumstances.
+Source: https://sindhpolice.gov.pk/`,
+  "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Police Services
+Official authority: Khyber Pakhtunkhwa Police.
+Requested service: ${service}.
+Police Sahulat Markaz provides IGP complaints, online FIR complaint, Police Character Certificate and Police Clearance Certificate for visa/travel.
+Source: https://apipsm.kppolice.gov.pk/psm/VideoTutorial`,
+  "Islamabad Capital Territory":`## Islamabad Capital Territory — Police Services
+Official authority: Islamabad Capital Territory Police.
+Requested service: ${service}.
+The official citizen-services system provides Character Certificate, General Police Verification, Tenant/Servant Registration, Copy of FIR, Lost Report and incident reporting.
+Character Certificate: CNIC/passport, fingerprint image and recent passport-size photo are listed on the current official form.
+Certified FIR copy: FIR reference/number and applicant CNIC are required; the form also lists CNIC front/back and recent passport-size photo.
+Sources: https://islamabadpolice.gov.pk/ and https://pkm.islamabadpolice.gov.pk/public/app/our_services?id=j`
+ };
+ return data[jurisdiction]||`## Police Services
+Requested service: ${service}.
+Specific documents, fees and processing times should not be invented without current official evidence.`;
+}
+
 export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
@@ -521,37 +553,7 @@ const departmentDomains:Record<string,string[]>={
 };
 
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
-function policeEvidence(question:string,jurisdiction:string):string{
- const q=normalize(question);
- const service=q.includes("fir")?"FIR / FIR copy":(q.includes("character")||q.includes("clearance"))?"Character / Police Clearance Certificate":q.includes("verification")?"Police Verification":"Police Services";
- const data:Record<string,string>={
-  Punjab:`## Punjab — Police Services
-Official authority: Punjab Police / Police Khidmat Markaz.
-Requested service: ${service}.
-Punjab Police provides Character Certificate, General Police Verification, FIR/crime reporting and other Police Khidmat Markaz services. Exact documents, fees and processing times should be taken from the relevant official service page.
-Source: https://punjabpolice.gov.pk/`,
-  Sindh:`## Sindh — Police Services
-Official authority: Sindh Police.
-Requested service: ${service}.
-Official Sindh Police material provides police character/clearance information. Exact requirements depend on the service and applicant circumstances.
-Source: https://sindhpolice.gov.pk/`,
-  "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Police Services
-Official authority: Khyber Pakhtunkhwa Police.
-Requested service: ${service}.
-Police Sahulat Markaz provides IGP complaints, online FIR complaint, Police Character Certificate and Police Clearance Certificate for visa/travel.
-Source: https://apipsm.kppolice.gov.pk/psm/VideoTutorial`,
-  "Islamabad Capital Territory":`## Islamabad Capital Territory — Police Services
-Official authority: Islamabad Capital Territory Police.
-Requested service: ${service}.
-The official citizen-services system provides Character Certificate, General Police Verification, Tenant/Servant Registration, Copy of FIR, Lost Report and incident reporting.
-Character Certificate: CNIC/passport, fingerprint image and recent passport-size photo are listed on the current official form.
-Certified FIR copy: FIR reference/number and applicant CNIC are required; the form also lists CNIC front/back and recent passport-size photo.
-Sources: https://islamabadpolice.gov.pk/ and https://pkm.islamabadpolice.gov.pk/public/app/our_services?id=j`
- };
- return data[jurisdiction]||`## Police Services
-Requested service: ${service}.
-Specific documents, fees and processing times should not be invented without current official evidence.`;
-}
+
 if(requested==="Police Services"){
  const pj=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
  if(pj){

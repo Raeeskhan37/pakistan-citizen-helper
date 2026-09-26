@@ -726,6 +726,9 @@ if(requested==="FBR / Taxation"){
  if(fq.includes("sales tax")||fq.includes("sales-tax")||fq.includes("gst")||fq.includes("sales tax return")){
   alternateOfficialUrls.push("https://www.fbr.gov.pk/categ/file-sales-tax-return/51148/50849/101158","https://e.fbr.gov.pk/SOP/IRIS/Filing_of_New_Sales_Tax_and_Federal_Excise_Return.pdf");
  }
+ if(fq.includes("taxpayer status")||fq.includes("active taxpayer")||fq.includes("active taxpayer list")||fq.includes("atl")||fq.includes("filer status")||fq.includes("filer")){
+  alternateOfficialUrls.push("https://www.fbr.gov.pk/categ/income-tax-due-dates/51149/30859/71169","https://www.fbr.gov.pk/download-atl/132041","https://e.fbr.gov.pk/atl/");
+ }
 }
 if(requested==="Protector & Overseas Employment"){alternateOfficialUrls.push("https://beoe.gov.pk/");}
 const departmentDomains:Record<string,string[]>={

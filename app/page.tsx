@@ -6,7 +6,7 @@ type Service = { id: string; name: string; icon: string; description: string; qu
 type Department = { id: string; name: string; urdu: string; icon: string; description: string; services: Service[] };
 type SourceInfo = { department?: string; title?: string; url?: string; lastVerified?: string; liveVerified?: boolean; checkedAt?: string; province?: string };
 type AgentStep = { id: string; name: string; icon: string; status: "waiting" | "active" | "completed" | "degraded"; detail: string };
-type AgentActivity = { mode: "normal" | "degraded"; agents: AgentStep[]; tools: string[]; memory: { shortTerm: string[]; longTerm: string[] }; };
+type AgentActivity = { mode: "normal" | "degraded"; agents: AgentStep[]; tools: string[]; summary?: string; memory: { shortTerm: string[]; longTerm: string[] }; };
 type ApiResponse = { answer?: string; source?: SourceInfo | null; error?: string; agentActivity?: AgentActivity };
 
 const departments: Department[] = [
@@ -76,13 +76,12 @@ export default function Home() {
     setLoading(true); setAnswer(null); setCopied(false);
     setAgentActivity({
       mode: "normal",
-      tools: ["Department knowledge", "Jurisdiction detection", "Official-source research", "Source verification"],
+      tools: ["NADRA RAG", "Supabase verified knowledge", "Official web research", "Jurisdiction detection", "Source verification"],
       memory: { shortTerm: [...shortTermMemory.slice(-3), q], longTerm: ["User-controlled preferences only"] },
       agents: [
-        { id: "supervisor", name: "Supervisor Agent", icon: "🧠", status: "active", detail: "Understanding the request and coordinating the workflow." },
-        { id: "analyzer", name: "Analyzing Agent", icon: "🔍", status: "waiting", detail: "Determining intent, service and jurisdiction." },
-        { id: "researcher", name: "Research Agent", icon: "🌐", status: "waiting", detail: "Preparing the appropriate official-source evidence." },
-        { id: "verifier", name: "Verification Agent", icon: "🛡️", status: "waiting", detail: "Checking relevance, jurisdiction and evidence." },
+        { id: "supervisor", name: "Supervisor Agent", icon: "🧠", status: "active", detail: "Coordinating the request and selecting the service." },
+        { id: "analyzer", name: "Analyzing Agent", icon: "🔍", status: "waiting", detail: "Determining intent, jurisdiction and research tools." },
+        { id: "verifier", name: "Verification Agent", icon: "🛡️", status: "waiting", detail: "Checking source relevance, jurisdiction and evidence." },
         { id: "guidance", name: "Citizen Guidance Agent", icon: "✍️", status: "waiting", detail: "Preparing clear citizen-friendly guidance." }
       ]
     });
@@ -96,12 +95,11 @@ export default function Home() {
         const returned = data.agentActivity as AgentActivity | undefined;
         setAgentActivity(returned || {
           mode: "normal",
-          tools: ["Department knowledge", "Jurisdiction detection", "Official-source research", "Source verification"],
+          tools: ["NADRA RAG", "Supabase verified knowledge", "Official web research", "Jurisdiction detection", "Source verification"],
           memory: { shortTerm: [...shortTermMemory.slice(-3), q], longTerm: ["User-controlled preferences only"] },
           agents: [
             { id: "supervisor", name: "Supervisor Agent", icon: "🧠", status: "completed", detail: "Coordinated the request." },
-            { id: "analyzer", name: "Analyzing Agent", icon: "🔍", status: "completed", detail: "Analyzed intent and jurisdiction." },
-            { id: "researcher", name: "Research Agent", icon: "🌐", status: "completed", detail: "Collected available official evidence." },
+            { id: "analyzer", name: "Analyzing Agent", icon: "🔍", status: "completed", detail: "Analyzed intent, jurisdiction and tool path." },
             { id: "verifier", name: "Verification Agent", icon: "🛡️", status: "completed", detail: "Verified the available evidence." },
             { id: "guidance", name: "Citizen Guidance Agent", icon: "✍️", status: "completed", detail: "Prepared the citizen-facing guidance." }
           ]

@@ -704,14 +704,13 @@ const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficial
 let officialText="";
 for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}
 const domains=isNadra?[]:(departmentDomains[canonicalDepartment(requested)]||[]);
-const skipSearch=requested==="Union Council" && civilRegistrationEvidence.length>0;
+const skipSearch=false;
 if(domains.length && !skipSearch){
  const searchText=await fetchOfficialSearch(question,domains);
  if(searchText)officialText+=searchText;
 }
 officialText=officialText.slice(0,10000);
 const dbContext=isNadra?"Supabase records intentionally excluded for NADRA answers; use NADRA POLICY RAG EVIDENCE only.":(selected.records.length?context(selected.records,language):"No matching verified database record was found.");
-  if(civilRegistrationEvidence) officialText=civilRegistrationEvidence+"\\n\\n"+officialText;
  if(!selected.records.length&&!officialText&&!ragEvidence)return NextResponse.json({answer:noInfo(language),source:null});
  const system=`You are the central verified government information agent inside Pakistan Citizen Helper.
 

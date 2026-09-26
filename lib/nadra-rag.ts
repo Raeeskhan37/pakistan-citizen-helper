@@ -157,16 +157,32 @@ function isAdultFreshCnicQuestion(question: string) {
 }
 
 function getTargetedEnglishAdultCnicChunks(chunks: EnglishChunk[]) {
-  return chunks
-    .filter((item) =>
-      /Requirements\s*[–-]\s*Fresh\s*\/\s*New Registration of 18 years or above \(CNIC or SMART CNIC\)/i.test(item.subsection || "")
-    )
-    .concat(
-      chunks.filter((item) =>
-        /Fresh\s*\/\s*New Registration/i.test(item.subsection || "") &&
-        /18 years or above/i.test((item.subsection || "") + " " + (item.text || ""))
-      )
-    )
+  const exact = chunks.filter((item) => {
+    const haystack = normalize(
+      [item.chunk_id, item.subsection, item.major_section, item.text].filter(Boolean).join(" ")
+    );
+
+    return (
+      /requirements.*fresh.*new registration.*18 years or above/.test(haystack) ||
+      /fresh.*new registration.*18 years or above.*cnic/.test(haystack) ||
+      item.chunk_id === "CHUNK-0015"
+    );
+  });
+
+  const fallback = chunks.filter((item) => {
+    const haystack = normalize(
+      [item.subsection, item.major_section, item.text].filter(Boolean).join(" ")
+    );
+
+    return (
+      /fresh.*new registration/.test(haystack) &&
+      /18 years or above/.test(haystack) &&
+      /cnic|smart cnic/.test(haystack)
+    );
+  });
+
+  return exact
+    .concat(fallback)
     .filter((item, index, arr) =>
       arr.findIndex((x) => x.chunk_id === item.chunk_id && x.text === item.text) === index
     )

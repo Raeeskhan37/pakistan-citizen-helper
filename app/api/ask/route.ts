@@ -455,6 +455,8 @@ Punjab Police Police Khidmat Markaz provides Character Certificate, General Poli
 
 **Character Certificate:** The official Punjab Police service timetable states a processing time of **3 working days** after application.
 
+**Copy of FIR:** For a FIR-copy request, use the official Punjab Police / Police Khidmat Markaz channel for the FIR copy service. The FIR-copy service is separate from Character Certificate and Police Verification services. The app should not substitute Character Certificate requirements for an FIR-copy request.
+
 **Other useful official service times:** General Police Verification — 3 working days; Crime Report — around 15–20 minutes; Copy FIR is available through Punjab Police citizen-service channels.
 
 For overseas Pakistanis, PKM Global provides Character Certificate, National Status Verification, Tenant Registration, Crime Report, Employee Verification and Copy FIR through Pakistani embassies in participating countries.

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Ported from the working pakistan-citizen-ai-agent routing/research architecture.
-export const WORKING_AGENT_JURISDICTIONS = ["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad Capital Territory","Azad Jammu and Kashmir","Gilgit-Baltistan"] as const;
-export type WorkingJurisdiction = typeof WORKING_AGENT_JURISDICTIONS[number];
+const WORKING_AGENT_JURISDICTIONS = ["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad Capital Territory","Azad Jammu and Kashmir","Gilgit-Baltistan"] as const;
+type WorkingJurisdiction = typeof WORKING_AGENT_JURISDICTIONS[number];
 
-export const WORKING_AGENT_DOMAINS: Record<string,string[]> = {
+const WORKING_AGENT_DOMAINS: Record<string,string[]> = {
   "Punjab":["lgcd.punjab.gov.pk","punjab.gov.pk"],
   "Sindh":["lgdsindh.gov.pk","sindh.gov.pk"],
   "Khyber Pakhtunkhwa":["lgkp.gov.pk","kp.gov.pk","kprts.gov.pk"],
@@ -14,7 +14,7 @@ export const WORKING_AGENT_DOMAINS: Record<string,string[]> = {
   "Gilgit-Baltistan":["gilgitbaltistan.gov.pk"],
 };
 
-export const WORKING_AGENT_DEPARTMENT_DOMAINS: Record<string,string[]> = {
+const WORKING_AGENT_DEPARTMENT_DOMAINS: Record<string,string[]> = {
   "NADRA Services":["nadra.gov.pk"], "Passport Services":["dgip.gov.pk"],
   "Protector & Overseas Employment":["beoe.gov.pk"],
   "Vaccination for Travelling Abroad":["nhsrc.gov.pk","nih.org.pk","moh.gov.sa"],
@@ -35,7 +35,7 @@ const WORKING_CITY_JURISDICTIONS: Record<string,WorkingJurisdiction> = {
   islamabad:"Islamabad Capital Territory",muzaffarabad:"Azad Jammu and Kashmir",rawalakot:"Azad Jammu and Kashmir",gilgit:"Gilgit-Baltistan",skardu:"Gilgit-Baltistan",hunza:"Gilgit-Baltistan"
 };
 
-export function workingDetectJurisdiction(question:string): WorkingJurisdiction|null {
+function workingDetectJurisdiction(question:string): WorkingJurisdiction|null {
   const q=(question||"").toLowerCase();
   const explicit:[string,WorkingJurisdiction][]=[
     ["punjab","Punjab"],["پنجاب","Punjab"],["sindh","Sindh"],["سندھ","Sindh"],
@@ -48,7 +48,7 @@ export function workingDetectJurisdiction(question:string): WorkingJurisdiction|
   return null;
 }
 
-export function workingDetectTargetJurisdiction(question:string): WorkingJurisdiction|null {
+function workingDetectTargetJurisdiction(question:string): WorkingJurisdiction|null {
   const q=(question||"").toLowerCase();
   const terms:Array<[WorkingJurisdiction,string[]]>=[
     ["Punjab",["punjab","پنجاب"]],["Sindh",["sindh","سندھ"]],["Khyber Pakhtunkhwa",["khyber pakhtunkhwa","kpk","خیبر پختونخوا"]],
@@ -60,13 +60,13 @@ export function workingDetectTargetJurisdiction(question:string): WorkingJurisdi
   return null;
 }
 
-export function workingDepartmentDomains(department:string,jurisdiction:string|null):string[] {
+function workingDepartmentDomains(department:string,jurisdiction:string|null):string[] {
   const base=WORKING_AGENT_DEPARTMENT_DOMAINS[department]||["gov.pk"];
   if(jurisdiction && WORKING_AGENT_DOMAINS[jurisdiction]) return [...new Set([...WORKING_AGENT_DOMAINS[jurisdiction],...base])];
   return base;
 }
 
-export function workingDepartmentTerms(department:string):string[] {
+function workingDepartmentTerms(department:string):string[] {
   const map:Record<string,string[]>={
     "NADRA Services":["nadra","cnic","nicop","poc","crc","frc","b-form","pak identity"],
     "Passport Services":["passport","renew passport","new passport","mrp","dgip"],

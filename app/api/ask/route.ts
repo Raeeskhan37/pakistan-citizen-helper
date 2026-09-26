@@ -564,6 +564,44 @@ function governmentJobsEvidence(question:string,language:"English"|"Urdu"):strin
  return "## Government Jobs — National Jobs Portal\n\nNJP provides government job search through **Live Jobs** and **Upcoming Jobs**. You can search vacancies by keyword or organization and open the job details for the application process.\n\n**Official source:** https://www.njp.gov.pk/index.php/jobs";
 }
 
+
+function educationEvidence(question:string,jurisdiction:string|null,language:"English"|"Urdu"):string{
+ const q=normalize(question);
+ const isApply=q.includes("apply")||q.includes("application")||q.includes("درخواست")||q.includes("اپلائی");
+ const isEligibility=q.includes("eligible")||q.includes("eligibility")||q.includes("criteria")||q.includes("اہلیت")||q.includes("شرائط");
+ const isNeedBased=q.includes("need based")||q.includes("need-based")||q.includes("financial need")||q.includes("مالی");
+ const isPunjab=jurisdiction==="Punjab";
+ if(language==="Urdu"){
+  if(isPunjab&& (q.includes("peef")||q.includes("punjab educational endowment")||q.includes("پنجاب ایجوکیشنل"))){
+   return "## پنجاب — PEEF اسکالرشپ\n\nپنجاب ہائر ایجوکیشن ڈیپارٹمنٹ کے مطابق PEEF باصلاحیت اور ضرورت مند طلبہ کو تعلیمی وظائف فراہم کرتا ہے۔ پروگرام ثانوی، انٹرمیڈیٹ، گریجویشن، ماسٹرز اور پی ایچ ڈی سطحوں کے لیے موجود ہے۔\n\n**سرکاری ذریعہ:** https://hed.punjab.gov.pk/peef";
+  }
+  if(isPunjab&& (q.includes("honhaar")||q.includes("honhar")||q.includes("ہونہار"))){
+   return "## پنجاب — Honhaar Scholarship\n\nپنجاب ہائر ایجوکیشن ڈیپارٹمنٹ کے سرکاری صفحے پر Honhaar Scholarship Program کی معلومات اور پروگرام کی تفصیل موجود ہے۔ موجودہ اہلیت اور درخواست کی آخری تاریخ کے لیے سرکاری پورٹل/اعلان چیک کریں۔\n\n**سرکاری ذریعہ:** https://hed.punjab.gov.pk/node/1674\n**سرکاری پورٹل:** https://honhaarscholarship.punjabhec.gov.pk/";
+  }
+  if(isNeedBased||q.includes("hec")||q.includes("scholarship")||q.includes("اسکالرشپ")||q.includes("وظیفہ")){
+   if(isApply) return "## HEC — Need-Based Scholarship\n\nHEC کے مطابق Need-Based Scholarship کے لیے طالب علم متعلقہ شریک یونیورسٹی کے Financial Aid Office سے فارم حاصل کرتا ہے یا HEC کا فراہم کردہ فارم استعمال کرتا ہے، اور مکمل فارم و معاون دستاویزات اسی یونیورسٹی کے Financial Aid Office میں جمع کراتا ہے۔ HEC براہ راست درخواستیں قبول نہیں کرتا۔\n\n**سرکاری ذرائع:**\nhttps://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/How-To-Apply.aspx\nhttps://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/Eligibility-Criteria.aspx";
+   return "## HEC — Need-Based Scholarship\n\nHEC کے Need-Based Scholarship پروگرام میں مالی ضرورت رکھنے والے طلبہ کے لیے شریک سرکاری جامعات/اداروں میں مالی معاونت دی جاتی ہے۔ اہلیت مالی ضرورت کی جانچ اور متعلقہ ادارے کی شرائط سے منسلک ہے۔\n\n**سرکاری ذریعہ:** https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/default.aspx";
+  }
+  return "## Education & Scholarships\n\nبراہ کرم اپنی ضرورت واضح کریں، مثلاً HEC اسکالرشپ، Need-Based Scholarship، پنجاب PEEF، Honhaar Scholarship، یا درخواست/اہلیت۔";
+ }
+ if(isPunjab&& (q.includes("peef")||q.includes("punjab educational endowment"))){
+  return "## Punjab — PEEF Scholarship\n\nThe Punjab Higher Education Department states that the Punjab Educational Endowment Fund (PEEF) provides scholarships/financial assistance to talented and needy students. Its published scholarship levels include secondary, intermediate, graduation, master's and PhD.\n\n**Official source:** https://hed.punjab.gov.pk/peef";
+ }
+ if(isPunjab&& (q.includes("honhaar")||q.includes("honhar"))){
+  return "## Punjab — Honhaar Scholarship\n\nThe Punjab Higher Education Department publishes the Honhaar Scholarship Program for deserving students in public-sector universities, graduate colleges and medical colleges. For current eligibility, application status and deadlines, use the official program information and portal.\n\n**Official source:** https://hed.punjab.gov.pk/node/1674\n**Official portal:** https://honhaarscholarship.punjabhec.gov.pk/";
+ }
+ if(isNeedBased||q.includes("hec")||q.includes("scholarship")){
+  if(isApply){
+   return "## HEC — Need-Based Scholarship\n\nTo apply, HEC states that applicants should obtain the scholarship application form from the Financial Aid Office of a participating university/institution, complete it with supporting documents, and submit it to that Financial Aid Office. HEC does not accept these applications directly.\n\n**Official sources:**\nhttps://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/How-To-Apply.aspx\nhttps://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/Eligibility-Criteria.aspx";
+  }
+  if(isEligibility){
+   return "## HEC — Need-Based Scholarship Eligibility\n\nHEC states that financial assistance is available at selected public-sector universities/institutions. Students must meet the participating institution's admission requirements, and financial need is assessed by the Institutional Scholarship Award Committee. Students already enrolled at participating institutions may also apply.\n\n**Official source:** https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/Eligibility-Criteria.aspx";
+  }
+  return "## HEC — Scholarships\n\nHEC maintains an official Scholarships portal covering national, international and other scholarship opportunities. For Need-Based Scholarships, HEC provides separate eligibility and application guidance.\n\n**Scholarships:** https://www.hec.gov.pk/site/scholarships\n**Need-Based:** https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/default.aspx";
+ }
+ return "## Education & Scholarships\n\nPlease specify the education service, for example HEC scholarship, Need-Based Scholarship, Punjab PEEF, Honhaar Scholarship, eligibility, or how to apply.";
+}
+
 export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";

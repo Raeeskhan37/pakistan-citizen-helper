@@ -441,34 +441,76 @@ function webSearchDomains(question:string,service:string,jurisdiction:string|nul
 
 function policeEvidence(question:string,jurisdiction:string):string{
  const q=normalize(question);
- const service=q.includes("fir")?"FIR / FIR copy":(q.includes("character")||q.includes("clearance"))?"Character / Police Clearance Certificate":q.includes("verification")?"Police Verification":"Police Services";
+ const isFir=q.includes("fir")||q.includes("first information");
+ const isCharacter=q.includes("character")||q.includes("clearance");
+ const isVerification=q.includes("verification")||q.includes("verify");
+ const service=isFir?"FIR / FIR copy":isCharacter?"Character / Police Clearance Certificate":isVerification?"Police Verification":"Police Services";
  const data:Record<string,string>={
   Punjab:`## Punjab — Police Services
-Official authority: Punjab Police / Police Khidmat Markaz.
-Requested service: ${service}.
-Punjab Police provides Character Certificate, General Police Verification, FIR/crime reporting and other Police Khidmat Markaz services. Exact documents, fees and processing times should be taken from the relevant official service page.
-Source: https://punjabpolice.gov.pk/`,
+**Official authority:** Punjab Police / Police Khidmat Markaz.
+
+**Requested service:** ${service}.
+
+Punjab Police Police Khidmat Markaz provides Character Certificate, General Police Verification, Copy of FIR, Crime Report and other citizen services.
+
+**Character Certificate:** The official Punjab Police service timetable states a processing time of **3 working days** after application.
+
+**Other useful official service times:** General Police Verification — 3 working days; Crime Report — around 15–20 minutes; Copy FIR is available through Punjab Police citizen-service channels.
+
+For overseas Pakistanis, PKM Global provides Character Certificate, National Status Verification, Tenant Registration, Crime Report, Employee Verification and Copy FIR through Pakistani embassies in participating countries.
+
+**Official sources:**
+https://www.punjabpolice.gov.pk/pkm-timeframe
+https://pkm.punjab.gov.pk/public/app/embassies`,
   Sindh:`## Sindh — Police Services
-Official authority: Sindh Police.
-Requested service: ${service}.
-Official Sindh Police material provides police character/clearance information. Exact requirements depend on the service and applicant circumstances.
-Source: https://sindhpolice.gov.pk/`,
-  "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Police Services
-Official authority: Khyber Pakhtunkhwa Police.
-Requested service: ${service}.
-Police Sahulat Markaz provides IGP complaints, online FIR complaint, Police Character Certificate and Police Clearance Certificate for visa/travel.
-Source: https://apipsm.kppolice.gov.pk/psm/VideoTutorial`,
+**Official authority:** Sindh Police.
+
+**Requested service:** ${service}.
+
+Use the official Sindh Police portal for the applicable police character/clearance, verification or FIR service. Exact documents, fees and processing times should be stated only when supported by the current official Sindh Police service information.
+
+**Official source:** https://sindhpolice.gov.pk/`,
+  "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Police Clearance Certificate
+**Official authority:** Khyber Pakhtunkhwa Police.
+
+**Requested service:** ${service}.
+
+For a Police Clearance Certificate, the official KP Police instructions require:
+1. An affidavit on 10-point stamp paper, attested by the Oath Commissioner.
+2. Unattested photocopy of recent CNIC.
+3. Recent passport copy for overseas applicants.
+4. Two recent passport-size photographs.
+5. Criminal-record verification by the beat officer, Moharrar, SHO of the local police station and circle DSP on the back of the stamp paper.
+6. Application in the relevant district according to permanent and present addresses on the CNIC; multiple addresses require verification from the relevant police stations.
+7. For overseas applicants, a blood relative submits the required abroad stamp paper, CNIC copy and date of last exit from Pakistan.
+8. Afghan applicants have additional document requirements specified by KP Police.
+9. Applicant personally visits the PAL office for collection after signature and fingerprinting.
+
+**Official source:** https://www.kppolice.gov.pk/detail.php?pid=52
+**KP Police contact:** +92-91-9210457`,
   "Islamabad Capital Territory":`## Islamabad Capital Territory — Police Services
-Official authority: Islamabad Capital Territory Police.
-Requested service: ${service}.
-The official citizen-services system provides Character Certificate, General Police Verification, Tenant/Servant Registration, Copy of FIR, Lost Report and incident reporting.
-Character Certificate: CNIC/passport, fingerprint image and recent passport-size photo are listed on the current official form.
-Certified FIR copy: FIR reference/number and applicant CNIC are required; the form also lists CNIC front/back and recent passport-size photo.
-Sources: https://islamabadpolice.gov.pk/ and https://pkm.islamabadpolice.gov.pk/public/app/our_services?id=j`
+**Official authority:** Islamabad Capital Territory Police.
+
+**Requested service:** ${service}.
+
+For a **Character Certificate**, the current official Islamabad Police service page states:
+- Applicants in Pakistan: original CNIC/B-Form and passport.
+- Affidavit if the CNIC does not show an Islamabad address.
+- Residential proof in Islamabad, such as rent agreement, allotment letter or official hostel letter.
+- Applicants abroad: authority letter, recent photograph, affidavit covering duration abroad, last-exit passport page and Islamabad residential proof.
+- Standard processing: **3 working days**.
+- Application fee: **Rs. 1,000**.
+
+The official online form also lists CNIC/passport front and back, fingerprint image and recent passport-size photo among required uploads.
+
+For other police services, use the relevant official Islamabad Police service page.
+
+**Official source:** https://www.islamabadpolice.gov.pk/character-certificate.php`
  };
  return data[jurisdiction]||`## Police Services
-Requested service: ${service}.
-Specific documents, fees and processing times should not be invented without current official evidence.`;
+**Requested service:** ${service}.
+
+Police requirements vary by province/territory. Specific documents, fees and processing times should not be invented without current official evidence.`;
 }
 
 export async function POST(request:NextRequest){try{

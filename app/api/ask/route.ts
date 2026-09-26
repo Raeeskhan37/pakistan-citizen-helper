@@ -650,16 +650,18 @@ export async function POST(request:NextRequest){try{
  if(workingTargetJurisdiction){selected.jurisdiction=workingTargetJurisdiction;}
  else if(workingJurisdiction && !selected.jurisdiction){selected.jurisdiction=workingJurisdiction;}
  const civilTargetJurisdiction=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
+
+ // EARLY LAND & REVENUE ROUTE: keep Fard/Mutation/Registry/SDC queries out of generic AI routing.
+ if(requested==="Land & Revenue"){
+  const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+  const answer=landRevenueEvidence(question,lj,language);
+  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Land & Revenue",title:"Official land and revenue source",url:"",lastVerified:"",province:lj||""},agent:true,goalFocused:true,webSearch:false});
+ }
  const detectedQuestionService=detectService(question,"");
  if(detectedQuestionService && !belongsToDepartment(detectedQuestionService,requested)){
  const qn=normalize(question);
  const directDepartmentMatch=(requested==="FBR / Taxation"&&(qn.includes("fbr")||qn.includes("ntn")||qn.includes("iris")||qn.includes("income tax")||qn.includes("tax return")))||(requested==="Government Jobs"&&(qn.includes("government job")||qn.includes("government jobs")||qn.includes("national jobs portal")||qn.includes("njp")||qn.includes("vacancy")||qn.includes("job")||qn.includes("apply for a job")||qn.includes("job application")||qn.includes("نوکری")||qn.includes("ملازمت")||qn.includes("درخواست")))||(requested==="Excise & Taxation"&&(qn.includes("excise")||qn.includes("vehicle")||qn.includes("token tax")||qn.includes("vehicle registration")||qn.includes("ownership transfer")))||(requested==="Land & Revenue"&&(qn.includes("land")||qn.includes("fard")||qn.includes("mutation")||qn.includes("intiqal")||qn.includes("revenue")))||(requested==="Police Services"&&(qn.includes("police")||qn.includes("fir")||qn.includes("character certificate")||qn.includes("police clearance")||qn.includes("verification")))||(requested==="Education & Scholarships"&&(qn.includes("scholarship")||qn.includes("hec")||qn.includes("education")))||(requested==="Driving Licence"&&(qn.includes("driving")||qn.includes("learner")||qn.includes("license")||qn.includes("licence")||qn.includes("ڈرائیونگ")||qn.includes("لائسنس")));
  if(!directDepartmentMatch)return NextResponse.json({answer:language==="Urdu"?"یہ سوال منتخب شعبے سے متعلق نہیں لگتا۔ براہ کرم اسی شعبے سے متعلق سوال پوچھیں۔":"This question does not appear to belong to the selected government department. Please ask a question related to the selected department.",source:null});
-}
-if(requested==="Land & Revenue"){
- const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
- const answer=landRevenueEvidence(question,lj,language);
- return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Land & Revenue",title:"Official land and revenue source",url:"",lastVerified:"",province:lj||""},agent:true,goalFocused:true,webSearch:false});
 }
 if(requested==="Education & Scholarships"){
  const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);

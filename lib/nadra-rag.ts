@@ -125,10 +125,34 @@ async function getUrduChunks(): Promise<string[]> {
 
 function isAdultFreshCnicQuestion(question: string) {
   const q = normalize(question);
-  const cnic = q.includes("cnic") || q.includes("smart cnic") || q.includes("شناختی");
-  const fresh = /\bfresh\b|\bnew\b|\bregistration\b/.test(q) || q.includes("نیا") || q.includes("نئے") || q.includes("اندراج");
-  const adult = /\b18\b|18\+|\badult\b/.test(q) || q.includes("اٹھارہ") || q.includes("بالغ");
-  const docs = /\bdocument(s)?\b|\brequirement(s)?\b/.test(q) || q.includes("دستاویز") || q.includes("کاغذات") || q.includes("تقاضا");
+
+  const cnic =
+    q.includes("cnic") ||
+    q.includes("smart cnic") ||
+    q.includes("national identity card") ||
+    q.includes("identity card") ||
+    q.includes("شناختی");
+
+  const fresh =
+    /\\bfresh\\b|\\bnew\\b|\\bregistration\\b|\\bfirst[- ]?time\\b/.test(q) ||
+    q.includes("new registration") ||
+    q.includes("نیا") ||
+    q.includes("نئے") ||
+    q.includes("اندراج");
+
+  const adult =
+    /\\b18\\b|18\\+|\\badult\\b|above 18|18 years or above|18 years and above/.test(q) ||
+    q.includes("اٹھارہ") ||
+    q.includes("بالغ");
+
+  const docs =
+    /\\bdocument(s)?\\b|\\brequirement(s)?\\b|\\brequired\\b/.test(q) ||
+    q.includes("what documents") ||
+    q.includes("documents required") ||
+    q.includes("دستاویز") ||
+    q.includes("کاغذات") ||
+    q.includes("تقاضا");
+
   return cnic && fresh && adult && docs;
 }
 

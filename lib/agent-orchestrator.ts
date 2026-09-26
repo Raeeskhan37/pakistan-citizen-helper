@@ -1,9 +1,4 @@
-export type AgentId =
-  | "supervisor"
-  | "analyzer"
-  | "researcher"
-  | "verifier"
-  | "guidance";
+export type AgentId = "supervisor" | "analyzer" | "verifier" | "guidance";
 
 export type AgentStep = {
   id: AgentId;
@@ -15,13 +10,17 @@ export type AgentStep = {
 
 export type AgentMode = "normal" | "degraded";
 
-const AGENT_NAMES: Record<AgentId, string> = {
-  supervisor: "Supervisor Agent",
-  analyzer: "Analyzing Agent",
-  researcher: "Research Agent",
-  verifier: "Verification Agent",
-  guidance: "Citizen Guidance Agent",
-};
+export const AGENT_TOOL_REGISTRY = [
+  "NADRA RAG",
+  "Supabase verified knowledge",
+  "Official web research",
+  "Official source reader",
+  "Jurisdiction detection",
+  "Source verification",
+  "Short-term conversation memory",
+  "User-controlled long-term memory",
+  "English / Urdu guidance",
+] as const;
 
 export function buildAgentWorkflow(args: {
   department: string;
@@ -37,59 +36,65 @@ export function buildAgentWorkflow(args: {
 } {
   const mode = args.mode || "normal";
   const jurisdiction = args.jurisdiction || "not specified";
-  const tools = args.tools || [
-    "Department knowledge",
-    "Jurisdiction detection",
-    "Official-source research",
-    "Source verification",
-  ];
 
-  const degradedSuffix =
-    mode === "degraded"
-      ? " Live external verification is unavailable; only locally available verified knowledge can be used."
-      : "";
+  // Research is a capability of the Analyzing Agent, not a fifth agent.
+  // The API supplies request-specific tools; the core tool layer remains visible.
+  const requestedTools = args.tools || [];
+  const tools = Array.from(
+    new Set([
+      ...requestedTools,
+      "NADRA RAG (when applicable)",
+      "Supabase verified knowledge (when applicable)",
+      "Official web research (when applicable)",
+      "Official source reader (when applicable)",
+      "Jurisdiction detection",
+      "Source verification",
+      "Short-term conversation memory",
+      "User-controlled long-term memory",
+      "English / Urdu guidance",
+    ])
+  );
 
   const agents: AgentStep[] = [
     {
       id: "supervisor",
-      name: AGENT_NAMES.supervisor,
+      name: "Supervisor Agent",
       icon: "🧠",
       status: "completed",
-      detail: `Received the request and selected ${args.department || "the appropriate service"}.`,
+      detail:
+        "Coordinated the request and selected " +
+        (args.department || "the appropriate service") +
+        ".",
     },
     {
       id: "analyzer",
-      name: AGENT_NAMES.analyzer,
+      name: "Analyzing Agent",
       icon: "🔍",
       status: "completed",
-      detail: `Analyzed the request and jurisdiction: ${jurisdiction}.`,
-    },
-    {
-      id: "researcher",
-      name: AGENT_NAMES.researcher,
-      icon: "🌐",
-      status: mode === "degraded" ? "degraded" : "completed",
       detail:
-        mode === "degraded"
-          ? "Live official-source research unavailable."
-          : "Collected evidence from the approved government knowledge/source layer.",
+        "Analyzed the intent and jurisdiction (" +
+        jurisdiction +
+        "), then selected the appropriate research tools and evidence path.",
     },
     {
       id: "verifier",
-      name: AGENT_NAMES.verifier,
+      name: "Verification Agent",
       icon: "🛡️",
-      status: "completed",
+      status: mode === "degraded" ? "degraded" : "completed",
       detail:
         mode === "degraded"
-          ? "Checked the locally available evidence only."
-          : "Checked service, jurisdiction and evidence relevance before answering.",
+          ? "Verified only the locally available evidence; live external verification was unavailable."
+          : "Checked service, jurisdiction, source relevance and available evidence before the answer was prepared.",
     },
     {
       id: "guidance",
-      name: AGENT_NAMES.guidance,
+      name: "Citizen Guidance Agent",
       icon: "✍️",
       status: "completed",
-      detail: "Converted the verified evidence into citizen-friendly guidance.",
+      detail:
+        mode === "degraded"
+          ? "Prepared bounded guidance from locally available verified evidence."
+          : "Prepared clear citizen-friendly guidance from the verified evidence.",
     },
   ];
 
@@ -99,7 +104,7 @@ export function buildAgentWorkflow(args: {
     tools,
     summary:
       mode === "degraded"
-        ? "Degraded Mode is active." + degradedSuffix
+        ? "Degraded Mode is active. Live external services are unavailable; only available verified local evidence is used."
         : "Four-agent verification workflow completed.",
   };
 }

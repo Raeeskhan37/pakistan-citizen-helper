@@ -203,6 +203,98 @@ Police Mobile Khidmat Markaz لرنر، تجدید، انٹرنیشنل، ڈپل
 }
 
 
+function armsLicenceEvidence(question:string,jurisdiction:WorkingJurisdiction|null,language:"English"|"Urdu"):{answer:string,sources:string[]}{
+ const q=normalize(question);
+ const en:Record<string,string>={
+  "Islamabad Capital Territory":`## Islamabad Capital Territory — Arms Licence
+
+The ICT Administration states that a new application requires a completed application, 3 passport-size photographs, 3 attested CNIC copies, 3 attested NTN copies, proof of residence in Islamabad, and a departmental NOC for government servants. The applicant must appear in person with original documents. The published procedure is to complete the application, submit it at the Citizen Facilitation Center, receive a token, and collect the licence on the date given on the receipt.
+
+**Official source:** https://ictadministration.gov.pk/new-arms-license/`,
+  "Sindh":`## Sindh — Arms Licence
+
+The Sindh Home Department states that for a new arms licence, an applicant visits the Home Department with the original CNIC and a copy, submits the application and receives a token. The process then includes photograph/biodata capture, police verification and payment through a bank challan. The FAQ lists Sindh domicile and age 25 among the basic criteria.
+
+**Official source:** https://home.sindh.gov.pk/faqs`,
+  "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Arms Licence
+
+The KP Right to Public Services Commission describes issuance through the Arms License Branch, including biometric/electronic processing and police verification, followed by the applicable approval and fee/dealer steps. The official page lists age 21 or above and distinguishes Provincial and All-Pakistan licence routes.
+
+**Official source:** https://www.kprts.gov.pk/services/issuance-of-arms-license/`,
+  "Balochistan":`## Balochistan — Arms Licence
+
+The Government of Balochistan Home Department identifies arms licensing as a provincial service and publishes the Balochistan Arms Act 2022 and current arms-licence renewal notices.
+
+For a current application or renewal, only the applicable provincial Home Department procedure should be stated when supported by official evidence.
+
+**Official sources:** https://home.balochistan.gov.pk/ and https://balochistan.gov.pk/departments-acts/`,
+  "Azad Jammu and Kashmir":`## Azad Jammu and Kashmir — Arms Licence
+
+The official AJK E-Facilitation Center lists Arms License as a service for acquiring an arms licence in AJK. It identifies the AJK Interior Department as the issuance authority and lists a computerized certificate issuance fee of Rs. 1,500; the service page also lists an application form and fitness certificate.
+
+**Official source:** https://efc.ajk.gov.pk/instructionservice/3`,
+  "Punjab":`## Punjab — Arms Licence
+
+Punjab government district portals identify Arms Licensing Branches and list services including new-arm-licence issuance, revalidation/renewal, duplicate copies, transfer, correction, verification and cancellation. Punjab e-Khidmat Markaz also provides renewal of Federal Arms Licenses issued by the Federal Government.
+
+For a new Punjab licence, the exact current district procedure should be confirmed from the relevant official Punjab Arms Licensing Branch rather than inferred from another province.
+
+**Official sources:** https://punjab.gov.pk/DGKhan_ALO and https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/federal-arms-license-fal`,
+  "Gilgit-Baltistan":`## Gilgit-Baltistan — Arms Licence
+
+A sufficiently detailed current GB Arms Licence procedure was not established from the retrieved official evidence. Verified information for the exact GB procedure could not be established without inventing requirements.`
+ };
+ const ur:Record<string,string>={
+  "Islamabad Capital Territory":`## اسلام آباد — اسلحہ لائسنس
+
+اسلام آباد انتظامیہ کے سرکاری صفحے کے مطابق نئی درخواست کے لیے مکمل درخواست، 3 پاسپورٹ سائز تصاویر، CNIC کی 3 تصدیق شدہ نقول، NTN کی 3 تصدیق شدہ نقول، اسلام آباد میں رہائش کا ثبوت، اور سرکاری ملازمین کے لیے محکمانہ NOC درکار ہے۔ اصل دستاویزات کے ساتھ ذاتی حاضری ضروری ہے۔ طریقہ کار میں درخواست مکمل کرنا، Citizen Facilitation Center میں جمع کرانا، ٹوکن لینا اور رسید پر دی گئی تاریخ کو لائسنس وصول کرنا شامل ہے۔
+
+**سرکاری ماخذ:** https://ictadministration.gov.pk/new-arms-license/`,
+  "Sindh":`## سندھ — اسلحہ لائسنس
+
+سندھ ہوم ڈیپارٹمنٹ کے مطابق نئی درخواست کے لیے اصل CNIC اور اس کی نقل کے ساتھ Home Department جانا، درخواست جمع کرانا اور ٹوکن لینا شامل ہے۔ اس کے بعد تصویر/بائیو ڈیٹا، پولیس تصدیق اور بینک چالان کے ذریعے فیس کا عمل ہوتا ہے۔ بنیادی معیار میں سندھ ڈومیسائل اور عمر 25 سال درج ہیں۔
+
+**سرکاری ماخذ:** https://home.sindh.gov.pk/faqs`,
+  "Khyber Pakhtunkhwa":`## خیبر پختونخوا — اسلحہ لائسنس
+
+KP Right to Public Services Commission کے مطابق Arms License Branch میں بائیومیٹرک/الیکٹرانک پراسیسنگ اور پولیس تصدیق کے مراحل شامل ہیں، اس کے بعد متعلقہ منظوری اور فیس کے مراحل مکمل کیے جاتے ہیں۔ سرکاری صفحہ کم از کم عمر 21 سال بیان کرتا ہے اور Provincial اور All-Pakistan لائسنس روٹس الگ کرتا ہے۔
+
+**سرکاری ماخذ:** https://www.kprts.gov.pk/services/issuance-of-arms-license/`,
+  "Balochistan":`## بلوچستان — اسلحہ لائسنس
+
+حکومت بلوچستان کا Home Department اسلحہ لائسنسنگ کو صوبائی سروس کے طور پر ظاہر کرتا ہے اور Balochistan Arms Act 2022 اور موجودہ renewal notices شائع کرتا ہے۔ موجودہ درخواست یا تجدید کے لیے صرف مصدقہ سرکاری طریقہ کار ہی بیان کیا جائے گا۔
+
+**سرکاری ماخذ:** https://home.balochistan.gov.pk/`,
+  "Azad Jammu and Kashmir":`## آزاد جموں و کشمیر — اسلحہ لائسنس
+
+AJK E-Facilitation Center اسلحہ لائسنس کو سروس کے طور پر درج کرتا ہے اور Interior Department کو issuing authority بتاتا ہے۔ سروس صفحے پر computerized certificate issuance fee Rs. 1,500 اور application form اور fitness certificate درج ہیں۔
+
+**سرکاری ماخذ:** https://efc.ajk.gov.pk/instructionservice/3`,
+  "Punjab":`## پنجاب — اسلحہ لائسنس
+
+پنجاب کے سرکاری ضلعی پورٹلز Arms Licensing Branches کو متعلقہ دفاتر کے طور پر ظاہر کرتے ہیں اور نئی لائسنس issuance، revalidation/renewal، duplicate، transfer، correction، verification اور cancellation جیسی خدمات درج کرتے ہیں۔ پنجاب e-Khidmat Markaz وفاقی حکومت کے جاری کردہ Federal Arms License کی renewal سروس بھی فراہم کرتا ہے۔
+
+نئے پنجاب لائسنس کے لیے کسی دوسرے صوبے کے طریقہ کار کو پنجاب پر لاگو نہیں کیا جائے گا۔
+
+**سرکاری ماخذ:** https://punjab.gov.pk/DGKhan_ALO`,
+  "Gilgit-Baltistan":`## گلگت بلتستان — اسلحہ لائسنس
+
+دستیاب سرکاری شواہد سے گلگت بلتستان کے مخصوص موجودہ Arms Licence طریقہ کار کی مکمل تصدیق نہیں ہو سکی۔ غیر مصدقہ دستاویزات یا فیس شامل نہیں کی جائیں گی۔`
+ };
+ if(!jurisdiction) return {answer:language==="Urdu"?"## اسلحہ لائسنس\n\nپاکستان میں اسلحہ لائسنس کا طریقہ کار صوبے/علاقے کے مطابق مختلف ہے۔ براہ کرم صوبہ یا علاقہ بتائیں تاکہ متعلقہ سرکاری طریقہ کار دیا جا سکے۔":"## Arms Licence\n\nArms-licensing procedure is jurisdiction-specific in Pakistan. Please specify the province or territory so the applicable official procedure can be provided without mixing provincial rules.",sources:[]};
+ const answer=(language==="Urdu"?ur:en)[jurisdiction]||en.Punjab;
+ const sources:Record<string,string[]>={
+  "Islamabad Capital Territory":["https://ictadministration.gov.pk/new-arms-license/"],
+  "Sindh":["https://home.sindh.gov.pk/faqs"],
+  "Khyber Pakhtunkhwa":["https://www.kprts.gov.pk/services/issuance-of-arms-license/"],
+  "Balochistan":["https://home.balochistan.gov.pk/","https://balochistan.gov.pk/departments-acts/"],
+  "Azad Jammu and Kashmir":["https://efc.ajk.gov.pk/instructionservice/3"],
+  "Punjab":["https://punjab.gov.pk/DGKhan_ALO","https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/federal-arms-license-fal"],
+  "Gilgit-Baltistan":["https://gilgitbaltistan.gov.pk/"]
+ };
+ return {answer,sources:sources[jurisdiction]||[]};
+}
+
 function exciseEvidence(question:string,jurisdiction:string,language:"English"|"Urdu"):string{
  const q=normalize(question);
  const isToken=q.includes("token")||q.includes("motor vehicle tax")||q.includes("vehicle tax")||q.includes("ٹوکن");
@@ -866,6 +958,11 @@ if(requested==="Protector & Overseas Employment"){
  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Protector & Overseas Employment",title:"Bureau of Emigration & Overseas Employment — Emigrant Protection",url:"https://beoe.gov.pk/",lastVerified:"",province:requestedJurisdiction||""},agent:true,goalFocused:true,webSearch:false});
 }
 
+if(requested==="Arms Licence"){
+ const aj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+ const result=armsLicenceEvidence(question,aj,language);
+ return NextResponse.json({answer:cleanAnswer(result.answer),source:{department:"Arms Licence",title:"Official government arms-licensing information",url:result.sources[0]||"",lastVerified:"",province:aj||""},sources:result.sources,agent:true,goalFocused:true,webSearch:false,jurisdiction:aj||""});
+}
 if(requested==="Excise & Taxation"){ if(selected.jurisdiction==="Punjab") alternateOfficialUrls.push("https://excise.punjab.gov.pk/motorvehicle_tax","https://excise.punjab.gov.pk/index.php/node/39"); else if(selected.jurisdiction==="Sindh") alternateOfficialUrls.push("https://www.excise.gos.pk/motor-vehicle-tax","https://taxportal.excise.gos.pk/home/faq"); else if(selected.jurisdiction==="Khyber Pakhtunkhwa") alternateOfficialUrls.push("https://kpexcise.gov.pk/new/mvtax/"); }
 if(requested==="Education & Scholarships"){
  if(normalize(question).includes("need based")||normalize(question).includes("financial need")||normalize(question).includes("undergraduate"))

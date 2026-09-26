@@ -65,6 +65,7 @@ export default function Home() {
   const [agentActivity, setAgentActivity] = useState<AgentActivity | null>(null);
   const [shortTermMemory, setShortTermMemory] = useState<string[]>([]);
   const agentTimersRef = useRef<number[]>([]);
+  const agentRunStartedAtRef = useRef<number>(0);
 
   const clearAgentTimers = () => {
     agentTimersRef.current.forEach((timer) => window.clearTimeout(timer));
@@ -78,17 +79,17 @@ export default function Home() {
 
     const stages = [
       {
-        at: 550,
+        at: 700,
         active: "analyzer",
         detail: "Analyzing intent, jurisdiction and the best evidence path."
       },
       {
-        at: 1100,
+        at: 1500,
         active: "verifier",
         detail: "Checking source relevance, jurisdiction and supporting evidence."
       },
       {
-        at: 1650,
+        at: 2300,
         active: "guidance",
         detail: "Preparing clear citizen-friendly guidance from verified evidence."
       }
@@ -144,6 +145,7 @@ export default function Home() {
     if (!question.trim() || !department) return;
     const q = question.trim();
     setLoading(true); setAnswer(null); setCopied(false);
+    agentRunStartedAtRef.current = Date.now();
     setAgentActivity({
       mode: "normal",
       tools: ["NADRA RAG", "Supabase verified knowledge", "Official web research", "Jurisdiction detection", "Source verification"],
@@ -182,8 +184,14 @@ export default function Home() {
       setAgentActivity(prev => prev ? { ...prev, mode: "degraded", agents: prev.agents.map((a, i) => ({ ...a, status: i < 2 ? "completed" : "degraded", detail: i < 2 ? a.detail : "Connectivity problem; degraded mode is active." })) } : null);
       setAnswer({ error: "Unable to connect to the verified information service. Degraded mode is active." });
     } finally {
-      clearAgentTimers();
-      setLoading(false);
+      const elapsed = Date.now() - agentRunStartedAtRef.current;
+      const minimumVisibleMs = 3000;
+      const remaining = Math.max(0, minimumVisibleMs - elapsed);
+
+      window.setTimeout(() => {
+        clearAgentTimers();
+        setLoading(false);
+      }, remaining);
     }
   };
 

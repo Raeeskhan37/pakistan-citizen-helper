@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Service = { id: string; name: string; icon: string; description: string; question: string };
 type Department = { id: string; name: string; urdu: string; icon: string; description: string; services: Service[] };
@@ -64,6 +64,76 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [agentActivity, setAgentActivity] = useState<AgentActivity | null>(null);
   const [shortTermMemory, setShortTermMemory] = useState<string[]>([]);
+  const agentTimersRef = useRef<number[]>([]);
+
+  const clearAgentTimers = () => {
+    agentTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    agentTimersRef.current = [];
+  };
+
+  useEffect(() => () => clearAgentTimers(), []);
+
+  const startAgentProgress = () => {
+    clearAgentTimers();
+
+    const stages = [
+      {
+        at: 550,
+        active: "analyzer",
+        detail: "Analyzing intent, jurisdiction and the best evidence path."
+      },
+      {
+        at: 1100,
+        active: "verifier",
+        detail: "Checking source relevance, jurisdiction and supporting evidence."
+      },
+      {
+        at: 1650,
+        active: "guidance",
+        detail: "Preparing clear citizen-friendly guidance from verified evidence."
+      }
+    ];
+
+    stages.forEach((stage) => {
+      const timer = window.setTimeout(() => {
+        setAgentActivity((prev) => {
+          if (!prev) return prev;
+          const activeIndex = prev.agents.findIndex((a) => a.id === stage.active);
+          if (activeIndex < 0) return prev;
+
+          return {
+            ...prev,
+            agents: prev.agents.map((agent, index) => {
+              if (index < activeIndex) {
+                return {
+                  ...agent,
+                  status: "completed",
+                  detail:
+                    agent.id === "supervisor"
+                      ? "Coordinated the request and selected the service."
+                      : agent.id === "analyzer"
+                        ? "Completed intent and jurisdiction analysis."
+                        : "Completed evidence and source verification."
+                };
+              }
+
+              if (index === activeIndex) {
+                return {
+                  ...agent,
+                  status: "active",
+                  detail: stage.detail
+                };
+              }
+
+              return { ...agent, status: "waiting" };
+            })
+          };
+        });
+      }, stage.at);
+
+      agentTimersRef.current.push(timer);
+    });
+  };
 
   const isUrdu = language === "Urdu";
   const visibleDepartments = useMemo(() => { const q = search.trim().toLowerCase(); return q ? departments.filter(d => `${d.name} ${d.urdu} ${d.description}`.toLowerCase().includes(q)) : departments; }, [search]);
@@ -85,6 +155,7 @@ export default function Home() {
         { id: "guidance", name: "Citizen Guidance Agent", icon: "✍️", status: "waiting", detail: "Preparing clear citizen-friendly guidance." }
       ]
     });
+    startAgentProgress();
     try {
       const res = await fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q, service: department.name, language, department: department.name }) });
       const data = await res.json();
@@ -110,7 +181,10 @@ export default function Home() {
     } catch {
       setAgentActivity(prev => prev ? { ...prev, mode: "degraded", agents: prev.agents.map((a, i) => ({ ...a, status: i < 2 ? "completed" : "degraded", detail: i < 2 ? a.detail : "Connectivity problem; degraded mode is active." })) } : null);
       setAnswer({ error: "Unable to connect to the verified information service. Degraded mode is active." });
-    } finally { setLoading(false); }
+    } finally {
+      clearAgentTimers();
+      setLoading(false);
+    }
   };
 
   const copyAnswer = async () => { if (!answer?.answer) return; try { await navigator.clipboard.writeText(answer.answer); setCopied(true); window.setTimeout(() => setCopied(false), 1600); } catch {} };

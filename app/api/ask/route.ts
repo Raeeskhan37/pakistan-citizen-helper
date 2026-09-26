@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runFourAgentWorkflow } from "@/lib/agent-orchestrator";
+import { getDirectAdultFreshCnicAnswer } from "@/lib/nadra-rag";
 
 // Ported from the working pakistan-citizen-ai-agent routing/research architecture.
 const WORKING_AGENT_JURISDICTIONS = ["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad Capital Territory","Azad Jammu and Kashmir","Gilgit-Baltistan"] as const;
@@ -1030,6 +1031,37 @@ const departmentDomains:Record<string,string[]>={
 };
 
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
+if (requested === "NADRA Services") {
+  const directNadraAnswer = await getDirectAdultFreshCnicAnswer(question, language);
+  if (directNadraAnswer) {
+    const workflow = runFourAgentWorkflow({
+      department: requested,
+      question,
+      jurisdiction: selected.jurisdiction || null,
+      mode: "normal",
+      tools: ["NADRA RAG", "Source verification", "English / Urdu guidance"],
+      answer: directNadraAnswer,
+      evidenceAvailable: true
+    });
+    return NextResponse.json({
+      answer: directNadraAnswer,
+      source: {
+        department: "NADRA",
+        title: "NADRA Registration Policy RP-6.0.2 — Fresh/New Registration 18+",
+        url: "https://www.nadra.gov.pk/identityDocument/cnic",
+        lastVerified: "21 September 2026",
+        province: ""
+      },
+      agent: true,
+      goalFocused: true,
+      webSearch: false,
+      agentActivity: {
+        ...workflow,
+        memory: { shortTerm: [], longTerm: ["User-controlled preferences only"] }
+      }
+    });
+  }
+}
 
 
 if(requested==="Excise & Taxation"){

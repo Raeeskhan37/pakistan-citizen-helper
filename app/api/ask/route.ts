@@ -723,6 +723,57 @@ if(requested==="Passport Services"){
 }
 if(requested==="Government Jobs"){alternateOfficialUrls.push("https://www.njp.gov.pk/index.php/jobs","https://www.njp.gov.pk/index.php/jobs/live","https://www.njp.gov.pk/index.php/jobs/search");}
 if(requested==="Domicile"&&selected.jurisdiction==="Punjab"){alternateOfficialUrls.push("https://punjab.gov.pk/node/6239");}
+// EARLY PROTECTOR ROUTE: use directly verified BE&OE evidence and do not invent fees or OEP steps.
+if(requested==="Protector & Overseas Employment"){
+ const fq=normalize(question);
+ const isTourist=/tourist|visit visa|visitor visa|holiday|سیاحت|وزٹ/.test(fq);
+ const isOep=/oep|overseas employment promoter|promoter|recruitment agency|through an agent|ایجنٹ|او ای پی/.test(fq);
+ const isFee=/fee|fees|cost|charges|فیس|چارج/.test(fq);
+ const isOffice=/office|offices|location|where|دفتر|کہاں|مقام/.test(fq);
+ const isDocs=/document|documents|requirements|papers|دستاویز|کاغذات/.test(fq);
+ const isDirect=/direct employment|direct-employment|direct visa|براہ راست/.test(fq);
+ const requestedJurisdiction=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+ const policySource="https://beoe.gov.pk/files/policyguideliness/58.pdf";
+ const procedureSource="https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
+ let answer="";
+ if(isTourist){
+  answer=language==="Urdu"
+   ?"## پروٹیکٹر کلیئرنس\n\nعام سیاحتی یا وزٹ ویزا کے لیے اوورسیز ایمپلائمنٹ والا پروٹیکٹر رجسٹریشن طریقہ لاگو نہیں ہوتا۔ BE&OE کی یہ سروس بیرون ملک ملازمت/ایمیگریشن سے متعلق ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
+   :"## Protector of Emigrants\n\nThe BE&OE Protector registration process is for overseas employment/emigration cases. It is not an employment-clearance requirement for an ordinary tourist or visit visa.\n\n**Official source:** https://beoe.gov.pk/";
+ } else if(isOffice){
+  if(requestedJurisdiction==="Islamabad Capital Territory"){
+   answer=language==="Urdu"
+    ?"## پروٹیکٹر آف ایمیگرنٹس دفتر\n\nسرکاری BE&OE دائرۂ اختیار کی جدول کے مطابق **اسلام آباد**، Protector of Emigrants, **Rawalpindi** کے دائرۂ اختیار میں ہے۔ سرکاری رابطہ گائیڈ میں Rawalpindi دفتر کا پتہ **20-B1, Summer Plaza, Chandni Chowk, Rawalpindi** اور فون نمبرز **+92-51-9290439-40** اور **+92-51-9290569** درج ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf"
+    :"## Protector of Emigrants Office — Islamabad\n\nThe official BE&OE jurisdiction table places **Islamabad** under the **Protector of Emigrants, Rawalpindi**. The official contact guide lists the Rawalpindi office at **20-B1, Summer Plaza, Chandni Chowk, Rawalpindi**, telephone **+92-51-9290439-40** and **+92-51-9290569**.\n\n**Official sources:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
+  } else if(requestedJurisdiction==="Khyber Pakhtunkhwa"){
+   answer=language==="Urdu"
+    ?"## خیبر پختونخوا — پروٹیکٹر دفاتر\n\nسرکاری BE&OE رابطہ گائیڈ میں خیبر پختونخوا کے لیے **Peshawar** اور **Malakand** کے Protector of Emigrants دفاتر درج ہیں۔ متعلقہ دفتر درخواست گزار کے علاقے کے دائرۂ اختیار پر منحصر ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/a-guide-for-pakistani-migrant-workers-in-the-united-arab-emirates.pdf"
+    :"## Khyber Pakhtunkhwa — Protector Offices\n\nThe official BE&OE contact guide lists **Peshawar** and **Malakand** Protector of Emigrants offices for Khyber Pakhtunkhwa. The applicable office depends on the applicant's area of jurisdiction.\n\n**Official source:** https://beoe.gov.pk/files/a-guide-for-pakistani-migrant-workers-in-the-united-arab-emirates.pdf";
+  } else {
+   answer=language==="Urdu"
+    ?"## پروٹیکٹر آف ایمیگرنٹس دفتر\n\nBE&OE دائرۂ اختیار کے مطابق Protector of Emigrants کے دفاتر کے ذریعے رجسٹریشن ہوتی ہے۔ متعلقہ دفتر اپنے علاقے کے مطابق منتخب کیا جاتا ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf"
+    :"## Protector of Emigrants Office\n\nBE&OE handles registration through Protector of Emigrants offices according to area jurisdiction. The applicable office should be selected according to the applicant's area.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
+  }
+ } else if(isFee){
+  answer=language==="Urdu"
+   ?"## پروٹیکٹر فیس\n\nسرکاری BE&OE ہدایات کے مطابق رجسٹریشن کے وقت **Registration Fee، Welfare Fund، Emigration Promotion Fee** اور State Life insurance سے متعلق دستاویزات درکار ہوتی ہیں۔ اگر بھرتی **OEP** کے ذریعے ہو تو **Service Charges** بھی متعلقہ کیس میں شامل ہوتے ہیں۔\n\nموجودہ سرکاری ویب مواد میں مجھے ان تمام اجزا کی ایک واحد، واضح اور تازہ رقم قابلِ اعتماد طور پر نہیں ملی، اس لیے میں فیس کی رقم فرض نہیں کر رہا۔ ادائیگی سے پہلے BE&OE کی موجودہ فیس اسٹرکچر یا متعلقہ Protector office سے تصدیق کریں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/policyguideliness/58.pdf"
+   :"## Protector Fees\n\nOfficial BE&OE instructions identify **Registration Fee, Welfare Fund, Emigration Promotion Fee**, and State Life insurance as registration requirements. Where recruitment is through an **OEP**, service charges also apply to the case.\n\nI could not verify one single current official fee table with exact amounts for all of these components from the official material available to the agent, so I am not inventing a fee amount. Confirm the current fee structure with BE&OE or the relevant Protector office before payment.\n\n**Official source:** https://beoe.gov.pk/files/policyguideliness/58.pdf";
+ } else if(isOep){
+  answer=language==="Urdu"
+   ?"## OEP کے ذریعے پروٹیکٹر رجسٹریشن\n\nاگر ملازمت **Overseas Employment Promoter (OEP)** کے ذریعے حاصل ہوئی ہے تو BE&OE کی سرکاری ہدایات کے مطابق رجسٹریشن میں درج ذیل شامل ہیں:\n- درست ویزا\n- درست پاسپورٹ\n- درست CNIC\n- آجر کا دستخط شدہ Employment Contract/Agreement یا منظور شدہ Undertaking\n- Registration Fee کی رسید\n- Welfare Fund کی رسید\n- Emigration Promotion Fee\n- OEP کے ذریعے بھرتی کی صورت میں Service Charges\n- State Life Insurance کا سرٹیفکیٹ\n- متعلقہ صورت میں NOC، Police Character Verification اور Medical Fitness Report\n\nBE&OE کی ہدایات کے مطابق متعلقہ OEP/Protector office کے ذریعے رجسٹریشن مکمل کی جاتی ہے اور غیر ضروری دستاویزات طلب نہیں کی جانی چاہئیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/policyguideliness/58.pdf"
+   :"## Protector Registration Through an OEP\n\nIf the job was obtained through an **Overseas Employment Promoter (OEP)**, official BE&OE instructions state that registration includes:\n- valid visa\n- valid passport\n- valid CNIC\n- employer-signed employment contract/agreement or an approved undertaking\n- registration-fee receipt\n- welfare-fund receipt\n- emigration promotion fee\n- OEP service charges where recruitment is through an OEP\n- State Life insurance certificate\n- where applicable, NOC, police character verification and medical fitness report\n\nBE&OE instructs Protector offices not to demand unnecessary documents.\n\n**Official source:** https://beoe.gov.pk/files/policyguideliness/58.pdf";
+ } else if(isDocs || isDirect){
+  answer=language==="Urdu"
+   ?"## براہ راست اوورسیز ملازمت — پروٹیکٹر رجسٹریشن\n\nBE&OE کی سرکاری ہدایات کے مطابق بنیادی دستاویزات میں درست ویزا، درست پاسپورٹ، درست CNIC، آجر کا دستخط شدہ Employment Contract/Agreement یا منظور شدہ Undertaking، Registration Fee کی رسید، Welfare Fund کی رسید، Emigration Promotion Fee، State Life Insurance Certificate شامل ہیں۔ مخصوص ممالک/حالات میں Police Character Verification، Medical Fitness Report اور متعلقہ NOC بھی درکار ہو سکتے ہیں۔\n\nبراہ راست ملازمت کے ویزا رکھنے والے فرد کی رجسٹریشن Protector of Emigrants کرتا ہے؛ سرکاری طریقہ کار کے مطابق کاغذات مکمل ہونے کی صورت میں رجسٹریشن اسی دن کی جا سکتی ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf\nhttps://beoe.gov.pk/files/policyguideliness/58.pdf"
+   :"## Direct Overseas Employment — Protector Registration\n\nAccording to official BE&OE instructions, the core documents include a valid visa, valid passport, valid CNIC, an employer-signed employment contract/agreement or approved undertaking, registration-fee receipt, welfare-fund receipt, emigration promotion fee, and State Life Insurance Certificate. For specified countries/circumstances, a Police Character Verification Certificate, Medical Fitness Report, and relevant NOC may also be required.\n\nA holder of a direct employment visa is registered by the Protector of Emigrants; the official procedure states that registration is done the same day when the papers are in order.\n\n**Official sources:**\n- https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf\n- https://beoe.gov.pk/files/policyguideliness/58.pdf";
+ } else {
+  answer=language==="Urdu"
+   ?"## پروٹیکٹر آف ایمیگرنٹس\n\nبیرون ملک ملازمت کے لیے Protector registration درکار ہے۔ BE&OE کے مطابق رجسٹریشن کے لیے درست ویزا، پاسپورٹ، CNIC، ملازمت کا معاہدہ/منظور شدہ undertaking، فیس اور Welfare Fund کی رسید، Emigration Promotion Fee، انشورنس اور کیس کے مطابق دیگر دستاویزات درکار ہو سکتی ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
+   :"## Protector of Emigrants\n\nFor overseas employment, Protector registration is required. BE&OE identifies the visa, passport, CNIC, employment contract/approved undertaking, registration and welfare-fund receipts, emigration promotion fee, insurance, and case-specific documents as part of the registration requirements.\n\n**Official source:** https://beoe.gov.pk/";
+ }
+ return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Protector & Overseas Employment",title:"Bureau of Emigration & Overseas Employment — Emigrant Protection",url:"https://beoe.gov.pk/",lastVerified:"",province:requestedJurisdiction||""},agent:true,goalFocused:true,webSearch:false});
+}
+
 if(requested==="Excise & Taxation"){ if(selected.jurisdiction==="Punjab") alternateOfficialUrls.push("https://excise.punjab.gov.pk/motorvehicle_tax","https://excise.punjab.gov.pk/index.php/node/39"); else if(selected.jurisdiction==="Sindh") alternateOfficialUrls.push("https://www.excise.gos.pk/motor-vehicle-tax","https://taxportal.excise.gos.pk/home/faq"); else if(selected.jurisdiction==="Khyber Pakhtunkhwa") alternateOfficialUrls.push("https://kpexcise.gov.pk/new/mvtax/"); }
 if(requested==="Education & Scholarships"){
  if(normalize(question).includes("need based")||normalize(question).includes("financial need")||normalize(question).includes("undergraduate"))

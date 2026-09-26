@@ -686,7 +686,7 @@ The applicable meningococcal vaccination and Pakistan-specific polio requirement
 
 Follow the current Saudi Ministry of Health official Hajj health requirements.
 
-The applicable meningococcal vaccination requirement and Pakistan-specific polio requirements should be completed according to the current official document.
+All Hajj pilgrims must meet the current Saudi meningococcal requirement. For travelers arriving from Pakistan, the current 1447H (2026) Saudi guidance requires at least one dose of bOPV or IPV. COVID-19 proof applies to specified groups, while seasonal influenza is advised rather than stated as a universal mandatory requirement.
 
 Influenza and COVID-19 should not automatically be described as mandatory unless the current official document explicitly says so.`);
 

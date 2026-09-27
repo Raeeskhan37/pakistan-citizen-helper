@@ -6,7 +6,7 @@ type Service = { id: string; name: string; icon: string; description: string; qu
 type Department = { id: string; name: string; urdu: string; icon: string; description: string; services: Service[] };
 type SourceInfo = { department?: string; title?: string; url?: string; lastVerified?: string; liveVerified?: boolean; checkedAt?: string; province?: string };
 type AgentStep = { id: string; name: string; icon: string; status: "waiting" | "active" | "completed" | "degraded"; detail: string };
-type AgentActivity = { mode: "normal" | "degraded"; agents: AgentStep[]; tools: string[]; summary?: string; memory: { shortTerm: string[]; longTerm: string[] }; };
+type AgentActivity = { mode: "normal" | "degraded"; agents: AgentStep[]; tools: string[]; summary?: string; claimVerification?: { available?: boolean; passed?: boolean; score?: number; supportedClaims?: number; totalClaims?: number; unsupportedClaims?: number; unclearClaims?: number }; memory: { shortTerm: string[]; longTerm: string[] }; };
 type ApiResponse = { answer?: string; source?: SourceInfo | null; error?: string; agentActivity?: AgentActivity };
 
 const departments: Department[] = [
@@ -191,7 +191,7 @@ export default function Home() {
       window.setTimeout(() => {
         clearAgentTimers();
         setLoading(false);
-        setAgentActivity(null);
+        // Keep completed agent activity visible for inspection.
       }, remaining);
     }
   };
@@ -224,8 +224,8 @@ export default function Home() {
         </>}
 
         {department && <section className="view question-view"><button className="back" onClick={goHome}>← {isUrdu ? "تمام محکمے" : "All departments"}</button><div className="service-banner"><span className="service-banner-icon">{department.icon}</span><div><div className="eyebrow">{isUrdu ? "محکمہ" : "DEPARTMENT"}</div><h1>{isUrdu ? department.urdu : department.name}</h1><p>{isUrdu ? "اس محکمے سے متعلق کوئی بھی سوال پوچھیں" : "Ask any question related to this government department."}</p></div></div>
-          {loading && agentActivity && <div className="agent-panel">
-  <div className="agent-panel-head"><div><span className="eyebrow">AI ACTIVITY</span><strong>{agentActivity.mode === "degraded" ? "Working with limited service" : "AI is working…"}</strong></div><span className="agent-mode">{agentActivity.mode === "degraded" ? "DEGRADED" : "LIVE"}</span></div>
+          {agentActivity && <div className="agent-panel">
+  <div className="agent-panel-head"><div><span className="eyebrow">AI ACTIVITY</span><strong>{agentActivity.mode === "degraded" ? (loading ? "Working with limited service" : "Completed with limited service") : (loading ? "AI is working…" : "Agent workflow completed")}</strong></div><span className="agent-mode">{agentActivity.mode === "degraded" ? "DEGRADED" : loading ? "LIVE" : "COMPLETED"}</span></div>
   <div className="agent-steps">
     {[
       { key: "supervisor", text: "Understanding your request" },
@@ -251,6 +251,8 @@ export default function Home() {
       </div>;
     })}
   </div>
+  {!loading && agentActivity.summary && <div className="agent-summary"><strong>Workflow result</strong><small>{agentActivity.summary}</small></div>}
+  {!loading && agentActivity.claimVerification?.available && <div className="agent-summary"><strong>Claim verification</strong><small>{agentActivity.claimVerification.supportedClaims ?? 0}/{agentActivity.claimVerification.totalClaims ?? 0} claims supported{typeof agentActivity.claimVerification.score === "number" ? " · " + agentActivity.claimVerification.score + "%" : ""}</small></div>}
 </div>}
           {!answer && <><div className="question-card"><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "آپ اس محکمے کی کسی بھی سروس کے بارے میں سوال پوچھ سکتے ہیں۔" : "Ask anything about this department. You do not need to select a specific service."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? `مثلاً: ${department?.name} سے متعلق کوئی سوال پوچھیں` : `For example: What is the fee? What documents are required?`} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
           

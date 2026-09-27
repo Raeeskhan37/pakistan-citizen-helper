@@ -1,0 +1,166 @@
+export type ClaimCheck = {
+  claim: string;
+  verdict: "supported" | "unsupported" | "unclear";
+  reason: string;
+};
+
+export type ClaimVerificationResult = {
+  available: boolean;
+  claims: ClaimCheck[];
+  unsupportedClaims: string[];
+  unclearClaims: string[];
+  supportedCount: number;
+  totalClaims: number;
+  score: number;
+  reason: string;
+};
+
+const MAX_EVIDENCE = 14000;
+const MAX_ANSWER = 7000;
+
+function emptyResult(reason: string): ClaimVerificationResult {
+  return {
+    available: false,
+    claims: [],
+    unsupportedClaims: [],
+    unclearClaims: [],
+    supportedCount: 0,
+    totalClaims: 0,
+    score: 0,
+    reason,
+  };
+}
+
+function extractJson(text: string): unknown {
+  const cleaned = text
+    .trim()
+    .replace(/^\`\`\`json\s*/i, "")
+    .replace(/^\`\`\`\s*/i, "")
+    .replace(/\s*\`\`\`$/i, "");
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      try {
+        return JSON.parse(cleaned.slice(start, end + 1));
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
+export async function verifyAnswerClaims(args: {
+  answer: string;
+  evidence: string;
+  language?: "English" | "Urdu";
+}): Promise<ClaimVerificationResult> {
+  const apiKey = process.env.GROQ_API_KEY;
+  const answer = args.answer.trim();
+  const evidence = args.evidence.trim();
+
+  if (!apiKey) return emptyResult("Verifier API key is unavailable.");
+  if (answer.length < 20) return emptyResult("The answer is too short to verify.");
+  if (evidence.length < 100) return emptyResult("Insufficient evidence was supplied to the verifier.");
+
+  const prompt =
+    "You are the Verification Agent for a government-services assistant.\n\n" +
+    "Your ONLY job is to check whether factual claims in the proposed answer are supported by the supplied official/verified evidence.\n\n" +
+    "Rules:\n" +
+    "- Treat the supplied evidence as the only authority.\n" +
+    "- Do not use general knowledge.\n" +
+    "- Do not assume that a claim is true because it sounds plausible.\n" +
+    "- A claim is supported only when the evidence explicitly supports it or clearly entails it.\n" +
+    "- A claim is unsupported when the evidence contradicts it or provides no basis for it.\n" +
+    "- Use unclear when the evidence is ambiguous or insufficient to decide.\n" +
+    "- Ignore headings, greetings, advice to verify, and source URLs as claims.\n" +
+    "- Split compound statements into separate factual claims when practical.\n" +
+    "- Be especially strict with fees, dates, deadlines, documents, eligibility, processing times, office locations, legal requirements, and jurisdiction-specific requirements.\n" +
+    '- Return JSON only with this shape: {"claims":[{"claim":"...","verdict":"supported|unsupported|unclear","reason":"..."}]}\n\n' +
+    "PROPOSED ANSWER:\n" +
+    answer.slice(0, MAX_ANSWER) +
+    "\n\nSUPPLIED EVIDENCE:\n" +
+    evidence.slice(0, MAX_EVIDENCE);
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: process.env.GROQ_VERIFIER_MODEL || "openai/gpt-oss-120b",
+        temperature: 0,
+        max_completion_tokens: 1800,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: "You are a strict evidence-grounded factual verifier. Never add outside knowledge.",
+          },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      return emptyResult("Verifier provider returned HTTP " + response.status + ".");
+    }
+
+    const data = await response.json();
+    const raw = String(data?.choices?.[0]?.message?.content || "");
+    const parsed = extractJson(raw) as { claims?: unknown } | null;
+
+    if (!parsed || !Array.isArray(parsed.claims)) {
+      return emptyResult("Verifier returned an invalid structured result.");
+    }
+
+    const claims: ClaimCheck[] = parsed.claims
+      .map((item: any) => ({
+        claim: String(item?.claim || "").trim(),
+        verdict:
+          item?.verdict === "supported" ||
+          item?.verdict === "unsupported" ||
+          item?.verdict === "unclear"
+            ? item.verdict
+            : "unclear",
+        reason: String(item?.reason || "").trim(),
+      }))
+      .filter((item: ClaimCheck) => item.claim.length > 0);
+
+    if (!claims.length) return emptyResult("No factual claims were extracted for verification.");
+
+    const unsupportedClaims = claims
+      .filter((item) => item.verdict === "unsupported")
+      .map((item) => item.claim);
+
+    const unclearClaims = claims
+      .filter((item) => item.verdict === "unclear")
+      .map((item) => item.claim);
+
+    const supportedCount = claims.filter((item) => item.verdict === "supported").length;
+    const score = Math.round((supportedCount / claims.length) * 100);
+
+    return {
+      available: true,
+      claims,
+      unsupportedClaims,
+      unclearClaims,
+      supportedCount,
+      totalClaims: claims.length,
+      score,
+      reason:
+        unsupportedClaims.length === 0 && unclearClaims.length === 0
+          ? "All extracted factual claims were supported by the supplied evidence."
+          : "One or more extracted factual claims were not fully supported by the supplied evidence.",
+    };
+  } catch (error) {
+    console.error("Claim verifier failed:", error);
+    return emptyResult("Verifier execution failed.");
+  }
+}

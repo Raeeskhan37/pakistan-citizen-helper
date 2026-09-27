@@ -833,6 +833,20 @@ export async function POST(request:NextRequest){try{
  else if(workingJurisdiction && !selected.jurisdiction){selected.jurisdiction=workingJurisdiction;}
  const civilTargetJurisdiction=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
 
+ // EARLY PASSPORT DATE-OF-BIRTH / AGE MODIFICATION ROUTE:
+ // DGI&P explicitly permits modification of date of birth after the CNIC/NICOP
+ // is revised. This must run before generic passport research so the model
+ // cannot incorrectly state that DOB/age changes are prohibited.
+ if(requested==="Passport Services" &&
+    /passport|پاسپورٹ/i.test(question) &&
+    /(date of birth|dob|birth date|age|date-of-birth|تاریخ پیدائش|عمر)/i.test(question) &&
+    /(change|change the|modify|modification|correct|correction|alter|wrong|incorrect|تبدیل|درست|تصحیح)/i.test(question)){
+  const answer=language==="Urdu"
+   ?"## پاسپورٹ میں تاریخِ پیدائش / عمر کی تبدیلی\n\nDGI&P کے مطابق پاسپورٹ میں **تاریخِ پیدائش تبدیل یا درست کی جا سکتی ہے**۔ پہلے اپنے **CNIC/NICOP کو درست تاریخِ پیدائش کے ساتھ revise/modify** کروانا ضروری ہے۔ اس کے بعد متعلقہ پاسپورٹ آفس میں مطلوبہ دستاویزات کے ساتھ پاسپورٹ کی modification کے لیے درخواست دی جا سکتی ہے۔\n\n**اہم دستاویزات:**\n- درست شدہ اصل CNIC/NICOP\n- مزید verification کے لیے birth certificate یا Matriculation certificate فراہم کیا جا سکتا ہے، اگر ضرورت ہو۔\n\nاگر عمر کے بارے میں issuing authority کو شک ہو تو DGI&P birth certificate یا recognized Board/University کی Matriculation certificate جیسی documentary evidence طلب کر سکتا ہے۔\n\n**سرکاری ذریعہ:** DGI&P — General Requirements for Passport / Passport Modification\nhttps://dgip.gov.pk/passport/ordinary-passport.php"
+   :"## Passport — Change of Date of Birth / Age\n\nDGI&P **does permit modification of the date of birth recorded on a passport**. The official requirement is that the applicant first revise/modify the **CNIC/NICOP** so that it reflects the corrected date of birth. After that, the applicant can visit the passport office with the required documents and apply for passport modification.\n\n**Key requirements:**\n- Revised original CNIC/NICOP showing the corrected date of birth.\n- For further verification, a birth certificate or Matriculation certificate may be provided if required.\n\nIf the issuing authority has doubt about an applicant's age, DGI&P may call for documentary evidence such as a birth certificate issued by a municipality/local body or a Matriculation certificate from a recognized Board/University.\n\n**Official source:** DGI&P — General Requirements for Passport / Passport Modification\nhttps://dgip.gov.pk/passport/ordinary-passport.php";
+  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Passport",title:"DGI&P — General Requirements for Passport / Passport Modification",url:"https://dgip.gov.pk/passport/ordinary-passport.php",lastVerified:"27 September 2026",province:""},agent:true,goalFocused:true,webSearch:false});
+ }
+
  // EARLY VACCINATION ROUTE: import the proven Streamlit Hajj/Umrah/work-visa handling without changing frozen departments.
  if(requested==="Vaccination for Travelling Abroad"){
   if(isVaccinationPilgrimQuestion(question)){

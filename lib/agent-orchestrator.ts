@@ -17,12 +17,19 @@ export type AgentHandoff = {
   detail: string;
 };
 
+export type AgentStageResult = {
+  agent: AgentId;
+  status: "completed" | "waiting" | "degraded";
+  result: string;
+};
+
 export type AgentWorkflowResult = {
   mode: AgentMode;
   agents: AgentStep[];
   tools: string[];
   summary: string;
   handoffs: AgentHandoff[];
+  stageResults: AgentStageResult[];
   verification: {
     passed: boolean;
     evidenceAvailable: boolean;
@@ -147,6 +154,34 @@ export function buildAgentWorkflow(args: {
             : "Verifier passed the supported evidence gate to the guidance stage.",
       },
     ],
+    stageResults: [
+      {
+        agent: "supervisor",
+        status: "completed",
+        result: "Service context selected: " + (args.department || "appropriate service") + ".",
+      },
+      {
+        agent: "analyzer",
+        status: "completed",
+        result: "Intent and jurisdiction context prepared for evidence verification; jurisdiction: " + jurisdiction + ".",
+      },
+      {
+        agent: "verifier",
+        status: mode === "degraded" ? "degraded" : "completed",
+        result:
+          mode === "degraded"
+            ? "Only available local evidence can be used; live verification is unavailable."
+            : "Evidence and source verification stage is ready for the supplied answer.",
+      },
+      {
+        agent: "guidance",
+        status: "completed",
+        result:
+          mode === "degraded"
+            ? "Citizen guidance is bounded by the available verified evidence."
+            : "Citizen-facing guidance can be prepared from verified evidence.",
+      },
+    ],
     verification: {
       passed: mode === "normal",
       evidenceAvailable: true,
@@ -226,6 +261,40 @@ export function runFourAgentWorkflow(args: {
     }
 
     return agent;
+  });
+
+  base.stageResults = base.stageResults.map((stage) => {
+    if (stage.agent === "verifier") {
+      return {
+        ...stage,
+        status:
+          base.mode === "degraded"
+            ? "degraded"
+            : answerAccepted
+              ? "completed"
+              : "degraded",
+        result:
+          base.mode === "degraded"
+            ? "Only locally available verified evidence was accepted; live verification is unavailable."
+            : answerAccepted
+              ? "Supporting evidence is available and passed the verification gate."
+              : "Sufficient supporting evidence was not confirmed; the answer is not accepted as verified.",
+      };
+    }
+
+    if (stage.agent === "guidance") {
+      return {
+        ...stage,
+        status:
+          answerAccepted || base.mode === "degraded" ? "completed" : "waiting",
+        result:
+          answerAccepted || base.mode === "degraded"
+            ? "Final guidance is prepared from the evidence allowed by the verification gate."
+            : "Guidance is waiting because the verification gate did not pass.",
+      };
+    }
+
+    return stage;
   });
 
   base.summary =

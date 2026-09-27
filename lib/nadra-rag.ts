@@ -352,6 +352,20 @@ export async function getDirectNadraAnswer(question: string, language: "English"
     // 3. CRC -> JUVENILE CARD / OTHER ID CONVERSION.
     // Must precede the generic CRC application branch.
     // ------------------------------------------------------------
+    // Eligibility questions must be answered directly, before the
+    // conversion workflow. Example: "Can a child under 18 get a
+    // Smart/Juvenile Card?" is not asking how to convert a CRC.
+    if (/under 18|below 18|minor|child|بچہ|نابالغ|18 سال سے کم|اٹھارہ سال سے کم/.test(q) &&
+        /can|eligible|eligibility|allowed|get|have|obtain|smart|juvenile|جووینائل|اسمارٹ|مل سکتا|حقدار/.test(q) &&
+        !/convert|conversion|from crc|crc to|تبدیل.*جووینائل|تبدیلی.*جووینائل/.test(q)) {
+      const body = language === "Urdu"
+        ? "### ہاں — 18 سال سے کم عمر بچہ Juvenile Card حاصل کر سکتا ہے\n\n**ہاں۔** NADRA Registration Policy RP-6.0.2 کے مطابق 18 سال سے کم عمر پاکستانی شہری کے لیے **Juvenile Card** ایک شناختی دستاویز ہے۔ بچے کو بالغ CNIC حاصل کرنے کی ضرورت نہیں ہے۔\n\nاگر بچے کے پاس پہلے سے **CRC/B-Form** ہے تو اسے Juvenile Card میں convert کیا جا سکتا ہے۔ Juvenile Card کے عمل میں بچے کی اپنی application/identity record کے ساتھ parent(s)، 18 سال سے زائد sibling یا guardian کی **biometric verification** یا applicable attestation درکار ہو سکتی ہے۔"
+        : "### Yes — a child under 18 can get a Juvenile Card\n\n**Yes.** Under NADRA Registration Policy RP-6.0.2, a Pakistani citizen under 18 can obtain a **Juvenile Card**, which is an identity document for a minor. The child does **not** need to obtain an adult CNIC first.\n\nIf the child already has a **CRC/B-Form**, it can be converted to a Juvenile Card. For the Juvenile Card process, the child's own application/identity record is used, while a parent, sibling above 18, or guardian may be required for **biometric verification** or the applicable attestation.";
+      return out(language === "Urdu" ? "Juvenile Card — Under 18 Eligibility" : "Juvenile Card — Under 18 Eligibility", body);
+    }
+
+    // Conversion questions are handled separately.
+    if (hasCrc && isConversion && /juvenile|snic|snico? p?|smart|جووینائل/.test(q)) {
     if (hasCrc && isConversion && /juvenile|snic|snico? p?|smart|جووینائل/.test(q)) {
       const body = language === "Urdu"
         ? "### CRC سے Juvenile Card میں Conversion\n\n1. **Juvenile Card کے لیے minor خود primary applicant ہوتا ہے۔** RP-6.0.2 میں CRC سے Juvenile Card کے لیے application **CRC / Juvenile Card holder کی طرف سے یا اس کی جانب سے** درج ہے۔\n2. موجودہ **CRC number** درکار ہے۔\n3. Non-resident citizen کی صورت میں applicable Pakistani/foreign passport، residence permit، travel document یا Pakistan Embassy/Mission سے duly attested Undertaking “A” درکار ہو سکتا ہے۔\n4. **Parent(s)، 18 سال سے زائد sibling(s) یا guardian کی biometric verification**، یا Regulation 9(a-h) کے مطابق CNICF attestation، applicable ہے۔ Non-resident citizen جو abroad سے apply کرے، اس کے لیے ID holder سے application-form verification کا option بھی policy میں دیا گیا ہے؛ یہ exception Juvenile Card کے لیے apply نہیں ہوتی۔\n5. Conversion کے دوران **photograph, fingerprints اور iris** capture/update کیے جاتے ہیں۔\n6. اگر particulars میں کوئی تبدیلی بھی مطلوب ہو تو وہ متعلقہ change/correction standard کے مطابق process ہوگی۔"

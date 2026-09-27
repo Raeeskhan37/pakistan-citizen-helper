@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runFourAgentWorkflow } from "@/lib/agent-orchestrator";
-import { getDirectAdultFreshCnicAnswer } from "@/lib/nadra-rag";
+import { getDirectAdultFreshCnicAnswer, getDirectNadraAnswer } from "@/lib/nadra-rag";
 
 // Ported from the working pakistan-citizen-ai-agent routing/research architecture.
 const WORKING_AGENT_JURISDICTIONS = ["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad Capital Territory","Azad Jammu and Kashmir","Gilgit-Baltistan"] as const;
@@ -832,6 +832,39 @@ export async function POST(request:NextRequest){try{
  if(workingTargetJurisdiction){selected.jurisdiction=workingTargetJurisdiction;}
  else if(workingJurisdiction && !selected.jurisdiction){selected.jurisdiction=workingJurisdiction;}
  const civilTargetJurisdiction=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
+
+ // EARLY NADRA SERVICE ROUTER:
+ // NADRA policy questions must be resolved before generic service mismatch/routing.
+ // This prevents CRC/B-Form, NICOP, POC, FRC and identity-change questions from
+ // being misclassified as Union Council/Other Services or rejected as unrelated.
+ if(requested==="NADRA Services"){
+   const directNadraAnswer=await getDirectNadraAnswer(question,language);
+   if(directNadraAnswer){
+     const workflow=runFourAgentWorkflow({
+       department:requested,
+       question,
+       jurisdiction:selected.jurisdiction||null,
+       mode:"normal",
+       tools:["NADRA RAG","Source verification","English / Urdu guidance"],
+       answer:directNadraAnswer,
+       evidenceAvailable:true
+     });
+     return NextResponse.json({
+       answer:cleanAnswer(directNadraAnswer),
+       source:{
+         department:"NADRA",
+         title:"NADRA Registration Policy RP-6.0.2",
+         url:"https://www.nadra.gov.pk/",
+         lastVerified:"21 September 2026",
+         province:""
+       },
+       agent:true,
+       goalFocused:true,
+       webSearch:false,
+       agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]}}
+     });
+   }
+ }
 
  // EARLY PASSPORT PARTICULARS MODIFICATION ROUTE:
  // One verified handler covers name, father name, date of birth/age and

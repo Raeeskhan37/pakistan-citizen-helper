@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runFourAgentWorkflow } from "@/lib/agent-orchestrator";
+import { verifyAnswerClaims } from "@/lib/claim-verifier";
 import { getDirectAdultFreshCnicAnswer, getDirectNadraAnswer } from "@/lib/nadra-rag";
 
 // Ported from the working pakistan-citizen-ai-agent routing/research architecture.
@@ -1375,5 +1376,38 @@ IMPORTANT: The official source text and official-domain search results above are
    const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b",retryMessages))});
    if(retry.ok){const rd=await retry.json();answer=cleanAnswer(rd?.choices?.[0]?.message?.content||"")||answer;}
  }
- const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"normal",tools:["NADRA RAG","Supabase verified knowledge","Official web research","Jurisdiction detection","Source verification"],answer,evidenceAvailable:selected.records.length>0||officialText.length>200||ragEvidence.length>200});return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]}}});
+ const verificationEvidence=[dbContext,officialText,ragEvidence].filter(Boolean).join("\n\n");
+ const claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
+ const verificationAvailable=claimVerification.available;
+ const verificationPassed=verificationAvailable && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
+ const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"normal",tools:["NADRA RAG","Supabase verified knowledge","Official web research","Jurisdiction detection","Source verification","Claim-level evidence verification"],answer,evidenceAvailable:(selected.records.length>0||officialText.length>200||ragEvidence.length>200) && verificationPassed});
+ workflow.verification = {
+   ...workflow.verification,
+   passed: verificationPassed,
+   evidenceAvailable: selected.records.length>0||officialText.length>200||ragEvidence.length>200,
+   answerAccepted: verificationPassed
+ };
+ workflow.agents = workflow.agents.map(agent => agent.id==="verifier"
+   ? {...agent,status:verificationPassed?"completed":"degraded",detail:verificationAvailable
+      ? `Claim-level verification: ${claimVerification.supportedCount}/${claimVerification.totalClaims} claims supported; score ${claimVerification.score}%.`
+      : "Claim-level verification was unavailable; the answer is not labelled fully verified."
+     }
+   : agent.id==="guidance"
+     ? {...agent,status:verificationPassed?"completed":"waiting",detail:verificationPassed
+        ? "Prepared citizen guidance from evidence that passed claim-level verification."
+        : "Waiting because claim-level verification did not fully pass."}
+     : agent);
+ workflow.stageResults = workflow.stageResults.map(stage => stage.agent==="verifier"
+   ? {...stage,status:verificationPassed?"completed":"degraded",result:verificationAvailable
+      ? `Claim verification: ${claimVerification.supportedCount}/${claimVerification.totalClaims} claims supported; score ${claimVerification.score}%.`
+      : "Claim-level verification was unavailable; verification did not pass."}
+   : stage.agent==="guidance"
+     ? {...stage,status:verificationPassed?"completed":"waiting",result:verificationPassed
+        ? "Final guidance is prepared from evidence that passed claim-level verification."
+        : "Guidance is waiting for a fully supported answer."}
+     : stage);
+ workflow.summary = verificationPassed
+   ? "Four-agent workflow completed with claim-level evidence verification."
+   : "Four-agent workflow completed with a verification warning; the answer was not fully claim-verified.";
+ return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]},claimVerification}});
  }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

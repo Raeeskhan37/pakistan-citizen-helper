@@ -851,6 +851,16 @@ export async function POST(request:NextRequest){try{
   return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Domicile",title:"Official Government Domicile Services — Punjab, ICT and KP",url:"https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/domicile-certificate",lastVerified:"",province:""},agent:true,goalFocused:true,webSearch:false});
  }
 
+ // EARLY GILGIT-BALTISTAN DOMICILE ROUTE: the official GB government site
+ // confirms domicile-certificate procedures but does not publish a detailed public
+ // document checklist. Do not invent requirements when the official evidence is incomplete.
+ if(requested==="Domicile" && (workingTargetJurisdiction||workingJurisdiction)==="Gilgit-Baltistan"){
+  const answer=language==="Urdu"
+   ?"## گلگت بلتستان ڈومیسائل — سرکاری معلومات\n\nگلگت بلتستان حکومت کی سرکاری ویب سائٹ ڈومیسائل سرٹیفکیٹ کے حصول کے طریقۂ کار کو تسلیم کرتی ہے، لیکن دستیاب عوامی سرکاری معلومات میں مطلوبہ دستاویزات کی مکمل فہرست شائع نہیں کی گئی۔\n\nاس لیے میں غیرمصدقہ کاغذات کی فہرست شامل نہیں کر رہا۔ درست مطلوبہ دستاویزات کے لیے متعلقہ ضلع کی انتظامیہ / مجاز دفتر سے موجودہ checklist کی تصدیق کریں۔ گلگت بلتستان حکومت کا مرکزی سرکاری رابطہ: 05811-920423، info@gilgitbaltistan.gov.pk۔\n\n**سرکاری ذریعہ:** https://gilgitbaltistan.gov.pk/\n\nاگر آپ گلگت بلتستان کا ضلع بتا دیں تو میں اسی ضلع کے سرکاری ذریعے کے مطابق مزید مخصوص معلومات تلاش کر سکتا ہوں۔"
+   :"## Gilgit-Baltistan Domicile — Official Information\n\nThe Government of Gilgit-Baltistan’s official website confirms that procedures for obtaining a domicile certificate exist, but the publicly available official information does not publish a complete document checklist.\n\nI therefore will not invent or present an unverified list of required documents. For the current checklist, the applicant should confirm the requirements with the relevant district administration or authorized office. The Government of Gilgit-Baltistan lists its central contact as 05811-920423 and info@gilgitbaltistan.gov.pk.\n\n**Official source:** https://gilgitbaltistan.gov.pk/\n\nIf you provide the district in Gilgit-Baltistan, I can narrow the search to the relevant official district/department source.";
+  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Domicile",title:"Government of Gilgit-Baltistan — Official Information",url:"https://gilgitbaltistan.gov.pk/",lastVerified:"",province:"Gilgit-Baltistan"},agent:true,goalFocused:true,webSearch:false});
+ }
+
  // EARLY DOMICILE ROUTE: use verified provincial evidence for domicile questions.
  if(requested==="Domicile" && (workingTargetJurisdiction||workingJurisdiction)==="Punjab"){
   const answer=language==="Urdu"

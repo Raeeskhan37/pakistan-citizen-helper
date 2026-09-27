@@ -6,7 +6,7 @@ type Service = { id: string; name: string; icon: string; description: string; qu
 type Department = { id: string; name: string; urdu: string; icon: string; description: string; services: Service[] };
 type SourceInfo = { department?: string; title?: string; url?: string; lastVerified?: string; liveVerified?: boolean; checkedAt?: string; province?: string };
 type AgentStep = { id: string; name: string; icon: string; status: "waiting" | "active" | "completed" | "degraded"; detail: string };
-type AgentActivity = { mode: "normal" | "degraded"; agents: AgentStep[]; tools: string[]; summary?: string; claimVerification?: { available?: boolean; passed?: boolean; score?: number; supportedClaims?: number; totalClaims?: number; unsupportedClaims?: number; unclearClaims?: number }; memory: { shortTerm: string[]; longTerm: string[] }; };
+type AgentActivity = { mode: "normal" | "degraded"; agents: AgentStep[]; tools: string[]; summary?: string; claimVerification?: { available?: boolean; passed?: boolean; score?: number; supportedCount?: number; supportedClaims?: number; totalClaims?: number; unsupportedClaims?: number; unclearClaims?: number }; memory: { shortTerm: string[]; longTerm: string[] }; };
 type ApiResponse = { answer?: string; source?: SourceInfo | null; error?: string; agentActivity?: AgentActivity };
 
 const departments: Department[] = [
@@ -252,7 +252,7 @@ export default function Home() {
     })}
   </div>
   {!loading && agentActivity.summary && <div className="agent-summary"><strong>Workflow result</strong><small>{agentActivity.summary}</small></div>}
-  {!loading && agentActivity.claimVerification?.available && <div className="agent-summary"><strong>Claim verification</strong><small>{agentActivity.claimVerification.supportedClaims ?? 0}/{agentActivity.claimVerification.totalClaims ?? 0} claims supported{typeof agentActivity.claimVerification.score === "number" ? " · " + agentActivity.claimVerification.score + "%" : ""}</small></div>}
+  {!loading && agentActivity.claimVerification?.available && <div className="agent-summary"><strong>Claim verification</strong><small>{agentActivity.claimVerification.supportedCount ?? agentActivity.claimVerification.supportedClaims ?? 0}/{agentActivity.claimVerification.totalClaims ?? 0} claims supported{typeof agentActivity.claimVerification.score === "number" ? " · " + agentActivity.claimVerification.score + "%" : ""}</small></div>}
 </div>}
           {!answer && <><div className="question-card"><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "آپ اس محکمے کی کسی بھی سروس کے بارے میں سوال پوچھ سکتے ہیں۔" : "Ask anything about this department. You do not need to select a specific service."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? `مثلاً: ${department?.name} سے متعلق کوئی سوال پوچھیں` : `For example: What is the fee? What documents are required?`} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
           

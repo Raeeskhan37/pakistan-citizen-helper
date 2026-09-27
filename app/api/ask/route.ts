@@ -872,6 +872,16 @@ export async function POST(request:NextRequest){try{
   return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Domicile",title:"Government of Gilgit-Baltistan — Official Information",url:"https://gilgitbaltistan.gov.pk/",lastVerified:"",province:"Gilgit-Baltistan"},agent:true,goalFocused:true,webSearch:false});
  }
 
+ // EARLY AJK BIRTH-CERTIFICATE ROUTE: use official AJK local-government
+ // evidence directly for birth-registration questions.
+ if(/ajk|azad kashmir|azad jammu and kashmir|آزاد کشمیر|آزاد جموں و کشمیر/i.test(question) &&
+    /birth|birth certificate|birth registration|پیدائش|پیدائش سرٹیفکیٹ|رجسٹریشنِ پیدائش/i.test(question)){
+  const answer=language==="Urdu"
+   ?"## آزاد جموں و کشمیر — نیا برتھ سرٹیفکیٹ / پیدائش کی رجسٹریشن\n\nآزاد جموں و کشمیر کے سرکاری Local Government قانون کے مطابق **پیدائش اور اموات کی رجسٹریشن** مقامی کونسلوں کے دائرۂ کار میں شامل ہے۔ اس لیے نئے برتھ سرٹیفکیٹ کے لیے پیدائش کی رجسٹریشن متعلقہ مقامی کونسل / یونین کونسل کے ذریعے کی جاتی ہے۔\n\n**اہم:** دستیاب عوامی سرکاری AJK ذرائع میں نئے برتھ سرٹیفکیٹ کے لیے مکمل موجودہ دستاویزات، فیس اور مرحلہ وار checklist واضح طور پر شائع نہیں ملی۔ اس لیے میں غیرمصدقہ کاغذات یا فیس شامل نہیں کر رہا۔ درخواست دینے سے پہلے متعلقہ Union Council / Local Council سے موجودہ checklist کی تصدیق کریں۔\n\n**سرکاری ذریعہ:** AJK Local Government Act — Schedule VIII: Registration of birth, deaths and marriages: https://ec.ajk.gov.pk/wp-content/uploads/2022/09/AJKLocalGovernmentAct1990Amendedupto2021.pdf"
+   :"## Azad Jammu and Kashmir — New Birth Certificate / Birth Registration\n\nUnder the official Azad Jammu and Kashmir Local Government framework, **registration of births and deaths** falls within the functions of local councils. Therefore, birth registration for a new birth certificate is handled through the relevant local council / Union Council.\n\n**Important:** The publicly available official AJK sources I could verify do not publish a complete current document checklist, fee schedule, and step-by-step application procedure for a new birth certificate. I therefore will not invent document requirements or fees. Confirm the current checklist with the relevant Union Council / Local Council before applying.\n\n**Official source:** AJK Local Government Act — Schedule VIII: Registration of birth, deaths and marriages: https://ec.ajk.gov.pk/wp-content/uploads/2022/09/AJKLocalGovernmentAct1990Amendedupto2021.pdf";
+  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Union Council / Local Government",title:"AJK Local Government Act — Birth Registration",url:"https://ec.ajk.gov.pk/wp-content/uploads/2022/09/AJKLocalGovernmentAct1990Amendedupto2021.pdf",lastVerified:"",province:"Azad Jammu and Kashmir"},agent:true,goalFocused:true,webSearch:false});
+ }
+
  // EARLY AJK DOMICILE ROUTE: use the official AJK E-Facilitation Center
  // information when the citizen explicitly selects Azad Jammu and Kashmir.
  if(requested==="Domicile" && (workingTargetJurisdiction||workingJurisdiction)==="Azad Jammu and Kashmir"){

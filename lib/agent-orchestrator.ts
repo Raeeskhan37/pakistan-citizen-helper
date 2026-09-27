@@ -10,11 +10,19 @@ export type AgentStep = {
 
 export type AgentMode = "normal" | "degraded";
 
+export type AgentHandoff = {
+  from: AgentId;
+  to: AgentId;
+  passed: boolean;
+  detail: string;
+};
+
 export type AgentWorkflowResult = {
   mode: AgentMode;
   agents: AgentStep[];
   tools: string[];
   summary: string;
+  handoffs: AgentHandoff[];
   verification: {
     passed: boolean;
     evidenceAvailable: boolean;
@@ -116,6 +124,29 @@ export function buildAgentWorkflow(args: {
       mode === "degraded"
         ? "Degraded Mode is active. Live external services are unavailable; only available verified local evidence is used."
         : "Four-agent workflow completed.",
+    handoffs: [
+      {
+        from: "supervisor",
+        to: "analyzer",
+        passed: true,
+        detail: "Supervisor passed the selected service context for intent and jurisdiction analysis.",
+      },
+      {
+        from: "analyzer",
+        to: "verifier",
+        passed: true,
+        detail: "Analyzer passed the jurisdiction and evidence path for verification.",
+      },
+      {
+        from: "verifier",
+        to: "guidance",
+        passed: mode === "normal",
+        detail:
+          mode === "degraded"
+            ? "Verifier passed only the available local evidence with a degraded-service warning."
+            : "Verifier passed the supported evidence gate to the guidance stage.",
+      },
+    ],
     verification: {
       passed: mode === "normal",
       evidenceAvailable: true,
@@ -147,6 +178,22 @@ export function runFourAgentWorkflow(args: {
     evidenceAvailable: args.evidenceAvailable,
     answerAccepted,
   };
+
+  base.handoffs = base.handoffs.map((handoff) => {
+    if (handoff.from === "verifier" && handoff.to === "guidance") {
+      return {
+        ...handoff,
+        passed: answerAccepted || base.mode === "degraded",
+        detail:
+          answerAccepted
+            ? "Verified evidence gate passed; guidance may use the accepted answer."
+            : base.mode === "degraded"
+              ? "Only locally available verified evidence was accepted; guidance remains bounded by degraded mode."
+              : "Evidence gate failed; guidance must not present the answer as verified.",
+      };
+    }
+    return handoff;
+  });
 
   base.agents = base.agents.map((agent) => {
     if (agent.id === "verifier") {

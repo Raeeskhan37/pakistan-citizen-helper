@@ -861,6 +861,15 @@ export async function POST(request:NextRequest){try{
   return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Domicile",title:"Government of Gilgit-Baltistan — Official Information",url:"https://gilgitbaltistan.gov.pk/",lastVerified:"",province:"Gilgit-Baltistan"},agent:true,goalFocused:true,webSearch:false});
  }
 
+ // EARLY AJK DOMICILE ROUTE: use the official AJK E-Facilitation Center
+ // information when the citizen explicitly selects Azad Jammu and Kashmir.
+ if(requested==="Domicile" && (workingTargetJurisdiction||workingJurisdiction)==="Azad Jammu and Kashmir"){
+  const answer=language==="Urdu"
+   ?"## آزاد جموں و کشمیر ڈومیسائل — سرکاری معلومات\n\nAJK کے سرکاری E-Facilitation Center کے مطابق:\n\n- ڈومیسائل سرٹیفکیٹ سے متعلق محکمہ **Board of Revenue** ہے۔\n- ڈومیسائل سرٹیفکیٹ **Assistant Commissioner** جاری کرتا ہے۔\n- Facilitation Center کے ذریعے سروس کا وقت **16 working days** ہے، جبکہ متعلقہ محکمہ **15 working days** بتاتا ہے۔\n- محکمانہ فیس **PKR 200** ہے۔\n- درخواست فارم Facilitation Center یا متعلقہ parent department سے حاصل کیا جا سکتا ہے۔\n\n**اہم:** دستیاب سرکاری FAQ میں نئے ڈومیسائل کے لیے مطلوبہ دستاویزات کی مکمل checklist شائع نہیں کی گئی۔ اس لیے میں غیرمصدقہ کاغذات شامل نہیں کر رہا۔ درست موجودہ checklist متعلقہ Board of Revenue / Assistant Commissioner یا AJK E-Facilitation Center سے تصدیق کریں۔\n\n**سرکاری ذریعہ:** https://efc.ajk.gov.pk/faq\n\nاگر آپ AJK کا ضلع بتا دیں تو متعلقہ ضلعی سرکاری ذریعہ تلاش کیا جا سکتا ہے۔"
+   :"## Azad Jammu and Kashmir Domicile — Official Information\n\nAccording to the official AJK E-Facilitation Center:\n\n- The **Board of Revenue** is the department responsible for Domicile Certificates.\n- The **Assistant Commissioner** issues the Domicile Certificate.\n- The stated service time is **16 working days** through the Facilitation Center, while the parent department states **15 working days**.\n- The departmental fee is **PKR 200**.\n- The application form can be obtained from the Facilitation Center or the parent department.\n\n**Important:** The available official FAQ does not publish a complete checklist of documents required for a new domicile application. I therefore will not invent or present an unverified document list. The applicant should confirm the current checklist with the relevant Board of Revenue / Assistant Commissioner or AJK E-Facilitation Center.\n\n**Official source:** https://efc.ajk.gov.pk/faq\n\nIf you provide the AJK district, the relevant district-level official source can be checked.";
+  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Domicile",title:"AJK E-Facilitation Center — Domicile Certificate",url:"https://efc.ajk.gov.pk/faq",lastVerified:"",province:"Azad Jammu and Kashmir"},agent:true,goalFocused:true,webSearch:false});
+ }
+
  // EARLY DOMICILE ROUTE: use verified provincial evidence for domicile questions.
  if(requested==="Domicile" && (workingTargetJurisdiction||workingJurisdiction)==="Punjab"){
   const answer=language==="Urdu"

@@ -31,6 +31,13 @@ function emptyResult(reason: string): ClaimVerificationResult {
   };
 }
 
+function normalizeVerdict(value: unknown): ClaimCheck["verdict"] {
+  const verdict = String(value ?? "").trim().toLowerCase();
+  if (verdict === "supported") return "supported";
+  if (verdict === "unsupported") return "unsupported";
+  return "unclear";
+}
+
 function extractJson(text: string): unknown {
   const cleaned = text
     .trim()
@@ -87,6 +94,16 @@ export async function verifyAnswerClaims(args: {
     evidence.slice(0, MAX_EVIDENCE);
 
   try {
+    const model = process.env.GROQ_VERIFIER_MODEL || "openai/gpt-oss-120b";
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are a strict evidence-grounded factual verifier. Never add outside knowledge. Return only JSON that matches the requested schema.",
+      },
+      { role: "user", content: prompt },
+    ];
+
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -94,21 +111,46 @@ export async function verifyAnswerClaims(args: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.GROQ_VERIFIER_MODEL || "openai/gpt-oss-120b",
+        model,
         temperature: 0,
         max_completion_tokens: 1800,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content: "You are a strict evidence-grounded factual verifier. Never add outside knowledge.",
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "claim_verification",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                claims: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      claim: { type: "string" },
+                      verdict: {
+                        type: "string",
+                        enum: ["supported", "unsupported", "unclear"],
+                      },
+                      reason: { type: "string" },
+                    },
+                    required: ["claim", "verdict", "reason"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["claims"],
+              additionalProperties: false,
+            },
           },
-          { role: "user", content: prompt },
-        ],
+        },
+        messages,
       }),
     });
 
     if (!response.ok) {
+      const providerText = await response.text().catch(() => "");
+      console.error("Claim verifier provider error:", response.status, providerText.slice(0, 500));
       return emptyResult("Verifier provider returned HTTP " + response.status + ".");
     }
 
@@ -123,12 +165,7 @@ export async function verifyAnswerClaims(args: {
     const claims: ClaimCheck[] = parsed.claims
       .map((item: any) => ({
         claim: String(item?.claim || "").trim(),
-        verdict:
-          item?.verdict === "supported" ||
-          item?.verdict === "unsupported" ||
-          item?.verdict === "unclear"
-            ? item.verdict
-            : "unclear",
+        verdict: normalizeVerdict(item?.verdict),
         reason: String(item?.reason || "").trim(),
       }))
       .filter((item: ClaimCheck) => item.claim.length > 0);

@@ -823,6 +823,27 @@ Current medical and health-screening requirements should be checked against curr
  return directWorkflowResponse({answer,source:{department:"Vaccination for Travelling Abroad",title:"Government of Pakistan / BEOE — Work Visa Vaccination Policy",url:"https://beoe.gov.pk/files/policyguideliness/51.pdf"},department:"Vaccination for Travelling Abroad",question,language,evidenceAvailable:true});
 }
 
+
+async function verifiedDirectWorkflowResponse(args:{answer:string;source:any;department:string;question:string;language:"English"|"Urdu";jurisdiction?:string|null;tools?:string[];evidenceAvailable?:boolean;verificationUrls:string[]}) {
+ let verificationEvidence="";
+ for(const u of Array.from(new Set(args.verificationUrls.filter(Boolean)))){
+  const t=await fetchOfficialPage(u);
+  if(t) verificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
+ }
+ return directWorkflowResponse({
+  answer:args.answer,
+  source:args.source,
+  department:args.department,
+  question:args.question,
+  language:args.language,
+  jurisdiction:args.jurisdiction||null,
+  tools:args.tools,
+  evidenceAvailable:args.evidenceAvailable!==false,
+  verifyClaims:true,
+  verificationEvidence:verificationEvidence.trim()
+ });
+}
+
 async function directWorkflowResponse(args:{answer:string;source:any;department:string;question:string;language:"English"|"Urdu";jurisdiction?:string|null;tools?:string[];evidenceAvailable?:boolean;verifyClaims?:boolean;verificationEvidence?:string}) {
  let workflow=runFourAgentWorkflow({
   department:args.department, question:args.question, jurisdiction:args.jurisdiction||null, mode:"normal",
@@ -928,6 +949,45 @@ export async function POST(request:NextRequest){try{
   if(isSaudiVaccinationWorkVisaQuestion(question)){
    return vaccinationWorkVisaResponse(language, question);
   }
+ // EARLY DRIVING LICENCE ROUTE: use the jurisdiction-specific official driving evidence
+ // directly and verify the generated answer against the cited official pages.
+ if(requested==="Driving Licence"){
+  const dj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+  if(!dj){
+   return directWorkflowResponse({
+    answer:language==="Urdu"
+     ?"## ڈرائیونگ لائسنس\n\nبراہِ کرم صوبہ یا علاقہ بتائیں، مثلاً خیبر پختونخوا، پنجاب، سندھ یا اسلام آباد، تاکہ متعلقہ سرکاری طریقہ کار دیا جا سکے۔"
+     :"## Driving Licence\n\nPlease specify the province or territory, such as Khyber Pakhtunkhwa, Punjab, Sindh, or Islamabad, so I can provide the relevant official procedure.",
+    source:null,department:"Driving Licence",question,language,jurisdiction:null,evidenceAvailable:false
+   });
+  }
+  const answer=drivingEvidence(question,dj,language);
+  const verificationUrls=Array.from(new Set((answer.match(/https?:\/\/[^\s)]+/g)||[]).map((u)=>u.replace(/[.,]+$/,""))));
+  return verifiedDirectWorkflowResponse({
+   answer,
+   source:{department:"Driving Licence",title:dj+" — Official Driving Licence Services",url:verificationUrls[0]||"",lastVerified:"",province:dj},
+   department:"Driving Licence",
+   question,
+   language,
+   jurisdiction:dj,
+   evidenceAvailable:true,
+   verificationUrls
+  });
+ }
+
+
+  const genericVaccinationAnswer=language==="Urdu"
+   ? "## بیرونِ ملک سفر — ویکسینیشن\n\nپاکستان کی وزارتِ قومی صحت کے مطابق بین الاقوامی مسافروں کے لیے بعض ممالک پولیو اور یلو فیور ویکسینیشن سرٹیفکیٹ طلب کرتے ہیں، اور NIMS کے ذریعے ان سرٹیفکیٹس کا نظام موجود ہے۔ درست تقاضے منزل کے ملک کے مطابق مختلف ہوتے ہیں۔\n\nبراہِ کرم **منزل کا ملک** بتائیں تاکہ اسی ملک کے موجودہ سرکاری ویکسینیشن تقاضوں کے مطابق جواب دیا جا سکے۔\n\n**سرکاری ذریعہ:** https://nhsrc.gov.pk/Detail/NmVlMDMzZTctZGE5ZC00ZmE1LWJjMGEtYTQxMmNmYTYwNzZm"
+   : "## Vaccination for International Travel\n\nPakistan's Ministry of National Health Services states that some countries require international travellers to have polio and yellow-fever vaccination certificates, and Pakistan has an NIMS system for these certificates. Exact vaccination requirements vary by destination country.\n\nPlease specify the **destination country** so I can provide the applicable current government requirements for that country.\n\n**Official source:** https://nhsrc.gov.pk/Detail/NmVlMDMzZTctZGE5ZC00ZmE1LWJjMGEtYTQxMmNmYTYwNzZm";
+  return verifiedDirectWorkflowResponse({
+   answer:genericVaccinationAnswer,
+   source:{department:"Vaccination for Travelling Abroad",title:"Ministry of National Health Services — International Traveller Vaccination Certificates",url:"https://nhsrc.gov.pk/Detail/NmVlMDMzZTctZGE5ZC00ZmE1LWJjMGEtYTQxMmNmYTYwNzZm",lastVerified:"",province:""},
+   department:"Vaccination for Travelling Abroad",
+   question,
+   language,
+   evidenceAvailable:true,
+   verificationUrls:["https://nhsrc.gov.pk/Detail/NmVlMDMzZTctZGE5ZC00ZmE1LWJjMGEtYTQxMmNmYTYwNzZm"]
+  });
  }
 
  // EARLY BALOCHISTAN BIRTH-CERTIFICATE ROUTE: use the current official
@@ -1017,11 +1077,29 @@ export async function POST(request:NextRequest){try{
    :"## Sindh — Domicile Certificate\n\nOfficial Sindh government information confirms that a **Domicile & PRC Automation** system exists. An official district-administration portal also identifies a **Domicile Branch** under the Deputy Commissioner Office. Therefore, for a Sindh domicile application, the practical official route is to approach the Domicile Branch of the Deputy Commissioner Office of the relevant district.\n\nThe official pages I could verify do not clearly publish a complete current checklist of documents, fees, and step-by-step application form procedure. I am therefore not adding unverified requirements or fees.\n\n**Official sources:**\n- Sindh Government — Domicile & PRC Automation: https://istd.sindh.gov.pk/initiatives/621\n- District Administration Malir — Domicile Branch, Deputy Commissioner Office: https://dcmalir.sindh.gov.pk/\n- Sindh Home Department — Appeals for Domicile & PRC: https://home.sindh.gov.pk/judicial-i";
   return directWorkflowResponse({answer,source:{department:"Domicile",title:"Government of Sindh — Domicile & PRC",url:"https://istd.sindh.gov.pk/initiatives/621",lastVerified:"",province:"Sindh"},department:"Domicile",question,language,jurisdiction:"Sindh",evidenceAvailable:true});
  }
+ // EARLY KP DOMICILE ROUTE: use the current official e-Domicile/Citizen Facilitation evidence.
+ if(requested==="Domicile" && (workingTargetJurisdiction||workingJurisdiction)==="Khyber Pakhtunkhwa"){
+  const answer=language==="Urdu"
+   ? "## خیبر پختونخوا — ڈومیسائل سرٹیفکیٹ\n\nسرکاری KP e-Domicile نظام کے مطابق شہری ویب پورٹل، موبائل ایپ یا ضلعی Citizen Information Center کے ذریعے آن لائن ڈومیسائل درخواست جمع کر سکتے ہیں۔ درخواست کے لیے tracking ID/code جاری ہوتا ہے، جس سے status track کیا جا سکتا ہے، اور verification کے بعد ڈومیسائل جاری کیا جاتا ہے۔ KP Citizens Facilitation Portal پر Domicile Certificate کے لیے **Checklist** اور **Apply Online** بھی موجود ہیں۔\n\nدستیاب سرکاری صفحات مکمل دستاویزاتی checklist کا متن فراہم نہیں کرتے، اس لیے میں غیرمصدقہ کاغذات یا فیس شامل نہیں کر رہا۔\n\n**سرکاری ذرائع:**\nhttps://pmru.kp.gov.pk/e-domicile.php\nhttps://cfc.kp.gov.pk/"
+   : "## Khyber Pakhtunkhwa — Domicile Certificate\n\nThe official KP e-Domicile system states that citizens can submit a domicile application online through the web portal, mobile app, or district citizen information centers. A tracking ID/code is generated so the applicant can track the application status, and the domicile is issued after verification. The KP Citizens Facilitation Portal also lists **Domicile Certificate** with **Checklist** and **Apply Online** options.\n\nThe available official pages do not expose the complete document checklist text, so I am not adding unverified documents or fees.\n\n**Official sources:**\nhttps://pmru.kp.gov.pk/e-domicile.php\nhttps://cfc.kp.gov.pk/";
+  return verifiedDirectWorkflowResponse({
+   answer,
+   source:{department:"Domicile",title:"Government of Khyber Pakhtunkhwa — E-Domicile System",url:"https://pmru.kp.gov.pk/e-domicile.php",lastVerified:"",province:"Khyber Pakhtunkhwa"},
+   department:"Domicile",
+   question,
+   language,
+   jurisdiction:"Khyber Pakhtunkhwa",
+   evidenceAvailable:true,
+   verificationUrls:["https://pmru.kp.gov.pk/e-domicile.php","https://cfc.kp.gov.pk/"]
+  });
+ }
+
  // EARLY LAND & REVENUE ROUTE: keep Fard/Mutation/Registry/SDC queries out of generic AI routing.
  if(requested==="Land & Revenue"){
   const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
   const answer=landRevenueEvidence(question,lj,language);
-  return directWorkflowResponse({answer,source:{department:"Land & Revenue",title:"Official land and revenue source",url:"",lastVerified:"",province:lj||""},department:"Land & Revenue",question,language,jurisdiction:lj,evidenceAvailable:true});
+  const verificationUrls=Array.from(new Set((answer.match(/https?:\/\/[^\s)]+/g)||[]).map((u)=>u.replace(/[.,]+$/,""))));
+  return verifiedDirectWorkflowResponse({answer,source:{department:"Land & Revenue",title:"Official land and revenue source",url:verificationUrls[0]||"",lastVerified:"",province:lj||""},department:"Land & Revenue",question,language,jurisdiction:lj,evidenceAvailable:true,verificationUrls});
  }
  const detectedQuestionService=detectService(question,"");
  if(detectedQuestionService && !belongsToDepartment(detectedQuestionService,requested)){
@@ -1114,7 +1192,8 @@ if(requested==="Protector & Overseas Employment"){
    ?"## پروٹیکٹر آف ایمیگرنٹس\n\nبیرون ملک ملازمت کے لیے Protector registration درکار ہے۔ BE&OE کے مطابق رجسٹریشن کے لیے درست ویزا، پاسپورٹ، CNIC، ملازمت کا معاہدہ/منظور شدہ undertaking، فیس اور Welfare Fund کی رسید، Emigration Promotion Fee، انشورنس اور کیس کے مطابق دیگر دستاویزات درکار ہو سکتی ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
    :"## Protector of Emigrants\n\nFor overseas employment, Protector registration is required. BE&OE identifies the visa, passport, CNIC, employment contract/approved undertaking, registration and welfare-fund receipts, emigration promotion fee, insurance, and case-specific documents as part of the registration requirements.\n\n**Official source:** https://beoe.gov.pk/";
  }
- return directWorkflowResponse({answer,source:{department:"Protector & Overseas Employment",title:"Bureau of Emigration & Overseas Employment — Emigrant Protection",url:"https://beoe.gov.pk/",lastVerified:"",province:requestedJurisdiction||""},department:"Protector & Overseas Employment",question,language,jurisdiction:requestedJurisdiction,evidenceAvailable:true});
+ const verificationUrls=Array.from(new Set((answer.match(/https?:\/\/[^\s)]+/g)||[]).map((u)=>u.replace(/[.,]+$/,""))));
+ return verifiedDirectWorkflowResponse({answer,source:{department:"Protector & Overseas Employment",title:"Bureau of Emigration & Overseas Employment — Emigrant Protection",url:verificationUrls[0]||"https://beoe.gov.pk/",lastVerified:"",province:requestedJurisdiction||""},department:"Protector & Overseas Employment",question,language,jurisdiction:requestedJurisdiction,evidenceAvailable:true,verificationUrls});
 }
 
 if(requested==="Arms Licence"){
@@ -1301,7 +1380,8 @@ if(requested==="Excise & Taxation"){
  const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  if(ej){
   const answer=exciseEvidence(question,ej,language);
-  return directWorkflowResponse({answer,source:{department:"Excise & Taxation",title:"Official Excise & Taxation source",url:"",lastVerified:"",province:ej},department:"Excise & Taxation",question,language,jurisdiction:ej,evidenceAvailable:true});
+  const verificationUrls=Array.from(new Set((answer.match(/https?:\/\/[^\s)]+/g)||[]).map((u)=>u.replace(/[.,]+$/,""))));
+  return verifiedDirectWorkflowResponse({answer,source:{department:"Excise & Taxation",title:"Official Excise & Taxation source",url:verificationUrls[0]||"",lastVerified:"",province:ej},department:"Excise & Taxation",question,language,jurisdiction:ej,evidenceAvailable:true,verificationUrls});
  }
  return directWorkflowResponse({answer:language==="Urdu"?"## ایکسائز اینڈ ٹیکسیشن\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔":"## Excise & Taxation\n\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new vehicle registration, or ownership transfer.",source:null,department:"Excise & Taxation",question,language,jurisdiction:null,evidenceAvailable:false});
 }

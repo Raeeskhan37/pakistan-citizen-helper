@@ -949,6 +949,8 @@ export async function POST(request:NextRequest){try{
   if(isSaudiVaccinationWorkVisaQuestion(question)){
    return vaccinationWorkVisaResponse(language, question);
   }
+ }
+
  // EARLY DRIVING LICENCE ROUTE: use the jurisdiction-specific official driving evidence
  // directly and verify the generated answer against the cited official pages.
  if(requested==="Driving Licence"){

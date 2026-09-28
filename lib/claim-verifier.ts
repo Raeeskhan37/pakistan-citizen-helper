@@ -186,7 +186,10 @@ export async function verifyAnswerClaims(args: {
             model: fallbackModel,
             temperature: 0,
             max_completion_tokens: 1800,
-            response_format: { type: "json_object" },
+            // GPT-OSS 20B supports Groq Structured Outputs too.
+            // Keep the same strict schema as the primary model so the fallback
+            // cannot silently change the verifier's response contract.
+            response_format: requestBody.response_format,
             messages,
           }),
         });

@@ -803,7 +803,7 @@ Influenza and COVID-19 should not automatically be described as mandatory unless
  return directWorkflowResponse({answer,source,department:"Vaccination for Travelling Abroad",question,language,evidenceAvailable:true});
 }
 
-function vaccinationWorkVisaResponse(language:"English"|"Urdu"){
+function vaccinationWorkVisaResponse(language:"English"|"Urdu", question:string){
  const answer=language==="Urdu"
   ? `## سعودی ورک ویزا — ویکسینیشن
 
@@ -900,7 +900,7 @@ export async function POST(request:NextRequest){try{
    return vaccinationPilgrimResponse(question,language);
   }
   if(isSaudiVaccinationWorkVisaQuestion(question)){
-   return vaccinationWorkVisaResponse(language);
+   return vaccinationWorkVisaResponse(language, question);
   }
  }
 

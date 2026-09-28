@@ -171,11 +171,44 @@ export async function verifyAnswerClaims(args: {
     if (!response.ok) {
       const providerText = await response.text().catch(() => "");
       console.error("Claim verifier provider error:", response.status, providerText.slice(0, 500));
-      return emptyResult(
-        response.status === 429
-          ? "Verifier provider rate limit persisted after one retry."
-          : "Verifier provider returned HTTP " + response.status + "."
-      );
+
+      // If GPT-OSS 120B is rate-limited, try the lighter production model once.
+      // The fallback uses JSON-object mode for broad Groq compatibility.
+      if (response.status === 429) {
+        const fallbackModel = process.env.GROQ_VERIFIER_FALLBACK_MODEL || "openai/gpt-oss-20b";
+        const fallbackResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + apiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: fallbackModel,
+            temperature: 0,
+            max_completion_tokens: 1800,
+            response_format: { type: "json_object" },
+            messages,
+          }),
+        });
+
+        if (fallbackResponse.ok) {
+          response = fallbackResponse;
+        } else {
+          const fallbackText = await fallbackResponse.text().catch(() => "");
+          console.error(
+            "Claim verifier fallback provider error:",
+            fallbackResponse.status,
+            fallbackText.slice(0, 500)
+          );
+          return emptyResult(
+            fallbackResponse.status === 429
+              ? "Verifier provider rate limit persisted on the primary and fallback models."
+              : "Verifier fallback provider returned HTTP " + fallbackResponse.status + "."
+          );
+        }
+      } else {
+        return emptyResult("Verifier provider returned HTTP " + response.status + ".");
+      }
     }
 
     const data = await response.json();

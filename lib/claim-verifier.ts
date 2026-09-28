@@ -196,6 +196,43 @@ export async function verifyAnswerClaims(args: {
 
         if (fallbackResponse.ok) {
           response = fallbackResponse;
+        } else if (fallbackResponse.status === 400) {
+          // Retry JSON Object Mode if strict structured output is rejected.
+          const fallbackJsonResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + apiKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: fallbackModel,
+              temperature: 0,
+              max_completion_tokens: 1800,
+              response_format: { type: "json_object" },
+              messages: [
+                ...messages,
+                {
+                  role: "user",
+                  content:
+                    'Return a valid JSON object only. It MUST contain a top-level "claims" array. Each item MUST contain claim, verdict, and reason. verdict MUST be exactly supported, unsupported, or unclear.',
+                },
+              ],
+            }),
+          });
+
+          if (fallbackJsonResponse.ok) {
+            response = fallbackJsonResponse;
+          } else {
+            const fallbackText = await fallbackJsonResponse.text().catch(() => "");
+            console.error(
+              "Claim verifier fallback JSON-mode provider error:",
+              fallbackJsonResponse.status,
+              fallbackText.slice(0, 500)
+            );
+            return emptyResult(
+              "Verifier fallback provider returned HTTP " + fallbackJsonResponse.status + "."
+            );
+          }
         } else {
           const fallbackText = await fallbackResponse.text().catch(() => "");
           console.error(

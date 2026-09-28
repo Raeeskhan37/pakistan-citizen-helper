@@ -614,8 +614,8 @@ export async function retrieveNadraEvidence(
           return [
             "SOURCE: NADRA Registration Policy 6.0.2 (Urdu)",
             "VERSION: RP-6.0.2",
-            `ISSUE DATE: \${issueDate}`,
-            `EFFECTIVE DATE: \${effectiveDate}`,
+            `ISSUE DATE: ${issueDate}`,
+            `EFFECTIVE DATE: ${effectiveDate}`,
             "",
             "[NADRA URDU TARGETED EVIDENCE — FRESH CNIC AGE 18+]",
             targeted
@@ -638,12 +638,12 @@ export async function retrieveNadraEvidence(
       return [
         "SOURCE: NADRA Registration Policy 6.0.2 (Urdu)",
         "VERSION: RP-6.0.2",
-        `ISSUE DATE: \${issueDate}`,
-        `EFFECTIVE DATE: \${effectiveDate}`,
+        `ISSUE DATE: ${issueDate}`,
+        `EFFECTIVE DATE: ${effectiveDate}`,
         "",
         ...ranked.map(
           (x, i) =>
-            `[NADRA URDU EVIDENCE \${i + 1}]\\nChunk: \${x.index + 1}\\nRetrieval score: \${x.score}\\n\\n\${x.text.slice(0, 2400)}`
+            `[NADRA URDU EVIDENCE ${i + 1}]\nChunk: ${x.index + 1}\nRetrieval score: ${x.score}\n\n${x.text.slice(0, 2400)}`
         )
       ].join("\n\n");
     }
@@ -656,8 +656,8 @@ export async function retrieveNadraEvidence(
         return [
           "SOURCE: NADRA Registration Policy 6.0.2",
           "VERSION: RP-6.0.2",
-          `ISSUE DATE: \${issueDate}`,
-          `EFFECTIVE DATE: \${effectiveDate}`,
+          `ISSUE DATE: ${issueDate}`,
+          `EFFECTIVE DATE: ${effectiveDate}`,
           "",
           ...targeted.map(
             (item, i) =>

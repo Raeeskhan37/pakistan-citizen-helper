@@ -823,14 +823,40 @@ Current medical and health-screening requirements should be checked against curr
  return directWorkflowResponse({answer,source:{department:"Vaccination for Travelling Abroad",title:"Government of Pakistan / BEOE — Work Visa Vaccination Policy",url:"https://beoe.gov.pk/files/policyguideliness/51.pdf"},department:"Vaccination for Travelling Abroad",question,language,evidenceAvailable:true});
 }
 
-async function directWorkflowResponse(args:{answer:string;source:any;department:string;question:string;language:"English"|"Urdu";jurisdiction?:string|null;tools?:string[];evidenceAvailable?:boolean}) {
- const workflow=runFourAgentWorkflow({
+async function directWorkflowResponse(args:{answer:string;source:any;department:string;question:string;language:"English"|"Urdu";jurisdiction?:string|null;tools?:string[];evidenceAvailable?:boolean;verifyClaims?:boolean;verificationEvidence?:string}) {
+ let workflow=runFourAgentWorkflow({
   department:args.department, question:args.question, jurisdiction:args.jurisdiction||null, mode:"normal",
   tools:args.tools||["Official government evidence","Source verification","English / Urdu guidance"],
   answer:args.answer, evidenceAvailable:args.evidenceAvailable!==false
  });
+ let claimVerification:any=null;
+ if(args.verifyClaims){
+  claimVerification=await verifyAnswerClaims({answer:cleanAnswer(args.answer),evidence:args.verificationEvidence||"",language:args.language});
+  const verificationAvailable=claimVerification.available;
+  const verificationPassed=verificationAvailable && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
+  workflow.verification={...workflow.verification,passed:verificationPassed,evidenceAvailable:args.evidenceAvailable!==false,answerAccepted:verificationPassed};
+  workflow.agents=workflow.agents.map(agent=>agent.id==="verifier"
+   ?{...agent,status:verificationPassed?"completed":"degraded",detail:verificationAvailable
+      ?`Claim-level verification: ${claimVerification.supportedCount}/${claimVerification.totalClaims} claims supported; score ${claimVerification.score}%.`
+      :`Claim-level verification unavailable: ${claimVerification.reason}`}
+   :agent.id==="guidance"
+    ?{...agent,status:verificationPassed?"completed":"waiting",detail:verificationPassed
+      ?"Prepared citizen guidance from evidence that passed claim-level verification."
+      :"Waiting because claim-level verification did not fully pass."}
+   :agent);
+  workflow.stageResults=workflow.stageResults.map(stage=>stage.agent==="verifier"
+   ?{...stage,status:verificationPassed?"completed":"degraded",result:verificationAvailable
+      ?`Claim verification: ${claimVerification.supportedCount}/${claimVerification.totalClaims} claims supported; score ${claimVerification.score}%.`
+      :"Claim-level verification was unavailable; verification did not pass."}
+   :stage.agent==="guidance"
+    ?{...stage,status:verificationPassed?"completed":"waiting",result:verificationPassed
+      ?"Final guidance is prepared from evidence that passed claim-level verification."
+      :"Guidance is waiting for a fully supported answer."}
+   :stage);
+  workflow.summary=verificationPassed?"Four-agent workflow completed with claim-level evidence verification.":"Four-agent workflow completed with a verification warning; the answer was not fully claim-verified.";
+ }
  return NextResponse.json({answer:cleanAnswer(args.answer),source:args.source,agent:true,goalFocused:true,webSearch:false,
-  agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]}}});
+  agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]},...(claimVerification?{claimVerification}:{})}});
 }
 
 export async function POST(request:NextRequest){try{
@@ -1238,7 +1264,7 @@ const departmentDomains:Record<string,string[]>={
     ? "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+src.scope+"\\n\\n**آپ کے سوال کے مطابق:** "+detail+"\\n\\n**اہم:** جہاں سرکاری ذریعہ مکمل دستاویزات یا فیس واضح طور پر شائع نہیں کرتا، وہاں میں غیرمصدقہ معلومات شامل نہیں کر رہا۔\\n\\n**سرکاری ذریعہ:** "+src.url
     : "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+src.scope+"\\n\\n**For your question:** "+detail+"\\n\\n**Important:** Where the official source does not publish a complete current document or fee checklist, I will not invent unverified requirements.\\n\\n**Official source:** "+src.url;
 
-   return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:src.title,url:src.url,lastVerified:"",province:civilJurisdiction},department:"Union Council / Local Government",question,language,jurisdiction:civilJurisdiction,evidenceAvailable:true});
+   return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:src.title,url:src.url,lastVerified:"",province:civilJurisdiction},department:"Union Council / Local Government",question,language,jurisdiction:civilJurisdiction,evidenceAvailable:true,verifyClaims:true,verificationEvidence:`${src.scope}\n\n${detail}`});
   }
  }
 

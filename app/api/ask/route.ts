@@ -1053,12 +1053,14 @@ if(requested==="Driving Licence"){
   });
  }
  const answer=drivingEvidence(question,dj,language);
- const drivingVerificationUrls=Array.from(new Set(
-  (answer.match(/https?:\\/\\/[^\\s)]+/g)||[])
-   .map((u)=>u.replace(/[.,]+$/,""))
- ));
+ const drivingVerificationUrls=answer
+  .split(/\\s+/)
+  .filter((item)=>item.startsWith("http://")||item.startsWith("https://"))
+  .map((item)=>item.replace(/[.,]+$/,""));
+ const uniqueDrivingUrls:string[]=[];
+ for(const u of drivingVerificationUrls){if(uniqueDrivingUrls.indexOf(u)<0) uniqueDrivingUrls.push(u);}
  let drivingVerificationEvidence="";
- for(const u of drivingVerificationUrls){
+ for(const u of uniqueDrivingUrls){
   const t=await fetchOfficialPage(u);
   if(t) drivingVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
  }
@@ -1067,7 +1069,7 @@ if(requested==="Driving Licence"){
   source:{
    department:"Driving Licence",
    title:"Official government driving-licence information",
-   url:drivingVerificationUrls[0]||"",
+   url:uniqueDrivingUrls[0]||"",
    lastVerified:"",
    province:dj
   },

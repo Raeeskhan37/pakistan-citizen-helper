@@ -123,19 +123,27 @@ The official source identifies a valid original CNIC, physical fitness and minim
 
 **Sources:** https://dls.gos.pk/ and https://dls.gos.pk/pro-comp-lic.html`,
   "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Driving Licence
-**Official authorities:** KP Transport Department, KPITB and relevant licensing authorities.
+**Official authority:** Khyber Pakhtunkhwa Transport & Mass Transit Department.
 
-The original working agent identifies the **Dastak App** as the primary digital route for KP transport/driving-licence services. The documented system covers learner, LTV, HTV and international driving licences.
+The official KP Transport Online Services portal provides online driving-licence renewal.
 
-The digital workflow may include applicant profile, CNIC/NADRA verification, required documents/attachments, officer verification/approval, payment and licence processing. KP Police Police Sahulat Markaz also provides specific driving services including learner permit, traffic learner certificate and duplicate driving licence.
+For the online service:
+1. Create an account using your CNIC and mobile number.
+2. Verify your identity through biometric or OTP verification.
+3. Select the required service.
+4. Complete the required information, upload documents and make payment.
 
-**Requested category/service:** ${cats.join(", ")}.
+The official portal lists these driving-licence documents for the online service:
+- Copy of CNIC.
+- Existing driving licence, when renewing.
+- Medical fitness certificate.
+- Two passport-size photographs.
 
-Exact documents, fees and steps should only be stated when supported by current official evidence.
+The portal lists the online driving-licence renewal service as active with a stated processing time of 3–5 working days.
 
-**Sources:**
-https://transport.kp.gov.pk/public-service.php
-https://apipsm.kppolice.gov.pk/psm/VideoTutorial`,
+For a new licence, learner permit, or a category other than renewal, the exact current procedure should be confirmed from the relevant official KP service.
+
+**Source:** https://transport.kp.gov.pk/tp/online-services.php`,
   Balochistan:`## Balochistan — Driving Licence
 **Official authority:** Balochistan Police / Police Mobile Khidmat Markaz.
 

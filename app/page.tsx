@@ -6,7 +6,7 @@ type Service = { id: string; name: string; icon: string; description: string; qu
 type Department = { id: string; name: string; urdu: string; icon: string; description: string; services: Service[] };
 type SourceInfo = { department?: string; title?: string; url?: string; lastVerified?: string; liveVerified?: boolean; checkedAt?: string; province?: string };
 type AgentStep = { id: string; name: string; icon: string; status: "waiting" | "active" | "completed" | "degraded"; detail: string };
-type AgentActivity = { mode: "normal" | "degraded"; agents: AgentStep[]; tools: string[]; summary?: string; claimVerification?: { available?: boolean; passed?: boolean; score?: number; supportedCount?: number; supportedClaims?: number; totalClaims?: number; unsupportedClaims?: number; unclearClaims?: number }; memory: { shortTerm: string[]; longTerm: string[] }; };
+type AgentActivity = { mode: "normal" | "degraded"; agents: AgentStep[]; tools: string[]; summary?: string; claimVerification?: { available?: boolean; passed?: boolean; score?: number; supportedCount?: number; supportedClaims?: number; totalClaims?: number; unsupportedClaims?: number; unclearClaims?: number; reason?: string }; memory: { shortTerm: string[]; longTerm: string[] }; };
 type ApiResponse = { answer?: string; source?: SourceInfo | null; error?: string; agentActivity?: AgentActivity };
 
 const departments: Department[] = [

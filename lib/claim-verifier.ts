@@ -104,54 +104,78 @@ export async function verifyAnswerClaims(args: {
       { role: "user", content: prompt },
     ];
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const requestBody = {
+      model,
+      temperature: 0,
+      max_completion_tokens: 1800,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "claim_verification",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              claims: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    claim: { type: "string" },
+                    verdict: {
+                      type: "string",
+                      enum: ["supported", "unsupported", "unclear"],
+                    },
+                    reason: { type: "string" },
+                  },
+                  required: ["claim", "verdict", "reason"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["claims"],
+            additionalProperties: false,
+          },
+        },
+      },
+      messages,
+    };
+
+    let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: "Bearer " + apiKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model,
-        temperature: 0,
-        max_completion_tokens: 1800,
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "claim_verification",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: {
-                claims: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      claim: { type: "string" },
-                      verdict: {
-                        type: "string",
-                        enum: ["supported", "unsupported", "unclear"],
-                      },
-                      reason: { type: "string" },
-                    },
-                    required: ["claim", "verdict", "reason"],
-                    additionalProperties: false,
-                  },
-                },
-              },
-              required: ["claims"],
-              additionalProperties: false,
-            },
-          },
-        },
-        messages,
-      }),
+      body: JSON.stringify(requestBody),
     });
+
+    // Groq can temporarily return 429 when the verifier model hits a rate limit.
+    // Retry once only, respecting Retry-After when it is supplied.
+    if (response.status === 429) {
+      const retryAfter = Number(response.headers.get("retry-after") || "");
+      const delayMs = Number.isFinite(retryAfter)
+        ? Math.min(Math.max(retryAfter * 1000, 500), 2500)
+        : 1000;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+    }
 
     if (!response.ok) {
       const providerText = await response.text().catch(() => "");
       console.error("Claim verifier provider error:", response.status, providerText.slice(0, 500));
-      return emptyResult("Verifier provider returned HTTP " + response.status + ".");
+      return emptyResult(
+        response.status === 429
+          ? "Verifier provider rate limit persisted after one retry."
+          : "Verifier provider returned HTTP " + response.status + "."
+      );
     }
 
     const data = await response.json();

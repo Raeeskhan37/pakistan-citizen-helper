@@ -1045,6 +1045,72 @@ if(requested==="Education & Scholarships"){
  for(const u of verificationUrls){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t; }
  return directWorkflowResponse({answer,source:{department:"Education & Scholarships",title:"Official education/scholarship source",url:verificationUrls[0]||"",lastVerified:"",province:ej||""},department:"Education & Scholarships",question,language,jurisdiction:ej,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
+if(requested==="FBR / Taxation"){
+ const fq=normalize(question);
+ const isRegistration=fq.includes("ntn")||fq.includes("national tax number")||fq.includes("register")||fq.includes("registration")||fq.includes("taxpayer");
+ if(isRegistration){
+  const fbrAnswer=language==="Urdu"
+   ? `## FBR — انکم ٹیکس رجسٹریشن اور NTN
+**سرکاری ادارہ:** Federal Board of Revenue (FBR)
+
+FBR کے مطابق انکم ٹیکس رجسٹریشن ٹیکس ریٹرن فائل کرنے کا پہلا قدم ہے۔
+
+**فرد (Individual) کے لیے آن لائن رجسٹریشن:**
+1. FBR کے **IRIS** پورٹل پر آن لائن رجسٹریشن کی جا سکتی ہے۔
+2. آن لائن رجسٹریشن صرف **Individual** کے لیے دستیاب ہے؛ AOP یا Company کے لیے یہ آن لائن راستہ دستیاب نہیں۔
+3. اپنا CNIC والا موبائل نمبر اور ذاتی ای میل درکار ہے۔
+4. اگر کاروبار ہے تو کاروباری جگہ کی ملکیت/کرایہ داری کا ثبوت اور تین ماہ سے پرانا نہ ہونے والا paid utility bill درکار ہے۔
+5. اپنے نام کے personal bank account کی maintenance certificate کی اسکین شدہ کاپی درکار ہے۔
+
+**رجسٹریشن کے بعد:** FBR کے مطابق IRIS e-enrollment سے فرد کو اس کا National Tax Number (NTN)/Registration Number اور password ملتا ہے۔ فرد کے لیے 13 ہندسوں کا CNIC ہی NTN/Registration Number کے طور پر استعمال ہوتا ہے۔
+
+**اہم:** AOP اور Company کے لیے FBR کا Facilitation Counter/RTO والا طریقہ الگ ہے۔
+
+**سرکاری ذرائع:**
+https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150
+https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148`
+   : `## FBR — Income Tax Registration and NTN
+**Official authority:** Federal Board of Revenue (FBR)
+
+According to FBR, income-tax registration is the first step before filing an income-tax return.
+
+**For an individual, online registration:**
+1. An individual can register online through the **IRIS** portal.
+2. Online registration is available only for an **individual**, not for an Association of Persons (AOP) or company.
+3. The applicant needs a mobile SIM registered in their own CNIC and a personal email address.
+4. If the applicant has a business, FBR requires evidence of tenancy/ownership of the business premises and a paid utility bill for the business premises not older than 3 months.
+5. A scanned certificate showing maintenance of the applicant's personal bank account in their own name is required.
+
+**After registration:** FBR states that e-enrollment provides a National Tax Number (NTN) or Registration Number and password. For an individual, the 13-digit CNIC is used as the NTN/Registration Number.
+
+**Important:** AOP and company registration follows a separate Facilitation Counter/Tax House process.
+
+**Official sources:**
+https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150
+https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148`;
+  const urls=[
+   "https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150",
+   "https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148"
+  ];
+  let fbrVerificationEvidence="";
+  for(const u of urls){
+   const t=await fetchOfficialPage(u);
+   if(t) fbrVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
+  }
+  return directWorkflowResponse({
+   answer:fbrAnswer,
+   source:{department:"FBR / Taxation",title:"FBR — Register for Income Tax",url:urls[0],lastVerified:"",province:""},
+   department:"FBR / Taxation",
+   question,
+   language,
+   jurisdiction:null,
+   evidenceAvailable:true,
+   verifyClaims:true,
+   verificationEvidence:fbrVerificationEvidence.trim()
+  });
+ }
+}
+
 if(requested==="Driving Licence"){
  const dj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  if(!dj){

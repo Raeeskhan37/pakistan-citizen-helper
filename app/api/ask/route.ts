@@ -984,15 +984,12 @@ KP Citizen Facilitation Portal پر **Domicile Certificate** سروس کے سا�
 - KP Citizens Facilitation Portal: https://cfc.kp.gov.pk/`
    :`## Khyber Pakhtunkhwa — Domicile Certificate
 
-According to the official KP e-Domicile system, citizens can apply online to obtain a domicile from the **DC Office**. The official system states that applications can be submitted through the web portal, mobile app, or District Citizen Information Centers established in DC Offices.
+According to the official KP e-Domicile system, citizens can apply online to obtain a domicile from the **DC Office**. The official system provides an online e-Domicile service through the KP Citizen’s Portal.
 
 **Process:**
-1. Register in the **KP Citizen’s Portal** and use the **e-Citizen** tab to submit the domicile application.
-2. After submission, an automatic **tracking code / transaction ID** is generated and can be used to track the application status.
-3. The official system states that the applicant is informed about the decision on the application.
-4. The KP e-Domicile page states that the system is implemented in all DC Offices where applications are received and domiciles are issued.
-
-The official KP Citizen Facilitation Portal lists **Domicile Certificate** with **Checklist** and **Apply Online** options.
+1. Use the **KP Citizen’s Portal** and the **e-Citizen** section to submit the domicile application.
+2. The application provides a **tracking code / transaction ID** for status tracking.
+3. The KP Citizen Facilitation Portal lists **Domicile Certificate** with **Checklist** and **Apply Online** options.
 
 **Important:** The publicly accessible official pages do not expose the complete current document-checklist text, so I am not adding unverified document requirements.
 

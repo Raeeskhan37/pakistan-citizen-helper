@@ -1092,12 +1092,6 @@ According to the official KP e-Domicile system, citizens can apply online to obt
    :"## Sindh — Domicile Certificate\n\nOfficial Sindh government information confirms that a **Domicile & PRC Automation** system exists. An official district-administration portal also identifies a **Domicile Branch** under the Deputy Commissioner Office. Therefore, for a Sindh domicile application, the practical official route is to approach the Domicile Branch of the Deputy Commissioner Office of the relevant district.\n\nThe official pages I could verify do not clearly publish a complete current checklist of documents, fees, and step-by-step application form procedure. I am therefore not adding unverified requirements or fees.\n\n**Official sources:**\n- Sindh Government — Domicile & PRC Automation: https://istd.sindh.gov.pk/initiatives/621\n- District Administration Malir — Domicile Branch, Deputy Commissioner Office: https://dcmalir.sindh.gov.pk/\n- Sindh Home Department — Appeals for Domicile & PRC: https://home.sindh.gov.pk/judicial-i";
   return directWorkflowResponse({answer,source:{department:"Domicile",title:"Government of Sindh — Domicile & PRC",url:"https://istd.sindh.gov.pk/initiatives/621",lastVerified:"",province:"Sindh"},department:"Domicile",question,language,jurisdiction:"Sindh",evidenceAvailable:true});
  }
- // EARLY LAND & REVENUE ROUTE: keep Fard/Mutation/Registry/SDC queries out of generic AI routing.
- if(requested==="Land & Revenue"){
-  const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
-  const answer=landRevenueEvidence(question,lj,language);
-  return directWorkflowResponse({answer,source:{department:"Land & Revenue",title:"Official land and revenue source",url:"",lastVerified:"",province:lj||""},department:"Land & Revenue",question,language,jurisdiction:lj,evidenceAvailable:true});
- }
  const detectedQuestionService=detectService(question,"");
  if(detectedQuestionService && !belongsToDepartment(detectedQuestionService,requested)){
  const qn=normalize(question);

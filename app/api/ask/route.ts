@@ -1302,7 +1302,22 @@ if(requested==="Protector & Overseas Employment"){
    ?"## پروٹیکٹر آف ایمیگرنٹس\n\nبیرون ملک ملازمت کے لیے Protector registration درکار ہے۔ BE&OE کے مطابق رجسٹریشن کے لیے درست ویزا، پاسپورٹ، CNIC، ملازمت کا معاہدہ/منظور شدہ undertaking، فیس اور Welfare Fund کی رسید، Emigration Promotion Fee، انشورنس اور کیس کے مطابق دیگر دستاویزات درکار ہو سکتی ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
    :"## Protector of Emigrants\n\nFor overseas employment, Protector registration is required. BE&OE identifies the visa, passport, CNIC, employment contract/approved undertaking, registration and welfare-fund receipts, emigration promotion fee, insurance, and case-specific documents as part of the registration requirements.\n\n**Official source:** https://beoe.gov.pk/";
  }
- return directWorkflowResponse({answer,source:{department:"Protector & Overseas Employment",title:"Bureau of Emigration & Overseas Employment — Emigrant Protection",url:"https://beoe.gov.pk/",lastVerified:"",province:requestedJurisdiction||""},department:"Protector & Overseas Employment",question,language,jurisdiction:requestedJurisdiction,evidenceAvailable:true});
+ let protectorVerificationEvidence="";
+ for(const u of [policySource,procedureSource]){
+  const t=await fetchOfficialPage(u);
+  if(t) protectorVerificationEvidence+="\\n\\nOFFICIAL BE&OE SOURCE PAGE: "+u+"\\n"+t;
+ }
+ return directWorkflowResponse({
+  answer,
+  source:{department:"Protector & Overseas Employment",title:"Bureau of Emigration & Overseas Employment — Emigrant Protection",url:"https://beoe.gov.pk/",lastVerified:"",province:requestedJurisdiction||""},
+  department:"Protector & Overseas Employment",
+  question,
+  language,
+  jurisdiction:requestedJurisdiction,
+  evidenceAvailable:true,
+  verifyClaims:true,
+  verificationEvidence:protectorVerificationEvidence.trim()
+ });
 }
 
 if(requested==="Arms Licence"){

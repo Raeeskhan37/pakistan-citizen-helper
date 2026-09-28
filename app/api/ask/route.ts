@@ -1272,16 +1272,7 @@ const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(quest
 if (requested === "NADRA Services") {
   const directNadraAnswer = await getDirectAdultFreshCnicAnswer(question, language);
   if (directNadraAnswer) {
-    const workflow = runFourAgentWorkflow({
-      department: requested,
-      question,
-      jurisdiction: selected.jurisdiction || null,
-      mode: "normal",
-      tools: ["NADRA RAG", "Source verification", "English / Urdu guidance"],
-      answer: directNadraAnswer,
-      evidenceAvailable: true
-    });
-    return NextResponse.json({
+    return directWorkflowResponse({
       answer: directNadraAnswer,
       source: {
         department: "NADRA",
@@ -1290,13 +1281,12 @@ if (requested === "NADRA Services") {
         lastVerified: "21 September 2026",
         province: ""
       },
-      agent: true,
-      goalFocused: true,
-      webSearch: false,
-      agentActivity: {
-        ...workflow,
-        memory: { shortTerm: [], longTerm: ["User-controlled preferences only"] }
-      }
+      department: "NADRA Services",
+      question,
+      language,
+      evidenceAvailable: true,
+      verifyClaims: true,
+      verificationEvidence: ragEvidence
     });
   }
 }

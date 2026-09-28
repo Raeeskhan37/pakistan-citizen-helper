@@ -1011,6 +1011,8 @@ According to the official KP e-Domicile system, citizens can apply online to obt
     "The system is implemented in all DC Offices of Khyber Pakhtunkhwa.",
     "The KP Citizens Facilitation Portal lists Domicile Certificate with Checklist and Apply Online options.",
   ].join("\n");
+
+  return directWorkflowResponse({
    answer,
    source:{department:"Domicile",title:"Government of Khyber Pakhtunkhwa — E-Domicile System",url:kpDomicileUrls[0],lastVerified:"",province:"Khyber Pakhtunkhwa"},
    department:"Domicile",

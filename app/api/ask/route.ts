@@ -1238,13 +1238,7 @@ const departmentDomains:Record<string,string[]>={
     ? "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+src.scope+"\\n\\n**آپ کے سوال کے مطابق:** "+detail+"\\n\\n**اہم:** جہاں سرکاری ذریعہ مکمل دستاویزات یا فیس واضح طور پر شائع نہیں کرتا، وہاں میں غیرمصدقہ معلومات شامل نہیں کر رہا۔\\n\\n**سرکاری ذریعہ:** "+src.url
     : "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+src.scope+"\\n\\n**For your question:** "+detail+"\\n\\n**Important:** Where the official source does not publish a complete current document or fee checklist, I will not invent unverified requirements.\\n\\n**Official source:** "+src.url;
 
-   return NextResponse.json({
-    answer:cleanAnswer(answer),
-    source:{department:"Union Council / Local Government",title:src.title,url:src.url,lastVerified:"",province:civilJurisdiction},
-    agent:true,
-    goalFocused:true,
-    webSearch:false
-   });
+   return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:src.title,url:src.url,lastVerified:"",province:civilJurisdiction},department:"Union Council / Local Government",question,language,jurisdiction:civilJurisdiction,evidenceAvailable:true});
   }
  }
 
@@ -1288,7 +1282,7 @@ if(requested==="Excise & Taxation"){
   const answer=exciseEvidence(question,ej,language);
   return directWorkflowResponse({answer,source:{department:"Excise & Taxation",title:"Official Excise & Taxation source",url:"",lastVerified:"",province:ej},department:"Excise & Taxation",question,language,jurisdiction:ej,evidenceAvailable:true});
  }
- return NextResponse.json({answer:language==="Urdu"?"## ایکسائز اینڈ ٹیکسیشن\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔":"## Excise & Taxation\n\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new vehicle registration, or ownership transfer.",source:null,agent:true,goalFocused:true,webSearch:false});
+ return directWorkflowResponse({answer:language==="Urdu"?"## ایکسائز اینڈ ٹیکسیشن\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔":"## Excise & Taxation\n\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new vehicle registration, or ownership transfer.",source:null,department:"Excise & Taxation",question,language,jurisdiction:null,evidenceAvailable:false});
 }
 const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
 let officialText="";
@@ -1301,7 +1295,7 @@ if(domains.length && !skipSearch){
 }
 officialText=officialText.slice(0,10000);
 const isVaccination=requested==="Vaccination for Travelling Abroad"; const dbContext=isNadra?"Supabase records intentionally excluded for NADRA answers; use NADRA POLICY RAG EVIDENCE only.":isVaccination?"Supabase records intentionally excluded for vaccination answers; use verified official health/travel sources only.":(selected.records.length?context(selected.records,language):"No matching verified database record was found.");
- if(!selected.records.length&&!officialText&&!ragEvidence)return NextResponse.json({answer:noInfo(language),source:null});
+ if(!selected.records.length&&!officialText&&!ragEvidence)return directWorkflowResponse({answer:noInfo(language),source:null,department:requested,question,language,jurisdiction:selected.jurisdiction||null,evidenceAvailable:false});
  const system=`You are the central verified government information agent inside Pakistan Citizen Helper.
 
 Your primary responsibility is to PROVIDE the citizen with the required answer. Do not send the citizen away to search another government website when the supplied official evidence contains the requested information.

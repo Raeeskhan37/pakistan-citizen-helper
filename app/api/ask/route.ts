@@ -1390,7 +1390,7 @@ IMPORTANT: The official source text and official-domain search results above are
  workflow.agents = workflow.agents.map(agent => agent.id==="verifier"
    ? {...agent,status:verificationPassed?"completed":"degraded",detail:verificationAvailable
       ? `Claim-level verification: ${claimVerification.supportedCount}/${claimVerification.totalClaims} claims supported; score ${claimVerification.score}%.`
-      : "Claim-level verification was unavailable; the answer is not labelled fully verified."
+      : `Claim-level verification unavailable: ${claimVerification.reason}`
      }
    : agent.id==="guidance"
      ? {...agent,status:verificationPassed?"completed":"waiting",detail:verificationPassed

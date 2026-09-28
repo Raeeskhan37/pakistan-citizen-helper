@@ -1382,20 +1382,6 @@ IMPORTANT: The official source text and official-domain search results above are
  }
  const verificationEvidence=[dbContext,officialText,ragEvidence].filter(Boolean).join("\n\n");
  const claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
- console.error("[CLAIM VERIFICATION DIAGNOSTIC]", JSON.stringify({
-   question,
-   department: requested,
-   jurisdiction: selected.jurisdiction||null,
-   supportedCount: claimVerification.supportedCount,
-   totalClaims: claimVerification.totalClaims,
-   score: claimVerification.score,
-   claims: claimVerification.claims.map((item,index)=>({
-     number:index+1,
-     verdict:item.verdict,
-     claim:item.claim,
-     reason:item.reason
-   }))
- }));
  const verificationAvailable=claimVerification.available;
  const verificationPassed=verificationAvailable && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
  const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"normal",tools:["NADRA RAG","Supabase verified knowledge","Official web research","Jurisdiction detection","Source verification","Claim-level evidence verification"],answer,evidenceAvailable:(selected.records.length>0||officialText.length>200||ragEvidence.length>200) && verificationPassed});
@@ -1427,5 +1413,5 @@ IMPORTANT: The official source text and official-domain search results above are
  workflow.summary = verificationPassed
    ? "Four-agent workflow completed with claim-level evidence verification."
    : "Four-agent workflow completed with a verification warning; the answer was not fully claim-verified.";
- return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]},claimVerification},diagnostic:{supportedCount:claimVerification.supportedCount,totalClaims:claimVerification.totalClaims,score:claimVerification.score,claims:claimVerification.claims.map((item,index)=>({number:index+1,verdict:item.verdict,claim:item.claim,reason:item.reason}))}});
+ return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]},claimVerification}});
  }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

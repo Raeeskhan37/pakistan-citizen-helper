@@ -1109,6 +1109,25 @@ export async function POST(request:NextRequest){try{
  const directDepartmentMatch=(requested==="FBR / Taxation"&&(qn.includes("fbr")||qn.includes("ntn")||qn.includes("iris")||qn.includes("income tax")||qn.includes("tax return")||qn.includes("sales tax")||qn.includes("sales-tax")||qn.includes("gst")||qn.includes("tax registration")||qn.includes("taxpayer registration")||qn.includes("withholding tax")||qn.includes("income tax return")))||(requested==="Government Jobs"&&(qn.includes("government job")||qn.includes("government jobs")||qn.includes("national jobs portal")||qn.includes("njp")||qn.includes("vacancy")||qn.includes("job")||qn.includes("apply for a job")||qn.includes("job application")||qn.includes("نوکری")||qn.includes("ملازمت")||qn.includes("درخواست")))||(requested==="Excise & Taxation"&&(qn.includes("excise")||qn.includes("vehicle")||qn.includes("token tax")||qn.includes("vehicle registration")||qn.includes("ownership transfer")))||(requested==="Land & Revenue"&&(qn.includes("land")||qn.includes("fard")||qn.includes("mutation")||qn.includes("intiqal")||qn.includes("revenue")))||(requested==="Police Services"&&(qn.includes("police")||qn.includes("fir")||qn.includes("character certificate")||qn.includes("police clearance")||qn.includes("verification")))||(requested==="Education & Scholarships"&&(qn.includes("scholarship")||qn.includes("hec")||qn.includes("education")))||(requested==="Driving Licence"&&(qn.includes("driving")||qn.includes("learner")||qn.includes("license")||qn.includes("licence")||qn.includes("ڈرائیونگ")||qn.includes("لائسنس")))||(requested==="Vaccination for Travelling Abroad"&&(qn.includes("vaccination")||qn.includes("vaccine")||qn.includes("polio")||qn.includes("yellow fever")||qn.includes("hajj")||qn.includes("haj")||qn.includes("umrah")||qn.includes("umra")||qn.includes("ویکسین")||qn.includes("حج")||qn.includes("عمرہ")))||(requested==="Arms Licence"&&(qn.includes("arms licence")||qn.includes("arms license")||qn.includes("weapon licence")||qn.includes("weapon license")||qn.includes("gun licence")||qn.includes("gun license")||qn.includes("اسلحہ")||qn.includes("ہتھیار")||qn.includes("لائسنس")));
  if(!directDepartmentMatch)return NextResponse.json({answer:language==="Urdu"?"یہ سوال منتخب شعبے سے متعلق نہیں لگتا۔ براہ کرم اسی شعبے سے متعلق سوال پوچھیں۔":"This question does not appear to belong to the selected government department. Please ask a question related to the selected department.",source:null});
 }
+// EARLY FBR REGISTRATION ROUTE: keep NTN registration grounded in the cited FBR page
+// and run claim-level verification against the same official source.
+if(requested==="FBR / Taxation"){
+ const fq=normalize(question);
+ if(fq.includes("ntn")||fq.includes("tax registration")||fq.includes("taxpayer registration")||fq.includes("registered taxpayer")){
+  const answer=language==="Urdu"
+   ? "## ایف بی آر — انکم ٹیکس رجسٹریشن / NTN\n\nایف بی آر کی سرکاری ہدایات کے مطابق انکم ٹیکس رجسٹریشن کے لیے فرد، AOP یا کمپنی کی متعلقہ کیٹیگری منتخب کی جاتی ہے۔ فرد کے لیے FBR کی آن لائن رجسٹریشن سہولت موجود ہے، جبکہ دیگر کیٹیگریز کے لیے Facilitation Counter کے ذریعے رجسٹریشن کا طریقہ دیا گیا ہے۔\n\n**اہم مطلوبہ معلومات/دستاویزات:** CNIC، اپنے CNIC کے نام پر رجسٹرڈ موبائل/SIM، ای میل، بینک اکاؤنٹ کا ثبوت، اور جہاں کاروباری جگہ ہو وہاں ملکیت/کرایہ اور متعلقہ یوٹیلیٹی بل؛ AOP اور کمپنی کے لیے FBR کی متعلقہ اضافی دستاویزات بھی درکار ہوتی ہیں۔\n\n**آن لائن رجسٹریشن:** فرد FBR کے IRIS نظام کے ذریعے رجسٹریشن کر سکتا ہے۔\n\n**سرکاری ذریعہ:** https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150"
+   : "## FBR — Income Tax Registration / NTN\n\nAccording to FBR's official registration guidance, income-tax registration is handled according to the taxpayer category: individual, AOP or company. FBR provides an online registration facility for individuals, while its guidance also provides registration through Facilitation Counters for the relevant categories.\n\n**Key requirements/information include:** CNIC, a mobile/SIM registered in the relevant person's CNIC, email address, proof of bank account, and—where there is a business premises—evidence of ownership/tenancy and a recent utility bill. AOPs and companies have additional category-specific documents listed by FBR.\n\n**Online registration:** Individuals can register through FBR's IRIS system.\n\n**Official source:** https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150";
+  return verifiedDirectWorkflowResponse({
+   answer,
+   source:{department:"FBR / Taxation",title:"FBR Income Tax Registration",url:"https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150",lastVerified:"",province:""},
+   department:"FBR / Taxation",
+   question,
+   language,
+   evidenceAvailable:true,
+   verificationUrls:["https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150"]
+  });
+ }
+}
 if(requested==="Education & Scholarships"){
  const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  const answer=educationEvidence(question,ej,language);

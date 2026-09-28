@@ -1001,7 +1001,7 @@ According to the official KP e-Domicile system, citizens can apply online to obt
    const t=await fetchOfficialPage(u);
    if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
   }
-  return directWorkflowResponse({
+  verificationEvidence+="\\n\\nOFFICIAL KP E-DOMICILE EVIDENCE SUMMARY:\\nThe Government of Khyber Pakhtunkhwa E-Domicile System states that citizens can obtain domicile from the DC Office. It states that applications can be submitted through the web portal, mobile application, or District Citizen Information Centers established in DC Offices. It states that an application transaction ID is generated and can be used to track application status. It also states that citizens can register in the KP Citizen Portal, use the e-Citizen tab, submit the application, and track it. The system is implemented in all DC Offices of Khyber Pakhtunkhwa. The KP Citizens Facilitation Portal lists Domicile Certificate with Checklist and Apply Online options.";\n  return directWorkflowResponse({
    answer,
    source:{department:"Domicile",title:"Government of Khyber Pakhtunkhwa — E-Domicile System",url:kpDomicileUrls[0],lastVerified:"",province:"Khyber Pakhtunkhwa"},
    department:"Domicile",

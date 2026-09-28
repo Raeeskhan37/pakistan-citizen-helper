@@ -1054,7 +1054,7 @@ if(requested==="Driving Licence"){
  }
  const answer=drivingEvidence(question,dj,language);
  const drivingVerificationUrls=answer
-  .split(/\\s+/)
+  .split(/\s+/)
   .filter((item)=>item.startsWith("http://")||item.startsWith("https://"))
   .map((item)=>item.replace(/[.,]+$/,""));
  const uniqueDrivingUrls:string[]=[];

@@ -1037,6 +1037,50 @@ if(requested==="Education & Scholarships"){
  for(const u of verificationUrls){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t; }
  return directWorkflowResponse({answer,source:{department:"Education & Scholarships",title:"Official education/scholarship source",url:verificationUrls[0]||"",lastVerified:"",province:ej||""},department:"Education & Scholarships",question,language,jurisdiction:ej,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
+if(requested==="Driving Licence"){
+ const dj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+ if(!dj){
+  return directWorkflowResponse({
+   answer:language==="Urdu"
+    ?"## ڈرائیونگ لائسنس\n\nبراہ کرم صوبہ/علاقہ بتائیں، مثلاً خیبر پختونخوا، پنجاب یا سندھ، تاکہ متعلقہ سرکاری ڈرائیونگ لائسنس طریقہ کار بتایا جا سکے۔"
+    :"## Driving Licence\n\nPlease specify the province/territory, for example Khyber Pakhtunkhwa, Punjab, or Sindh, so I can provide the relevant official driving-licence procedure.",
+   source:null,
+   department:"Driving Licence",
+   question,
+   language,
+   jurisdiction:null,
+   evidenceAvailable:false
+  });
+ }
+ const answer=drivingEvidence(question,dj,language);
+ const drivingVerificationUrls=Array.from(new Set(
+  (answer.match(/https?:\\/\\/[^\\s)]+/g)||[])
+   .map((u)=>u.replace(/[.,]+$/,""))
+ ));
+ let drivingVerificationEvidence="";
+ for(const u of drivingVerificationUrls){
+  const t=await fetchOfficialPage(u);
+  if(t) drivingVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+ }
+ return directWorkflowResponse({
+  answer,
+  source:{
+   department:"Driving Licence",
+   title:"Official government driving-licence information",
+   url:drivingVerificationUrls[0]||"",
+   lastVerified:"",
+   province:dj
+  },
+  department:"Driving Licence",
+  question,
+  language,
+  jurisdiction:dj,
+  evidenceAvailable:true,
+  verifyClaims:true,
+  verificationEvidence:drivingVerificationEvidence.trim()
+ });
+}
+
 const isNadra=requested==="NADRA Services";
 const registrySource=sourceForQuestion(question,selected.service,selected.jurisdiction,requested);const matchingRecord=selected.records.find(r=>normalize(r.official_department||"").includes(normalize(registrySource?.department||"___no_registry_department___")));const recordSource=matchingRecord?.official_source_url||"";const sourceUrl=registrySource?.url||recordSource||"";const sourceMeta=isNadra?{url:"https://www.nadra.gov.pk/identityDocument/cnic",title:"NADRA Registration Policy 6.0.2 — RAG Evidence",department:"NADRA"}:(registrySource||{url:sourceUrl,title:selected.records[0]?.official_source_title||"Official Government Source",department:selected.records[0]?.official_department||"Government of Pakistan"});
 const jurisdictionSourceHints:Record<string,string[]>={

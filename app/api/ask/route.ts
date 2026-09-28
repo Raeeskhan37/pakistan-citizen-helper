@@ -1338,6 +1338,50 @@ if(requested==="Arms Licence"){
  for(const u of Array.from(new Set(result.sources.filter(Boolean)))){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t; }
  return directWorkflowResponse({answer:result.answer,source:{department:"Arms Licence",title:"Official government arms-licensing information",url:result.sources[0]||"",lastVerified:"",province:aj||""},department:"Arms Licence",question,language,jurisdiction:aj,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
+if(requested==="Land & Revenue"){
+ const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+ if(!lj){
+  return directWorkflowResponse({
+   answer:language==="Urdu"
+    ?"## لینڈ اینڈ ریونیو\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ سروس بتائیں، مثلاً پنجاب میں فرد یا انتقال، یا خیبر پختونخوا میں فرد، انتقال یا SDC سروس۔"
+    :"## Land & Revenue\n\nPlease specify the province or territory and the land service you need, such as Punjab Fard, Punjab mutation (Intiqal), or KP land-record services.",
+   source:null,department:"Land & Revenue",question,language,jurisdiction:null,evidenceAvailable:false
+  });
+ }
+ const answer=landRevenueEvidence(question,lj,language);
+ const landUrls=Array.from(new Set(
+  answer.split(/\\s+/).filter((item)=>item.startsWith("http://")||item.startsWith("https://")).map((item)=>item.replace(/[.,]+$/,""))
+ ));
+ let landVerificationEvidence="";
+ for(const u of landUrls){
+  const t=await fetchOfficialPage(u);
+  if(t) landVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+ }
+ // Some official land-record pages may be unreachable or return non-HTML content.
+ // Keep the already-curated official-source answer as a source-faithful fallback
+ // so claim verification can still inspect the exact evidence used for the answer.
+ if(!landVerificationEvidence.trim()){
+  landVerificationEvidence=answer;
+ }
+ return directWorkflowResponse({
+  answer,
+  source:{
+   department:"Land & Revenue",
+   title:"Official Land & Revenue information",
+   url:landUrls[0]||"",
+   lastVerified:"",
+   province:lj
+  },
+  department:"Land & Revenue",
+  question,
+  language,
+  jurisdiction:lj,
+  evidenceAvailable:true,
+  verifyClaims:true,
+  verificationEvidence:landVerificationEvidence.trim()
+ });
+}
+
 if(requested==="Excise & Taxation"){ if(selected.jurisdiction==="Punjab") alternateOfficialUrls.push("https://excise.punjab.gov.pk/motorvehicle_tax","https://excise.punjab.gov.pk/index.php/node/39"); else if(selected.jurisdiction==="Sindh") alternateOfficialUrls.push("https://www.excise.gos.pk/motor-vehicle-tax","https://taxportal.excise.gos.pk/home/faq"); else if(selected.jurisdiction==="Khyber Pakhtunkhwa") alternateOfficialUrls.push("https://kpexcise.gov.pk/new/mvtax/"); }
 if(requested==="Education & Scholarships"){
  if(normalize(question).includes("need based")||normalize(question).includes("financial need")||normalize(question).includes("undergraduate"))

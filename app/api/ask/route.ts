@@ -967,40 +967,38 @@ export async function POST(request:NextRequest){try{
   const answer=language==="Urdu"
    ?`## خیبر پختونخوا — ڈومیسائل سرٹیفکیٹ
 
-سرکاری KP e-Domicile نظام کے مطابق ڈومیسائل **DC Office** سے جاری کیا جاتا ہے اور شہری ویب پورٹل، موبائل ایپ یا DC Office میں قائم District Citizen Information Centers کے ذریعے آن لائن درخواست جمع کر سکتے ہیں۔
+سرکاری KP e-Domicile نظام کے مطابق شہری **DC Office** سے ڈومیسائل حاصل کرنے کے لیے آن لائن درخواست دے سکتے ہیں۔ سرکاری نظام کے مطابق درخواست ویب پورٹل، موبائل ایپ یا DC Office میں قائم District Citizen Information Centers کے ذریعے جمع کی جا سکتی ہے۔
 
 **طریقۂ کار:**
-1. KP Citizen’s Portal / e-Domicile کے ذریعے رجسٹر ہوں اور e-Citizen میں ڈومیسائل کی درخواست جمع کریں۔
-2. درخواست جمع ہونے پر ایک **tracking code / transaction ID** ملتا ہے، جس سے درخواست کا status ٹریک کیا جا سکتا ہے۔
-3. سرکاری نظام کے مطابق درخواست کی معلومات کی verification کے بعد فیصلہ بتایا جاتا ہے۔
-4. KP e-Domicile صفحہ بتاتا ہے کہ نظام صوبے کے تمام DC Offices میں نافذ ہے جہاں درخواستیں وصول اور ڈومیسائل جاری کیے جاتے ہیں۔
+1. **KP Citizen’s Portal** میں رجسٹر ہوں اور **e-Citizen** ٹیب سے ڈومیسائل کی درخواست جمع کریں۔
+2. درخواست جمع ہونے کے بعد ایک **tracking code / transaction ID** خودکار طور پر جاری ہوتا ہے، جس سے درخواست کا status ٹریک کیا جا سکتا ہے۔
+3. سرکاری نظام کے مطابق درخواست پر فیصلے سے درخواست گزار کو مطلع کیا جاتا ہے۔
+4. KP e-Domicile کے مطابق یہ نظام تمام DC Offices میں نافذ ہے جہاں درخواستیں وصول اور ڈومیسائل جاری کیے جاتے ہیں۔
 
-KP Citizen Facilitation Portal پر **Domicile Certificate** سروس کے ساتھ **Checklist** اور **Apply Online** آپشن بھی موجود ہیں۔
+KP Citizen Facilitation Portal پر **Domicile Certificate** سروس کے ساتھ **Checklist** اور **Apply Online** آپشن موجود ہیں۔
 
 **اہم:** دستیاب عوامی سرکاری صفحات پر مکمل موجودہ document checklist کا متن واضح طور پر دستیاب نہیں، اس لیے میں غیرمصدقہ دستاویزات شامل نہیں کر رہا۔
 
 **سرکاری ذرائع:**
 - KP e-Domicile: https://pmru.kp.gov.pk/e-domicile.php
-- KP Citizens Facilitation Portal: https://cfc.kp.gov.pk/
-- KP CFC FAQs: https://cfc.kp.gov.pk/Home/FAQs`
+- KP Citizens Facilitation Portal: https://cfc.kp.gov.pk/`
    :`## Khyber Pakhtunkhwa — Domicile Certificate
 
-According to the official KP e-Domicile system, a domicile is issued through the **DC Office**. Citizens can submit an online application through the web portal, mobile app, or district citizen information centers established in DC offices.
+According to the official KP e-Domicile system, citizens can apply online to obtain a domicile from the **DC Office**. The official system states that applications can be submitted through the web portal, mobile app, or District Citizen Information Centers established in DC Offices.
 
 **Process:**
-1. Register in the KP Citizen’s Portal / e-Domicile service and submit the domicile application through the e-Citizen section.
-2. After submission, the system generates a **tracking code / transaction ID** that can be used to track the application status.
-3. The official system states that the applicant is informed about the decision after processing/verification.
-4. The KP e-Domicile page states that the system is implemented in all DC Offices of Khyber Pakhtunkhwa where applications are received and domiciles are issued.
+1. Register in the **KP Citizen’s Portal** and use the **e-Citizen** tab to submit the domicile application.
+2. After submission, an automatic **tracking code / transaction ID** is generated and can be used to track the application status.
+3. The official system states that the applicant is informed about the decision on the application.
+4. The KP e-Domicile page states that the system is implemented in all DC Offices where applications are received and domiciles are issued.
 
-The official KP Citizen Facilitation Portal also lists **Domicile Certificate** as a service with **Checklist** and **Apply Online** options.
+The official KP Citizen Facilitation Portal lists **Domicile Certificate** with **Checklist** and **Apply Online** options.
 
 **Important:** The publicly accessible official pages do not expose the complete current document-checklist text, so I am not adding unverified document requirements.
 
 **Official sources:**
 - KP e-Domicile: https://pmru.kp.gov.pk/e-domicile.php
-- KP Citizens Facilitation Portal: https://cfc.kp.gov.pk/
-- KP CFC FAQs: https://cfc.kp.gov.pk/Home/FAQs`;
+- KP Citizens Facilitation Portal: https://cfc.kp.gov.pk/`;
   let verificationEvidence="";
   for(const u of kpDomicileUrls){
    const t=await fetchOfficialPage(u);

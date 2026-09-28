@@ -988,7 +988,7 @@ According to the official KP e-Domicile system, citizens can apply online to obt
 
 **Process:**
 1. Use the **KP Citizen’s Portal** and the **e-Citizen** section to submit the domicile application.
-2. The application provides a **tracking code / transaction ID** for status tracking.
+2. An **application transaction ID** is generated and can be used to track the application status.
 3. The KP Citizen Facilitation Portal lists **Domicile Certificate** with **Checklist** and **Apply Online** options.
 
 **Important:** The publicly accessible official pages do not expose the complete current document-checklist text, so I am not adding unverified document requirements.

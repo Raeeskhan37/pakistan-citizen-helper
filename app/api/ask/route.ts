@@ -1032,7 +1032,7 @@ export async function POST(request:NextRequest){try{
 if(requested==="Education & Scholarships"){
  const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  const answer=educationEvidence(question,ej,language);
- const verificationUrls=Array.from(new Set((answer.match(/https?:\\/\\/[^\\s)]+/g)||[]).map((u)=>u.replace(/[.,]+$/,""))));
+  const verificationUrls=Array.from(new Set((answer.match(/https?:\/\/[^\s)]+/g)||[]).map((u)=>u.replace(/[.,]+$/,""))));
  let verificationEvidence="";
  for(const u of verificationUrls){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t; }
  return directWorkflowResponse({answer,source:{department:"Education & Scholarships",title:"Official education/scholarship source",url:verificationUrls[0]||"",lastVerified:"",province:ej||""},department:"Education & Scholarships",question,language,jurisdiction:ej,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});

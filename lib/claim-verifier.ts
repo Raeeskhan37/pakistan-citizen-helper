@@ -108,6 +108,7 @@ export async function verifyAnswerClaims(args: {
       model,
       temperature: 0,
       max_completion_tokens: 1800,
+      include_reasoning: false,
       response_format: {
         type: "json_schema",
         json_schema: {
@@ -189,6 +190,7 @@ export async function verifyAnswerClaims(args: {
             // GPT-OSS 20B supports Groq Structured Outputs too.
             // Keep the same strict schema as the primary model so the fallback
             // cannot silently change the verifier's response contract.
+            include_reasoning: false,
             response_format: requestBody.response_format,
             messages,
           }),
@@ -208,6 +210,7 @@ export async function verifyAnswerClaims(args: {
               model: fallbackModel,
               temperature: 0,
               max_completion_tokens: 1800,
+              include_reasoning: false,
               response_format: { type: "json_object" },
               messages: [
                 ...messages,

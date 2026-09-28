@@ -941,16 +941,6 @@ export async function POST(request:NextRequest){try{
   return directWorkflowResponse({answer,source:{department:"Passport",title:"DGI&P — Change of Particulars / Modification",url:"https://dgip.gov.pk/passport/ordinary-passport.php",lastVerified:"27 September 2026",province:""},department:"Passport Services",question,language,evidenceAvailable:true});
  }
 
- // EARLY VACCINATION ROUTE: import the proven Streamlit Hajj/Umrah/work-visa handling without changing frozen departments.
- if(requested==="Vaccination for Travelling Abroad"){
-  if(isVaccinationPilgrimQuestion(question)){
-   return vaccinationPilgrimResponse(question,language);
-  }
-  if(isSaudiVaccinationWorkVisaQuestion(question)){
-   return vaccinationWorkVisaResponse(language, question);
-  }
- }
-
  // EARLY DRIVING LICENCE ROUTE: use the jurisdiction-specific official driving evidence
  // directly and verify the generated answer against the cited official pages.
  if(requested==="Driving Licence"){
@@ -975,6 +965,16 @@ export async function POST(request:NextRequest){try{
    evidenceAvailable:true,
    verificationUrls
   });
+ }
+
+ // EARLY VACCINATION ROUTE: import the proven Streamlit Hajj/Umrah/work-visa handling without changing frozen departments.
+ if(requested==="Vaccination for Travelling Abroad"){
+  if(isVaccinationPilgrimQuestion(question)){
+   return vaccinationPilgrimResponse(question,language);
+  }
+  if(isSaudiVaccinationWorkVisaQuestion(question)){
+   return vaccinationWorkVisaResponse(language, question);
+  }
  }
 
 

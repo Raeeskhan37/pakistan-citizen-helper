@@ -957,6 +957,68 @@ export async function POST(request:NextRequest){try{
   return directWorkflowResponse({answer,source:{department:"Domicile",title:"Official Government Domicile Services — Punjab, ICT and KP",url:"https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/domicile-certificate",lastVerified:"",province:""},department:"Domicile",question,language,jurisdiction:workingTargetJurisdiction||workingJurisdiction,evidenceAvailable:true});
  }
 
+ // EARLY KP DOMICILE ROUTE: use the current official KP e-Domicile and Citizen Facilitation evidence directly.
+ if(requested==="Domicile" && (workingTargetJurisdiction||workingJurisdiction)==="Khyber Pakhtunkhwa"){
+  const kpDomicileUrls=[
+   "https://pmru.kp.gov.pk/e-domicile.php",
+   "https://cfc.kp.gov.pk/",
+   "https://cfc.kp.gov.pk/Home/FAQs"
+  ];
+  const answer=language==="Urdu"
+   ?`## خیبر پختونخوا — ڈومیسائل سرٹیفکیٹ
+
+سرکاری KP e-Domicile نظام کے مطابق ڈومیسائل **DC Office** سے جاری کیا جاتا ہے اور شہری ویب پورٹل، موبائل ایپ یا DC Office میں قائم District Citizen Information Centers کے ذریعے آن لائن درخواست جمع کر سکتے ہیں۔
+
+**طریقۂ کار:**
+1. KP Citizen’s Portal / e-Domicile کے ذریعے رجسٹر ہوں اور e-Citizen میں ڈومیسائل کی درخواست جمع کریں۔
+2. درخواست جمع ہونے پر ایک **tracking code / transaction ID** ملتا ہے، جس سے درخواست کا status ٹریک کیا جا سکتا ہے۔
+3. سرکاری نظام کے مطابق درخواست کی معلومات کی verification کے بعد فیصلہ بتایا جاتا ہے۔
+4. KP e-Domicile صفحہ بتاتا ہے کہ نظام صوبے کے تمام DC Offices میں نافذ ہے جہاں درخواستیں وصول اور ڈومیسائل جاری کیے جاتے ہیں۔
+
+KP Citizen Facilitation Portal پر **Domicile Certificate** سروس کے ساتھ **Checklist** اور **Apply Online** آپشن بھی موجود ہیں۔
+
+**اہم:** دستیاب عوامی سرکاری صفحات پر مکمل موجودہ document checklist کا متن واضح طور پر دستیاب نہیں، اس لیے میں غیرمصدقہ دستاویزات شامل نہیں کر رہا۔
+
+**سرکاری ذرائع:**
+- KP e-Domicile: https://pmru.kp.gov.pk/e-domicile.php
+- KP Citizens Facilitation Portal: https://cfc.kp.gov.pk/
+- KP CFC FAQs: https://cfc.kp.gov.pk/Home/FAQs`
+   :`## Khyber Pakhtunkhwa — Domicile Certificate
+
+According to the official KP e-Domicile system, a domicile is issued through the **DC Office**. Citizens can submit an online application through the web portal, mobile app, or district citizen information centers established in DC offices.
+
+**Process:**
+1. Register in the KP Citizen’s Portal / e-Domicile service and submit the domicile application through the e-Citizen section.
+2. After submission, the system generates a **tracking code / transaction ID** that can be used to track the application status.
+3. The official system states that the applicant is informed about the decision after processing/verification.
+4. The KP e-Domicile page states that the system is implemented in all DC Offices of Khyber Pakhtunkhwa where applications are received and domiciles are issued.
+
+The official KP Citizen Facilitation Portal also lists **Domicile Certificate** as a service with **Checklist** and **Apply Online** options.
+
+**Important:** The publicly accessible official pages do not expose the complete current document-checklist text, so I am not adding unverified document requirements.
+
+**Official sources:**
+- KP e-Domicile: https://pmru.kp.gov.pk/e-domicile.php
+- KP Citizens Facilitation Portal: https://cfc.kp.gov.pk/
+- KP CFC FAQs: https://cfc.kp.gov.pk/Home/FAQs`;
+  let verificationEvidence="";
+  for(const u of kpDomicileUrls){
+   const t=await fetchOfficialPage(u);
+   if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+  }
+  return directWorkflowResponse({
+   answer,
+   source:{department:"Domicile",title:"Government of Khyber Pakhtunkhwa — E-Domicile System",url:kpDomicileUrls[0],lastVerified:"",province:"Khyber Pakhtunkhwa"},
+   department:"Domicile",
+   question,
+   language,
+   jurisdiction:"Khyber Pakhtunkhwa",
+   evidenceAvailable:true,
+   verifyClaims:true,
+   verificationEvidence:verificationEvidence.trim()
+  });
+ }
+
  // EARLY GILGIT-BALTISTAN DOMICILE ROUTE: the official GB government site
  // confirms domicile-certificate procedures but does not publish a detailed public
  // document checklist. Do not invent requirements when the official evidence is incomplete.

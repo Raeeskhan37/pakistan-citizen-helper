@@ -991,7 +991,6 @@ According to the official KP e-Domicile system, citizens can apply online to obt
 2. An **application transaction ID** is generated and can be used to track the application status.
 3. The KP Citizen Facilitation Portal lists **Domicile Certificate** with **Checklist** and **Apply Online** options.
 
-**Important:** The publicly accessible official pages do not expose the complete current document-checklist text, so I am not adding unverified document requirements.
 
 **Official sources:**
 - KP e-Domicile: https://pmru.kp.gov.pk/e-domicile.php

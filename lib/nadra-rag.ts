@@ -661,7 +661,7 @@ export async function retrieveNadraEvidence(
           "",
           ...targeted.map(
             (item, i) =>
-              `[NADRA POLICY TARGETED EVIDENCE \${i + 1}]\\nPage: \${item.page ?? "N/A"}\\nSection: \${item.major_section || item.subsection || ""}\\n\\n\${(item.text || "").slice(0, 4000)}`
+              `[NADRA POLICY TARGETED EVIDENCE ${i + 1}]\nPage: ${item.page ?? "N/A"}\nSection: ${item.major_section || item.subsection || ""}\n\n${(item.text || "").slice(0, 4000)}`
           )
         ].join("\n\n");
       }

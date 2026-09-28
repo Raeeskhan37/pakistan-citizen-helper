@@ -1089,6 +1089,7 @@ According to FBR, income-tax registration is the first step before filing an inc
 https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150
 https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148`;
   const urls=[
+   "https://www.fbr.gov.pk/categ/register-income-tax/51147/30846/%2061149",
    "https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150",
    "https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148"
   ];

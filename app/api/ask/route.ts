@@ -1436,20 +1436,51 @@ if(requested==="Protector & Overseas Employment"){
    ?"## پروٹیکٹر کلیئرنس\n\nعام سیاحتی یا وزٹ ویزا کے لیے اوورسیز ایمپلائمنٹ والا پروٹیکٹر رجسٹریشن طریقہ لاگو نہیں ہوتا۔ BE&OE کی یہ سروس بیرون ملک ملازمت/ایمیگریشن سے متعلق ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
    :"## Protector of Emigrants\n\nThe BE&OE Protector registration process is for overseas employment/emigration cases. It is not an employment-clearance requirement for an ordinary tourist or visit visa.\n\n**Official source:** https://beoe.gov.pk/";
  } else if(isOffice){
-  if(requestedJurisdiction==="Islamabad Capital Territory"){
-   answer=language==="Urdu"
-    ?"## پروٹیکٹر آف ایمیگرنٹس دفتر\n\nسرکاری BE&OE دائرۂ اختیار کی جدول کے مطابق **اسلام آباد**، Protector of Emigrants, **Rawalpindi** کے دائرۂ اختیار میں ہے۔ سرکاری رابطہ گائیڈ میں Rawalpindi دفتر کا پتہ **20-B1, Summer Plaza, Chandni Chowk, Rawalpindi** اور فون نمبرز **+92-51-9290439-40** اور **+92-51-9290569** درج ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf"
-    :"## Protector of Emigrants Office — Islamabad\n\nThe official BE&OE jurisdiction table places **Islamabad** under the **Protector of Emigrants, Rawalpindi**. The official contact guide lists the Rawalpindi office at **20-B1, Summer Plaza, Chandni Chowk, Rawalpindi**, telephone **+92-51-9290439-40** and **+92-51-9290569**.\n\n**Official sources:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
-  } else if(requestedJurisdiction==="Khyber Pakhtunkhwa"){
-   answer=language==="Urdu"
-    ?"## خیبر پختونخوا — پروٹیکٹر دفاتر\n\nسرکاری BE&OE رابطہ گائیڈ میں خیبر پختونخوا کے لیے **Peshawar** اور **Malakand** کے Protector of Emigrants دفاتر درج ہیں۔ متعلقہ دفتر درخواست گزار کے علاقے کے دائرۂ اختیار پر منحصر ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/a-guide-for-pakistani-migrant-workers-in-the-united-arab-emirates.pdf"
-    :"## Khyber Pakhtunkhwa — Protector Offices\n\nThe official BE&OE contact guide lists **Peshawar** and **Malakand** Protector of Emigrants offices for Khyber Pakhtunkhwa. The applicable office depends on the applicant's area of jurisdiction.\n\n**Official source:** https://beoe.gov.pk/files/a-guide-for-pakistani-migrant-workers-in-the-united-arab-emirates.pdf";
-  } else {
-   answer=language==="Urdu"
-    ?"## پروٹیکٹر آف ایمیگرنٹس دفتر\n\nBE&OE دائرۂ اختیار کے مطابق Protector of Emigrants کے دفاتر کے ذریعے رجسٹریشن ہوتی ہے۔ متعلقہ دفتر اپنے علاقے کے مطابق منتخب کیا جاتا ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf"
-    :"## Protector of Emigrants Office\n\nBE&OE handles registration through Protector of Emigrants offices according to area jurisdiction. The applicable office should be selected according to the applicant's area.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
-  }
- } else if(isFee){
+  // A location question without a province/city must return the actual BE&OE office directory,
+  // not a generic instruction. Current BE&OE material identifies nine Protectorates:
+  // Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi and Quetta.
+  // The current BE&OE migrant-worker contact guide provides addresses/phones for seven;
+  // the official policy material confirms D.G. Khan and Sialkot as functioning Protectorates.
+  const officeDirectoryEn=`## Protector of Emigrants Offices in Pakistan
+
+The Bureau of Emigration & Overseas Employment (BE&OE) identifies these Protector of Emigrants offices:
+
+| Office | Location / address | Telephone |
+|---|---|---|
+| Rawalpindi | 20-B1, Summer Plaza, Chandni Chowk, Rawalpindi | +92-51-9290439-40; +92-51-9290569 |
+| Lahore | 117-G Block, Model Town, Lahore | +92-42-99230338; +92-42-99230488 |
+| Multan | House No. 136, Rehmat Colony, Near Lodhe More, MDA Road, Multan | +92-61-921020020 |
+| Dera Ghazi Khan | Dera Ghazi Khan | Address/telephone not stated in the current BE&OE contact guide retrieved |
+| Sialkot | Sialkot | Address/telephone not stated in the current BE&OE contact guide retrieved |
+| Peshawar | Amanullah Khan Plaza, 2nd Floor, Opposite GPO, Lala Ayub Lane, Saddar Road, Peshawar Cantt | +92-91-9212050 |
+| Malakand | Bahadar Khan Plaza, Main Bazar, Bathella, Malakand | +92-93-2412483 |
+| Karachi | 14-J, Block No. 6, Near KFC, Nursery, PECHS, Karachi | +92-21-34531941 |
+| Quetta | Quarry Road, Quetta | +92-81-9202436 |
+
+**Important:** The applicable Protector office depends on the applicant's area of jurisdiction. For example, the official BE&OE jurisdiction table places Islamabad under the Rawalpindi Protectorate, while several Punjab districts are assigned to Lahore or Multan.
+
+**Official sources:** BE&OE contact guide and BE&OE procedure/jurisdiction documents.`;
+
+  const officeDirectoryUr=`## پاکستان میں پروٹیکٹر آف ایمیگرنٹس کے دفاتر
+
+بیورو آف ایمیگریشن اینڈ اوورسیز ایمپلائمنٹ (BE&OE) کے سرکاری مواد میں یہ پروٹیکٹر دفاتر درج ہیں:
+
+1. **راولپنڈی** — 20-B1، سمر پلازہ، چاندنی چوک، راولپنڈی — +92-51-9290439-40، +92-51-9290569
+2. **لاہور** — 117-G بلاک، ماڈل ٹاؤن، لاہور — +92-42-99230338، +92-42-99230488
+3. **ملتان** — ہاؤس نمبر 136، رحمت کالونی، نزد لوڈھے موڑ، MDA روڈ، ملتان — +92-61-921020020
+4. **ڈیرہ غازی خان** — ڈیرہ غازی خان؛ موجودہ BE&OE رابطہ گائیڈ میں مکمل پتہ/فون درج نہیں ملا۔
+5. **سیالکوٹ** — سیالکوٹ؛ موجودہ BE&OE رابطہ گائیڈ میں مکمل پتہ/فون درج نہیں ملا۔
+6. **پشاور** — امان اللہ خان پلازہ، دوسری منزل، GPO کے سامنے، لالہ ایوب لین، صدر روڈ، پشاور کینٹ — +92-91-9212050
+7. **مالاکنڈ** — بہادر خان پلازہ، مین بازار، بٹھیلہ، مالاکنڈ — +92-93-2412483
+8. **کراچی** — 14-J، بلاک نمبر 6، KFC کے قریب، نرسری، PECHS، کراچی — +92-21-34531941
+9. **کوئٹہ** — کوئری روڈ، کوئٹہ — +92-81-9202436
+
+**اہم:** متعلقہ پروٹیکٹر دفتر درخواست گزار کے علاقے کے دائرۂ اختیار کے مطابق منتخب ہوتا ہے۔ مثال کے طور پر سرکاری BE&OE جدول کے مطابق اسلام آباد، راولپنڈی پروٹیکٹر کے دائرۂ اختیار میں ہے۔
+
+**سرکاری ماخذ:** BE&OE رابطہ گائیڈ اور دائرۂ اختیار/طریقۂ کار کی سرکاری دستاویزات۔`;
+
+  answer=language==="Urdu"?officeDirectoryUr:officeDirectoryEn;
+ } } else if(isFee){
   answer=language==="Urdu"
    ?"## پروٹیکٹر فیس\n\nسرکاری Emigration Rules کے مطابق **Direct Employment** کے لیے Protector registration fee **Rs. 2,500 فی شخص** ہے اور **Welfare Fund** کے لیے **Rs. 4,000 فی شخص** ہے۔ اس کے علاوہ State Life insurance اور، جہاں لاگو ہو، OEP service charges/دیگر متعلقہ اخراجات الگ ہو سکتے ہیں۔\n\nاس لیے ایک ہی مجموعی رقم ہر کیس کے لیے فرض نہیں کی جانی چاہیے۔ ادائیگی سے پہلے اپنے کیس کے مطابق موجودہ BE&OE/Protector office instructions سے باقی قابلِ اطلاق charges کی تصدیق کریں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf"
    :"## Protector Fees\n\nAccording to the official Emigration Rules, the **Direct Employment** Protector registration fee is **Rs. 2,500 per emigrant**, and the **Welfare Fund** contribution is **Rs. 4,000 per emigrant**. State Life insurance and, where applicable, OEP service charges/other case-specific costs are separate.\n\nTherefore, the app should not present one universal total for every case. Confirm any remaining applicable charges with the current BE&OE/Protector office instructions before payment.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf";

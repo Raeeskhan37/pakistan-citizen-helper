@@ -1216,7 +1216,37 @@ if(requested==="Government Jobs"){
 
 if(requested==="FBR / Taxation"){
  const fq=normalize(question);
- const isRegistration=fq.includes("ntn")||fq.includes("national tax number")||fq.includes("register")||fq.includes("registration")||fq.includes("taxpayer");
+ const isRegistration=fq.includes("ntn")||fq.includes("national tax number")||fq.includes("register")||fq.includes("registration")||fq.includes("taxpayer"); const isATL=fq.includes("active taxpayer")||fq.includes("atl")||fq.includes("filer status")||fq.includes("filer")||fq.includes("active taxpayer list");
+ if(isATL){
+  const fbrATLAnswer=language==="Urdu"
+   ? `## FBR — Active Taxpayer Status (ATL)
+**سرکاری ادارہ:** Federal Board of Revenue (FBR)
+
+اپنا **Active Taxpayer Status** FBR کے **IRIS 2.0 / Online Verification** کے ذریعے چیک کیا جا سکتا ہے۔ IRIS میں **Active Taxpayer List (Income Tax)** کی verification سروس موجود ہے، جہاں متعلقہ شناختی نمبر منتخب کر کے معلومات درج کی جاتی ہیں اور **Verify** کیا جاتا ہے۔
+
+**سرکاری ذریعہ:** https://iris.fbr.gov.pk/
+`
+   : `## FBR — Active Taxpayer Status (ATL)
+**Official authority:** Federal Board of Revenue (FBR)
+
+You can check your **Active Taxpayer Status** through FBR's **IRIS 2.0 / Online Verification** service. IRIS provides an **Active Taxpayer List (Income Tax)** verification option where you select the relevant identifier, enter the required information and use **Verify**.
+
+**Official source:** https://iris.fbr.gov.pk/
+`;
+  const atlEvidence="OFFICIAL FBR EVIDENCE: The current FBR IRIS 2.0 portal provides an Online Verifications section containing Active Taxpayer List (Income Tax). It allows selection of an identifier such as NTN, CNIC, Passport No. or Registration/Inc. No., followed by verification. SOURCE: https://iris.fbr.gov.pk/";
+  return directWorkflowResponse({
+   answer:fbrATLAnswer,
+   source:{department:"FBR / Taxation",title:"FBR IRIS 2.0 — Active Taxpayer List Verification",url:"https://iris.fbr.gov.pk/",lastVerified:"28 September 2026",province:""},
+   department:"FBR / Taxation",
+   question,
+   language,
+   jurisdiction:null,
+   evidenceAvailable:true,
+   verifyClaims:true,
+   verificationEvidence:atlEvidence
+  });
+ }
+
  if(isRegistration){
   const fbrAnswer=language==="Urdu"
    ? `## FBR — انکم ٹیکس رجسٹریشن اور NTN

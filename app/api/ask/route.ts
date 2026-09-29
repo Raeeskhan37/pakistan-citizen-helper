@@ -354,8 +354,6 @@ function exciseEvidence(question:string,jurisdiction:string,language:"English"|"
   : "## Excise & Taxation\n\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new registration, or ownership transfer.";
 }
 
-import { retrieveNadraEvidence } from "../../../lib/nadra-rag";
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 

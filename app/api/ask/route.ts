@@ -1188,6 +1188,32 @@ if(requested==="Education & Scholarships"){
  for(const u of verificationUrls){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t; }
  return directWorkflowResponse({answer,source:{department:"Education & Scholarships",title:"Official education/scholarship source",url:verificationUrls[0]||"",lastVerified:"",province:ej||""},department:"Education & Scholarships",question,language,jurisdiction:ej,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
+if(requested==="Government Jobs"){
+ const jobsAnswer=governmentJobsEvidence(question,language);
+ const q=normalize(question);
+ const isApply=q.includes("apply")||q.includes("application")||q.includes("how to apply")||q.includes("اپلائی")||q.includes("درخواست");
+ const isAccount=q.includes("register")||q.includes("signup")||q.includes("sign up")||q.includes("account")||q.includes("رجسٹر")||q.includes("اکاؤنٹ");
+ const isPassword=q.includes("password")||q.includes("forgot")||q.includes("پاس ورڈ");
+ const evidence=isApply
+  ?"OFFICIAL NJP EVIDENCE: The National Jobs Portal Help page states that applicants can browse live jobs, open the job detail page, click Apply, complete the CV sections, and submit the application before the closing date. SOURCE: https://njp.gov.pk/help"
+  :isAccount
+  ?"OFFICIAL NJP EVIDENCE: The National Jobs Portal registration/help pages state that a candidate can register and complete verification; the registration page requests CNIC number and email address, and the help page describes CNIC and PAK-ID verification for the candidate profile. SOURCES: https://njp.gov.pk/register and https://njp.gov.pk/help"
+  :isPassword
+  ?"OFFICIAL NJP EVIDENCE: The National Jobs Portal Help page states that a user who forgot the password should use Forgot Password on the login page to receive a reset code and set a new password. SOURCE: https://njp.gov.pk/help"
+  :"OFFICIAL NJP EVIDENCE: The National Jobs Portal provides Live Jobs and Upcoming Jobs and allows job searches by keyword or organization. The official jobs page states that job postings are from verified government organizations. SOURCE: https://www.njp.gov.pk/index.php/jobs";
+ return directWorkflowResponse({
+  answer:jobsAnswer,
+  source:{department:"Government Jobs",title:"National Jobs Portal — Government of Pakistan",url:"https://njp.gov.pk/",lastVerified:"",province:""},
+  department:"Government Jobs",
+  question,
+  language,
+  jurisdiction:null,
+  evidenceAvailable:true,
+  verifyClaims:true,
+  verificationEvidence:evidence
+ });
+}
+
 if(requested==="FBR / Taxation"){
  const fq=normalize(question);
  const isRegistration=fq.includes("ntn")||fq.includes("national tax number")||fq.includes("register")||fq.includes("registration")||fq.includes("taxpayer");

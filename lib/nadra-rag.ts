@@ -323,7 +323,21 @@ export async function getDirectNadraAnswer(question: string, language: "English"
       );
     }
 
-// 2. FRC / FAMILY REGISTRATION.
+// SHAJRAH / FAMILY COMPOSITION VS FRC.
+    // "Shajrah" may mean PakID Family Composition or Shajra-e-Nasab.
+    // Keep this comparison ahead of the broad FRC branch.
+    if(/shajrah|shajra|shajra.?e.?nasab|family composition|family tree|شجرہ|خاندانی فہرست/.test(q) &&
+       /frc|family registration certificate|family composition|difference|فرق|مختلف/.test(q)) {
+      const body = language === "Urdu"
+        ? "### Shajrah / Family Composition اور FRC میں فرق\\n\\n**اگر Shajrah سے PakID کی Family Composition مراد ہے:** NADRA کے موجودہ PakID guide میں **FRC** اور **Family Composition** کو Family section میں الگ options کے طور پر دکھایا گیا ہے۔ FRC ایک باقاعدہ **Family Registration Certificate** ہے جو NADRA کے مطابق registered person کی family composition data کو reflect, verify اور record کرتا ہے۔ NADRA FRC کی categories میں By Birth، By Marriage، By Adoption اور By All شامل ہیں۔\\n\\n**اگر Shajra-e-Nasab (شجرہ نسب) مراد ہے:** یہ FRC نہیں ہے۔ سرکاری Revenue records میں Shajra-e-Nasab pedigree/family-tree record کے طور پر استعمال ہوتا ہے اور Revenue Department سے جاری/verified ہو سکتا ہے۔\\n\\nاس لیے دونوں کو ایک ہی document نہیں سمجھنا چاہیے۔"
+        : "### Shajrah / Family Composition vs FRC\\n\\n**If by Shajrah you mean the Family Composition option in PakID:** NADRA's current PakID guide shows **FRC** and **Family Composition** as separate options in the Family section. FRC is a formal **Family Registration Certificate** which NADRA says reflects, verifies and records a registered person's family-composition data. NADRA lists FRC categories including By Birth, By Marriage, By Adoption and By All.\\n\\n**If by Shajrah you mean Shajra-e-Nasab (pedigree):** that is not the same document as an NADRA FRC. Government Revenue records use Shajra-e-Nasab as a pedigree/family-tree record, which may be issued and verified by the Revenue Department.\\n\\nSo the two terms should not be treated as the same document.";
+      return out(
+        language === "Urdu" ? "NADRA — Shajrah / Family Composition اور FRC" : "NADRA — Shajrah / Family Composition vs FRC",
+        body
+      );
+    }
+
+    // 2. FRC / FAMILY REGISTRATION.
     // "Family registration information" is NOT automatically treated
     // as an FRC application or parent-information correction.
     // ------------------------------------------------------------

@@ -178,7 +178,7 @@ export async function verifyAnswerClaims(args: {
 
       // If GPT-OSS 120B is rate-limited, try the lighter production model once.
       // The fallback uses JSON-object mode for broad Groq compatibility.
-      if (response.status === 429) {
+      if (response.status === 429 || response.status === 400) {
         const fallbackModel = process.env.GROQ_VERIFIER_FALLBACK_MODEL || "openai/gpt-oss-20b";
         const fallbackResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",

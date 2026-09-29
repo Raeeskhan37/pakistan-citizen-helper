@@ -301,9 +301,13 @@ export async function verifyAnswerClaims(args: {
     }
 
     const data = await response.json();
-    const raw = String(data?.choices?.[0]?.message?.content || "");
+    // Normalize Groq's OpenAI-compatible response and Gemini's candidate response.
+    const raw = String(
+      data?.choices?.[0]?.message?.content ||
+      data?.candidates?.[0]?.content?.parts?.map((part: any) => String(part?.text || "")).join("") ||
+      ""
+    );
     const parsed = extractJson(raw) as { claims?: unknown } | null;
-
     if (!parsed || !Array.isArray(parsed.claims)) {
       return emptyResult("Verifier returned an invalid structured result.");
     }

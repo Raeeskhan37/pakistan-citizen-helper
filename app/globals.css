@@ -45,3 +45,34 @@ footer{margin-top:auto;padding:23px 18px;background:#0d273d;color:#b9cbd5;text-a
 .suggestions button{transition:background .14s ease,border-color .14s ease,color .14s ease,transform .14s ease}
 .suggestions button:hover{transform:translateY(-1px)}
 @media(max-width:600px){.question-card{padding:17px;border-radius:15px}.question-card textarea{min-height:145px;font-size:12px}.primary{padding:13px 14px}.suggestions{gap:6px}.suggestions button{padding:8px 10px;font-size:8px}}
+
+
+/* Answer & official-source presentation polish */
+.answer-area{animation:answerIn .24s ease-out}
+@keyframes answerIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.answer-card{position:relative;overflow:hidden}
+.answer-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--green)}
+.answer-card.is-warning:before{background:#c79b3b}
+.answer-top{padding-bottom:2px}
+.status-icon{box-shadow:0 3px 10px rgba(0,107,79,.09)}
+.status-icon.warning{box-shadow:0 3px 10px rgba(149,101,0,.08)}
+.verified-label{display:inline-flex;align-items:center;min-height:20px;padding:4px 7px;border-radius:6px;background:var(--green-soft)}
+.answer-card.is-warning .verified-label{background:#fff1d6;color:#956500}
+.answer-text{font-size:13px;line-height:1.85;letter-spacing:.002em}
+.answer-text strong{color:var(--navy)}
+.copy-button{transition:transform .14s ease,background .14s ease,border-color .14s ease,color .14s ease}
+.copy-button:hover{transform:translateY(-1px)}
+.source-card{position:relative;overflow:hidden;background:linear-gradient(135deg,#f9fcfb,#f5f9fb);border-color:#d5e3e6}
+.source-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#77b7a2}
+.source-main{flex:1}
+.source-card strong{font-size:11px;color:#203b50}
+.source-card a{transition:transform .14s ease,box-shadow .14s ease,background .14s ease}
+.source-card a:hover{box-shadow:0 5px 12px rgba(0,107,79,.16)}
+.secondary{transition:transform .14s ease,box-shadow .14s ease,background .14s ease,border-color .14s ease}
+.secondary:hover{box-shadow:0 6px 14px rgba(16,45,67,.06)}
+@media(max-width:600px){
+  .answer-card{padding:17px}
+  .answer-text{margin-top:14px;padding-top:13px;font-size:12px;line-height:1.8}
+  .source-card{padding:13px}
+  .source-card strong{font-size:10px}
+}

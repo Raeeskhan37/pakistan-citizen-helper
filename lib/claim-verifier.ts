@@ -17,7 +17,7 @@ export type ClaimVerificationResult = {
 
 const MAX_EVIDENCE = 9000;
 const MAX_ANSWER = 4500;
-const MAX_COMPLETION_TOKENS = 1200;
+const MAX_COMPLETION_TOKENS = 1400;
 
 function emptyResult(reason: string): ClaimVerificationResult {
   return {
@@ -98,7 +98,7 @@ export async function verifyAnswerClaims(args: {
     evidence.slice(0, MAX_EVIDENCE);
 
   try {
-    const model = process.env.GROQ_VERIFIER_MODEL || "openai/gpt-oss-120b";
+    const model = process.env.GROQ_VERIFIER_MODEL || "openai/gpt-oss-20b";
     const messages = [
       {
         role: "system",
@@ -114,36 +114,7 @@ export async function verifyAnswerClaims(args: {
       max_completion_tokens: MAX_COMPLETION_TOKENS,
       service_tier: "auto",
       include_reasoning: false,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "claim_verification",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              claims: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    claim: { type: "string" },
-                    verdict: {
-                      type: "string",
-                      enum: ["supported", "unsupported", "unclear"],
-                    },
-                    reason: { type: "string" },
-                  },
-                  required: ["claim", "verdict", "reason"],
-                  additionalProperties: false,
-                },
-              },
-            },
-            required: ["claims"],
-            additionalProperties: false,
-          },
-        },
-      },
+      response_format: { type: "json_object" },
       messages,
     };
 
@@ -223,7 +194,14 @@ export async function verifyAnswerClaims(args: {
             // cannot silently change the verifier's response contract.
             include_reasoning: false,
             response_format: { type: "json_object" },
-            messages,
+            messages: [
+...messages,
+{
+role: "user",
+content:
+'Return a valid JSON object only. It MUST contain a top-level "claims" array. Each item MUST contain claim, verdict, and reason. verdict MUST be exactly supported, unsupported, or unclear.',
+},
+],
           }),
         });
 

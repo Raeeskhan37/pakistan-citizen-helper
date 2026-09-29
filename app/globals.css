@@ -35,3 +35,13 @@ footer{margin-top:auto;padding:23px 18px;background:#0d273d;color:#b9cbd5;text-a
 .department-card:hover:after{opacity:1}
 .card-icon{box-shadow:0 2px 8px rgba(16,45,67,.045)}
 @media(max-width:600px){.department-grid{grid-template-columns:1fr}.department-card{min-height:92px;padding:14px 16px}.card-icon{width:42px;height:42px;font-size:20px}}
+
+.question-card{position:relative;overflow:hidden}
+.question-card:before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:var(--green);opacity:.85}
+.question-heading{padding-top:2px}
+.question-mark{box-shadow:0 3px 9px rgba(0,107,79,.08)}
+.question-card textarea{transition:border-color .16s ease,box-shadow .16s ease,background .16s ease}
+.primary{transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+.suggestions button{transition:background .14s ease,border-color .14s ease,color .14s ease,transform .14s ease}
+.suggestions button:hover{transform:translateY(-1px)}
+@media(max-width:600px){.question-card{padding:17px;border-radius:15px}.question-card textarea{min-height:145px;font-size:12px}.primary{padding:13px 14px}.suggestions{gap:6px}.suggestions button{padding:8px 10px;font-size:8px}}

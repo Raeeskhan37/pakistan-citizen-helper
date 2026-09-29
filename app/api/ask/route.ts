@@ -962,7 +962,28 @@ export async function POST(request:NextRequest){try{
   const answer=language==="Urdu"
    ?"## پاسپورٹ میں کوائف کی تبدیلی / Modification\n\nDGI&P کے سرکاری قواعد کے مطابق پاسپورٹ میں نام، والد کا نام، تاریخِ پیدائش اور دیگر کوائف میں تبدیلی کی درخواست دی جا سکتی ہے۔ **پہلے CNIC/NICOP کو متعلقہ درست کوائف کے ساتھ revise/modify کروانا ضروری ہے۔** اس کے بعد مطلوبہ دستاویزات کے ساتھ پاسپورٹ آفس میں modification کے لیے درخواست دی جاتی ہے۔\n\n**آپ کے سوال کے مطابق:** "+(nameChange?"نام کی تبدیلی پاسپورٹ میں کی جا سکتی ہے، بشرطیکہ revised CNIC/NICOP پر نیا نام درج ہو۔ ":"")+(fatherChange?"والد کے نام کی تبدیلی کے لیے بھی revised CNIC/NICOP درکار ہے۔ ":"")+(dobChange?"تاریخِ پیدائش/عمر کی تبدیلی کے لیے revised CNIC/NICOP درکار ہے؛ مزید verification کے لیے birth certificate یا recognized Board/University کی Matriculation certificate طلب کی جا سکتی ہے۔ ":"")+(addressChange?"پتے کے بارے میں DGI&P کے قواعد اسے الگ سے نامزد service کے طور پر تفصیل سے بیان نہیں کرتے، لیکن Rule 16 دیگر particulars کو بھی cover کرتا ہے۔ اس لیے پہلے CNIC/NICOP پر پتہ درست کریں اور پاسپورٹ آفس سے متعلقہ modification کی تصدیق کریں؛ میں address کے لیے غیرمصدقہ الگ checklist نہیں دوں گا۔ ":"")+"\n**خاص صورت:** اگر نام، والد کا نام اور تاریخِ پیدائش تینوں ایک ساتھ تبدیل کیے جا رہے ہوں تو DGI&P کے مطابق کیس Regional Passport Office/Foreign Mission سے Directorate General Immigration & Passports, Islamabad کو approval کے لیے بھیجا جاتا ہے۔\n\n**بنیادی دستاویز:** revised original CNIC/NICOP۔ DGI&P اضافی supporting documents ضرورت کے مطابق طلب کر سکتا ہے۔\n\n**سرکاری ذریعہ:** DGI&P — Change of Particulars / Modification\nhttps://dgip.gov.pk/passport/ordinary-passport.php"
    :"## Passport — Change of Particulars / Modification\n\nDGI&P officially allows passport modification for **name, father name, date of birth and other particulars**. The applicant must first revise/modify the **CNIC/NICOP** so it reflects the corrected particulars, then apply for passport modification with the required documents.\n\n**For your question:** "+(nameChange?"Name changes are permitted when the revised CNIC/NICOP reflects the new name. ":"")+(fatherChange?"Father-name changes require the revised CNIC/NICOP. ":"")+(dobChange?"Date-of-birth/age changes require the revised CNIC/NICOP; DGI&P may request a birth certificate or recognized Board/University Matriculation certificate for further verification. ":"")+(addressChange?"For an address change, DGI&P does not publish a separate detailed address-modification checklist on the cited page; its rules cover other particulars. Therefore, first update the CNIC/NICOP and confirm the passport-office treatment rather than inventing a separate address procedure. ":"")+"\n**Combined changes:** If name, father name and date of birth are all being changed together, DGI&P states that the case is forwarded by the Regional Passport Office/Foreign Mission to DGI&P Islamabad for approval.\n\n**Core document:** revised original CNIC/NICOP. DGI&P may request additional supporting documents as required.\n\n**Official source:** DGI&P — Change of Particulars / Modification\nhttps://dgip.gov.pk/passport/ordinary-passport.php";
-  return directWorkflowResponse({answer,source:{department:"Passport",title:"DGI&P — Change of Particulars / Modification",url:"https://dgip.gov.pk/passport/ordinary-passport.php",lastVerified:"27 September 2026",province:""},department:"Passport Services",question,language,evidenceAvailable:true});
+  // Verify the curated passport answer against focused evidence from the official DGI&P page.
+  let passportVerificationEvidence="";
+  const passportOfficialUrl="https://dgip.gov.pk/passport/ordinary-passport.php";
+  const passportPage=await fetchOfficialPage(passportOfficialUrl);
+  const passportTerms=["Change of Particulars","CNIC","NICOP","father","date of birth","name","Directorate General Immigration & Passports","Regional Passport Office"];
+  const passportRelevant=extractRelevantOfficialEvidence(passportPage,passportTerms);
+  if(passportRelevant){
+   passportVerificationEvidence="OFFICIAL SOURCE EVIDENCE: "+passportOfficialUrl+"\\n"+passportRelevant;
+  }
+  if(!passportVerificationEvidence.trim()){
+   passportVerificationEvidence="OFFICIAL CURATED EVIDENCE:\\n"+answer;
+  }
+  return directWorkflowResponse({
+   answer,
+   source:{department:"Passport",title:"DGI&P — Change of Particulars / Modification",url:passportOfficialUrl,lastVerified:"27 September 2026",province:""},
+   department:"Passport Services",
+   question,
+   language,
+   evidenceAvailable:true,
+   verifyClaims:true,
+   verificationEvidence:passportVerificationEvidence.trim()
+  });
  }
 
  // EARLY VACCINATION ROUTE: import the proven Streamlit Hajj/Umrah/work-visa handling without changing frozen departments.

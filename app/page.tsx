@@ -46,6 +46,12 @@ const departments: Department[] = [
   { id: "excise", name: "Excise & Taxation", urdu: "ایکسائز اینڈ ٹیکسیشن", icon: "🚗", description: "Vehicle registration and taxation", services: [
     { id: "registration", name: "Motor Vehicle Registration", icon: "🚗", description: "Register a vehicle", question: "How can I register a motor vehicle?" }, { id: "transfer", name: "Vehicle Ownership Transfer", icon: "🔁", description: "Transfer ownership", question: "How can I transfer vehicle ownership?" }, { id: "token", name: "Vehicle Token Tax", icon: "💰", description: "Vehicle tax payment", question: "How can I pay vehicle token tax?" }, { id: "verification", name: "Vehicle Verification", icon: "🔎", description: "Verify vehicle information", question: "How can I verify a vehicle?" }, { id: "renewal", name: "Vehicle Registration Renewal", icon: "🔄", description: "Renew registration", question: "How can I renew vehicle registration?" }, { id: "plate", name: "Number Plate", icon: "🔢", description: "Number plate information", question: "How can I obtain or replace a number plate?" },
   ]},
+  { id: "education", name: "Education & Scholarships", urdu: "تعلیم اور وظائف", icon: "🎓", description: "Scholarships and education", services: [
+    { id: "hec", name: "HEC Scholarships", icon: "🎓", description: "HEC scholarship information", question: "What HEC scholarships are available?" }, { id: "eligibility", name: "Scholarship Eligibility", icon: "✅", description: "Eligibility criteria", question: "How can I check scholarship eligibility?" }, { id: "application", name: "Scholarship Application", icon: "📝", description: "How to apply", question: "How can I apply for a government scholarship?" }, { id: "directory", name: "Scholarship Directory", icon: "📚", description: "Official opportunities", question: "Where can I find official scholarship opportunities?" },
+  ]},
+  { id: "jobs", name: "Government Jobs", urdu: "سرکاری ملازمتیں", icon: "💼", description: "Official government recruitment", services: [
+    { id: "federal", name: "Federal Government Jobs", icon: "🇵🇰", description: "Federal vacancies", question: "Where can I find official federal government jobs?" }, { id: "provincial", name: "Provincial Government Jobs", icon: "🏛️", description: "Provincial vacancies", question: "Where can I find official provincial government jobs?" }, { id: "application", name: "How to Apply", icon: "📝", description: "Application guidance", question: "How can I apply for a government job?" },
+  ]},
 ];
 
 export default function Home() {
@@ -232,13 +238,7 @@ export default function Home() {
       const supervisor = statuses[0];
       const analyzer = statuses[1];
       const verifier = statuses[2];
-      const guidance = statuses[3  { id: "education", name: "Education & Scholarships", urdu: "تعلیم اور وظائف", icon: "🎓", description: "Scholarships and education", services: [
-    { id: "hec", name: "HEC Scholarships", icon: "🎓", description: "HEC scholarship information", question: "What HEC scholarships are available?" }, { id: "eligibility", name: "Scholarship Eligibility", icon: "✅", description: "Eligibility criteria", question: "How can I check scholarship eligibility?" }, { id: "application", name: "Scholarship Application", icon: "📝", description: "How to apply", question: "How can I apply for a government scholarship?" }, { id: "directory", name: "Scholarship Directory", icon: "📚", description: "Official opportunities", question: "Where can I find official scholarship opportunities?" },
-  ]},
-  { id: "jobs", name: "Government Jobs", urdu: "سرکاری ملازمتیں", icon: "💼", description: "Official government recruitment", services: [
-    { id: "federal", name: "Federal Government Jobs", icon: "🇵🇰", description: "Federal vacancies", question: "Where can I find official federal government jobs?" }, { id: "provincial", name: "Provincial Government Jobs", icon: "🏛️", description: "Provincial vacancies", question: "Where can I find official provincial government jobs?" }, { id: "application", name: "How to Apply", icon: "📝", description: "Application guidance", question: "How can I apply for a government job?" },
-  ]},
-];
+      const guidance = statuses[3];
       const state =
         item.key === "supervisor" ? supervisor :
         item.key === "analyzer" ? analyzer :

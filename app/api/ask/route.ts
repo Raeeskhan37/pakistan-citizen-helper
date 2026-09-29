@@ -1553,7 +1553,34 @@ if(requested==="Excise & Taxation"){
  const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  if(ej){
   const answer=exciseEvidence(question,ej,language);
-  return directWorkflowResponse({answer,source:{department:"Excise & Taxation",title:"Official Excise & Taxation source",url:"",lastVerified:"",province:ej},department:"Excise & Taxation",question,language,jurisdiction:ej,evidenceAvailable:true});
+  const exciseUrls=Array.from(new Set(
+   answer.split(/\\s+/).filter((item)=>item.startsWith("http://")||item.startsWith("https://")).map((item)=>item.replace(/[.,]+$/,""))
+  ));
+  let exciseVerificationEvidence="";
+  for(const u of exciseUrls){
+   const t=await fetchOfficialPage(u);
+   if(t) exciseVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+  }
+  if(!exciseVerificationEvidence.trim()){
+   exciseVerificationEvidence=answer;
+  }
+  return directWorkflowResponse({
+   answer,
+   source:{
+    department:"Excise & Taxation",
+    title:"Official Excise & Taxation information",
+    url:exciseUrls[0]||"",
+    lastVerified:"",
+    province:ej
+   },
+   department:"Excise & Taxation",
+   question,
+   language,
+   jurisdiction:ej,
+   evidenceAvailable:true,
+   verifyClaims:true,
+   verificationEvidence:exciseVerificationEvidence.trim()
+  });
  }
  return directWorkflowResponse({answer:language==="Urdu"?"## ایکسائز اینڈ ٹیکسیشن\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔":"## Excise & Taxation\n\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new vehicle registration, or ownership transfer.",source:null,department:"Excise & Taxation",question,language,jurisdiction:null,evidenceAvailable:false});
 }

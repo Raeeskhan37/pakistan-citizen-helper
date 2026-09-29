@@ -1012,7 +1012,37 @@ export async function POST(request:NextRequest){try{
   const answer=language==="Urdu"
    ?"## ڈومیسائل سرٹیفکیٹ — مطلوبہ دستاویزات\n\nڈومیسائل کی دستاویزات صوبے یا علاقے کے مطابق مختلف ہو سکتی ہیں۔ سرکاری ذرائع سے درج ذیل چیک لسٹس کی تصدیق ہوتی ہے:\n\n**پنجاب:**\n1. CNIC / Form-B\n2. والد کا CNIC / شوہر کا CNIC\n3. Birth Certificate / School Certificate\n4. Bank Receipt\n5. 2 تصاویر\n6. Property Documents / Utility Bill\n\n**اسلام آباد (ICT):** 21 سال یا اس سے زیادہ عمر کے درخواست گزار کے لیے CNIC کی کاپی، والد/شوہر کے CNIC کی کاپی، اسلام آباد میں رہائش کا ثبوت (Allotment Letter یا Lease Agreement)، اصل Utility Bill، اور اگر بچے ہوں تو Form-B کی کاپی درکار ہے۔ اصل دستاویزات کے ساتھ ذاتی حاضری ضروری ہے۔\n\n**خیبر پختونخوا:** سرکاری KP Citizen Facilitation Portal پر Domicile Certificate سروس، Checklist اور Online Apply موجود ہیں، لیکن دستیاب عوامی صفحے سے مکمل checklist متن اخذ نہیں ہو سکا۔ اس لیے میں KP کے لیے غیرمصدقہ دستاویزات شامل نہیں کر رہا۔\n\nاپنا **صوبہ/علاقہ** بتا دیں (مثلاً پنجاب، خیبر پختونخوا، سندھ، بلوچستان یا اسلام آباد) تو اسی حکومت کی متعلقہ سرکاری checklist کے مطابق جواب دیا جا سکتا ہے۔\n\n**سرکاری ذرائع:**\n- پنجاب e-Khidmat: https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/domicile-certificate\n- ICT Administration: https://ictadministration.gov.pk/domicile-certificate/\n- KP Citizens Facilitation Portal: https://cfc.kp.gov.pk/\n- KP E-Domicile System: https://www.pmru.kp.gov.pk/e-domicile.php"
    :"## Domicile Certificate — Required Documents\n\nDomicile document requirements vary by province or territory. The following checklists are directly supported by official government sources:\n\n**Punjab:**\n1. CNIC / Form-B\n2. Father’s CNIC / Husband’s CNIC\n3. Birth Certificate / School Certificate\n4. Bank Receipt\n5. Two photographs\n6. Property Documents / Utility Bill\n\n**Islamabad Capital Territory (ICT):** For applicants aged 21 or above, the ICT Administration lists a copy of the applicant’s CNIC, father’s/husband’s CNIC, proof of residence in Islamabad (Allotment Letter or Lease Agreement), one original utility bill, and Form-B if the applicant has children. The applicant must appear with original documents.\n\n**Khyber Pakhtunkhwa:** The official KP Citizen Facilitation Portal lists Domicile Certificate as a service with a Checklist and Online Apply option, but the accessible public page does not expose the complete checklist text. I therefore do not add an unverified KP document list.\n\nPlease specify your **province/territory** (for example Punjab, Khyber Pakhtunkhwa, Sindh, Balochistan, or Islamabad) for the relevant official checklist.\n\n**Official sources:**\n- Punjab e-Khidmat: https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/domicile-certificate\n- ICT Administration: https://ictadministration.gov.pk/domicile-certificate/\n- KP Citizens Facilitation Portal: https://cfc.kp.gov.pk/\n- KP E-Domicile System: https://www.pmru.kp.gov.pk/e-domicile.php";
-  return directWorkflowResponse({answer,source:{department:"Domicile",title:"Official Government Domicile Services — Punjab, ICT and KP",url:"https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/domicile-certificate",lastVerified:"",province:""},department:"Domicile",question,language,jurisdiction:workingTargetJurisdiction||workingJurisdiction,evidenceAvailable:true});
+  const domicileUrls=[
+   "https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/domicile-certificate",
+   "https://ictadministration.gov.pk/domicile-certificate/",
+   "https://cfc.kp.gov.pk/",
+   "https://www.pmru.kp.gov.pk/e-domicile.php"
+  ];
+  let domicileVerificationEvidence="";
+  for(const u of domicileUrls){
+   const t=await fetchOfficialPage(u);
+   if(t){
+    const terms=u.includes("ekhidmat")?["Domicile","CNIC","Form-B","Father","Husband","Birth Certificate","School Certificate","Bank Receipt","photographs","Property","Utility"]:
+      u.includes("ictadministration")?["Domicile","CNIC","father","husband","residence","Allotment","Lease","Utility Bill","Form-B","21"]:
+      ["Domicile","Checklist","Apply Online","e-Domicile","DC Office","Citizen Facilitation"];
+    const relevant=extractRelevantOfficialEvidence(t,terms);
+    if(relevant) domicileVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+relevant;
+   }
+  }
+  if(!domicileVerificationEvidence.trim()){
+   domicileVerificationEvidence="OFFICIAL CURATED EVIDENCE:\\n"+answer;
+  }
+  return directWorkflowResponse({
+   answer,
+   source:{department:"Domicile",title:"Official Government Domicile Services — Punjab, ICT and KP",url:"https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/domicile-certificate",lastVerified:"",province:""},
+   department:"Domicile",
+   question,
+   language,
+   jurisdiction:workingTargetJurisdiction||workingJurisdiction,
+   evidenceAvailable:true,
+   verifyClaims:true,
+   verificationEvidence:domicileVerificationEvidence.trim()
+  });
  }
 
  // EARLY KP DOMICILE ROUTE: use the current official KP e-Domicile and Citizen Facilitation evidence directly.

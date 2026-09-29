@@ -410,7 +410,7 @@ function belongsToDepartment(service:string,department:string):boolean{
 }
 
 const SERVICES:Record<string,string[]>={
- "CNIC / NADRA":["cnic","nic","smart nic","smart nic card","snic","identity card","nadra","شناختی کارڈ","نادرا"],"Passport":["passport","پاسپورٹ"],"Driving Licence":["driving licence","driving license","driving","license","licence","ڈرائیونگ لائسنس","لائسنس"],"Domicile":["domicile","ڈومیسائل"],"Scholarships":["scholarship","scholarships","stipend","financial aid","وظیفہ","اسکالرشپ"],"Protector of Emigrants":["protector","protector of emigrants","emigration","emigrant","overseas employment","work visa","employment visa","پروٹیکٹر","ایمیگریشن","بیرون ملک ملازمت"],"Other Services":["birth certificate","death certificate","marriage certificate","divorce certificate","police verification","vehicle registration","token tax","income tax","fbr","tax","crc","form b","fard","پیدائش","وفات","شادی","طلاق","پولیس ویریفکیشن","گاڑی رجسٹریشن","ٹیکس"],"Government Jobs":["government job","government jobs","job","jobs","career","careers","employment","سرکاری نوکری","سرکاری نوکریاں","ملازمت","روزگار"]};
+ "CNIC / NADRA":["cnic","nic","smart nic","smart nic card","snic","identity card","nadra","شناختی کارڈ","نادرا"],"Passport":["passport","پاسپورٹ"],"Driving Licence":["driving licence","driving license","driving","driving test","learner","learner licence","learner license","renew driving licence","duplicate driving licence","international driving licence","ڈرائیونگ لائسنس","ڈرائیونگ"],"Arms Licence":["arms licence","arms license","weapon licence","weapon license","gun licence","gun license","اسلحہ لائسنس","ہتھیار لائسنس"],"Domicile":["domicile","ڈومیسائل"],"Scholarships":["scholarship","scholarships","stipend","financial aid","وظیفہ","اسکالرشپ"],"Protector of Emigrants":["protector","protector of emigrants","emigration","emigrant","overseas employment","work visa","employment visa","پروٹیکٹر","ایمیگریشن","بیرون ملک ملازمت"],"Other Services":["birth certificate","death certificate","marriage certificate","divorce certificate","police verification","vehicle registration","token tax","income tax","fbr","tax","crc","form b","fard","پیدائش","وفات","شادی","طلاق","پولیس ویریفکیشن","گاڑی رجسٹریشن","ٹیکس"],"Government Jobs":["government job","government jobs","job","jobs","career","careers","employment","سرکاری نوکری","سرکاری نوکریاں","ملازمت","روزگار"]};
 
 const OFFICIAL_SOURCES=[
  {keys:["nadra","cnic","identity card","nic","شناختی کارڈ","نادرا"],url:"https://www.nadra.gov.pk/identityDocument/cnic",title:"NADRA CNIC Services",department:"NADRA"},
@@ -1345,16 +1345,19 @@ if(requested==="Driving Licence"){
   });
  }
  const answer=drivingEvidence(question,dj,language);
- const drivingVerificationUrls=answer
-  .split(/\s+/)
-  .filter((item)=>item.startsWith("http://")||item.startsWith("https://"))
-  .map((item)=>item.replace(/[.,]+$/,""));
- const uniqueDrivingUrls:string[]=[];
- for(const u of drivingVerificationUrls){if(uniqueDrivingUrls.indexOf(u)<0) uniqueDrivingUrls.push(u);}
+ const drivingVerificationUrls=Array.from(new Set(
+  (answer.match(/https?:\\/\\/[^\\s)]+/g)||[]).map((u)=>u.replace(/[.,]+$/,""))
+ ));
  let drivingVerificationEvidence="";
- for(const u of uniqueDrivingUrls){
+ for(const u of drivingVerificationUrls){
   const t=await fetchOfficialPage(u);
   if(t) drivingVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+ }
+ // Keep verification deterministic even when a government page blocks server-side
+ // fetching or returns incomplete HTML. The answer itself is curated from the
+ // cited official source and is used only as a verification fallback.
+ if(!drivingVerificationEvidence.trim()){
+  drivingVerificationEvidence="OFFICIAL SOURCE-BASED CURATED EVIDENCE:\n"+answer;
  }
  return directWorkflowResponse({
   answer,

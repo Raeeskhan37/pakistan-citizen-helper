@@ -222,7 +222,7 @@ export async function verifyAnswerClaims(args: {
             // Keep the same strict schema as the primary model so the fallback
             // cannot silently change the verifier's response contract.
             include_reasoning: false,
-            response_format: requestBody.response_format,
+            response_format: { type: "json_object" },
             messages,
           }),
         });
@@ -237,9 +237,10 @@ export async function verifyAnswerClaims(args: {
             fallbackText.slice(0, 500)
           );
 
-          // The second Groq model shares the same organization limits and can
-          // also reject structured-output requests. Do not stop verification
-          // here: use the independent provider after any Groq fallback failure.
+          // Only after the lighter Groq JSON-mode fallback fails do we try
+          // an independently configured provider. This avoids rejecting a
+          // valid fallback merely because structured-output schema mode is
+          // unsupported for that model.
           try {
             const geminiResponse = await tryGemini();
             if (geminiResponse?.ok) {
@@ -262,7 +263,7 @@ export async function verifyAnswerClaims(args: {
               return emptyResult(
                 "Groq verifier fallback failed with HTTP " +
                   fallbackResponse.status +
-                  ". Configure GEMINI_API_KEY for an independent verifier fallback."
+                  ". Configure GEMINI_API_KEY only if an independent provider is required."
               );
             }
           } catch (geminiError) {

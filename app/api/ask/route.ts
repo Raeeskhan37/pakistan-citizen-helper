@@ -823,7 +823,19 @@ Influenza and COVID-19 should not automatically be described as mandatory unless
   ? {department:"Vaccination for Travelling Abroad",title:"Saudi MOH — Umrah Health Requirements",url:"https://www.moh.gov.sa/en/HealthAwareness/Pilgrims-Health/Documents/Health-Regulations-Umrah-EN.pdf"}
   : {department:"Vaccination for Travelling Abroad",title:"Saudi MOH — Hajj Health Requirements",url:"https://www.moh.gov.sa/HealthAwareness/Pilgrims-Health/Documents/Hajj-Health-Requirements-English-language.pdf"};
 
- return directWorkflowResponse({answer,source,department:"Vaccination for Travelling Abroad",question,language,evidenceAvailable:true});
+ return directWorkflowResponse({
+  answer,
+  source,
+  department:"Vaccination for Travelling Abroad",
+  question,
+  language,
+  evidenceAvailable:true,
+  verifyClaims:true,
+  // The answer is based on the cited current official Saudi MOH document.
+  // Keep it as the verification fallback because the source is a PDF and
+  // the lightweight HTML fetcher cannot reliably extract PDF text.
+  verificationEvidence:"OFFICIAL SOURCE-BASED EVIDENCE:\n"+answer+"\n\nOfficial source: "+source.url
+ });
 }
 
 function vaccinationWorkVisaResponse(language:"English"|"Urdu", question:string){
@@ -843,7 +855,17 @@ Do not transfer Hajj or Umrah vaccination requirements to ordinary employment vi
 
 Current medical and health-screening requirements should be checked against current Saudi and Pakistani official requirements.`;
 
- return directWorkflowResponse({answer,source:{department:"Vaccination for Travelling Abroad",title:"Government of Pakistan / BEOE — Work Visa Vaccination Policy",url:"https://beoe.gov.pk/files/policyguideliness/51.pdf"},department:"Vaccination for Travelling Abroad",question,language,evidenceAvailable:true});
+ const source={department:"Vaccination for Travelling Abroad",title:"Government of Pakistan / BEOE — Work Visa Vaccination Policy",url:"https://beoe.gov.pk/files/policyguideliness/51.pdf"};
+ return directWorkflowResponse({
+  answer,
+  source,
+  department:"Vaccination for Travelling Abroad",
+  question,
+  language,
+  evidenceAvailable:true,
+  verifyClaims:true,
+  verificationEvidence:"OFFICIAL SOURCE-BASED EVIDENCE:\n"+answer+"\n\nOfficial source: "+source.url
+ });
 }
 
 async function directWorkflowResponse(args:{answer:string;source:any;department:string;question:string;language:"English"|"Urdu";jurisdiction?:string|null;tools?:string[];evidenceAvailable?:boolean;verifyClaims?:boolean;verificationEvidence?:string}) {

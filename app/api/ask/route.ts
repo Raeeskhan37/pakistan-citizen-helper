@@ -558,6 +558,21 @@ async function fetchOfficialSearch(query:string,domains:string[]):Promise<string
 }
 
 async function fetchOfficialPage(url:string):Promise<string>{try{const res=await fetch(url,{headers:{"User-Agent":"Mozilla/5.0 Pakistan Citizen Helper"},cache:"no-store"});if(!res.ok)return "";const html=await res.text();return html.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<noscript[\s\S]*?<\/noscript>/gi," ").replace(/<[^>]+>/g," ").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/\s+/g," ").trim().slice(0,28000);}catch{return "";}}
+function extractRelevantOfficialEvidence(text:string,terms:string[]):string{
+ const source=String(text||"").trim();
+ if(!source)return "";
+ const lower=source.toLowerCase();
+ const chunks:string[]=[];
+ for(const term of terms){
+  let at=lower.indexOf(term.toLowerCase());
+  if(at>=0){
+   const start=Math.max(0,at-900),end=Math.min(source.length,at+1800);
+   const chunk=source.slice(start,end).trim();
+   if(chunk && !chunks.includes(chunk))chunks.push(chunk);
+  }
+ }
+ return chunks.join("\n\n");
+}
 
 function webSearchDomains(question:string,service:string,jurisdiction:string|null):string[]{
   const text=normalize(`${question} ${service} ${jurisdiction||""}`);
@@ -1554,15 +1569,30 @@ if(requested==="Excise & Taxation"){
  if(ej){
   const answer=exciseEvidence(question,ej,language);
   const exciseUrls=Array.from(new Set(
-   answer.split(/\\s+/).filter((item)=>item.startsWith("http://")||item.startsWith("https://")).map((item)=>item.replace(/[.,]+$/,""))
+   answer.split(/\s+/).filter((item)=>item.startsWith("http://")||item.startsWith("https://")).map((item)=>item.replace(/[.,]+$/,""))
   ));
+  const q=normalize(question);
+  const isRegistration=q.includes("new registration")||q.includes("vehicle registration")||q.includes("register a vehicle")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
+  const isTransfer=q.includes("transfer")||q.includes("ownership")||q.includes("ملکیت")||q.includes("منتقلی");
+  const isToken=q.includes("token")||q.includes("motor vehicle tax")||q.includes("vehicle tax")||q.includes("ٹوکن");
+  const isPayment=q.includes("pay")||q.includes("payment")||q.includes("online payment")||q.includes("ادائیگی");
+  const relevanceTerms=isRegistration
+   ? ["Form-F","Sales Certificate","Sales Invoice","registration fee","number plate"]
+   : isTransfer
+    ? ["T.O. Form","seller's CNIC","purchaser's CNIC","Registration Certificate","Transfer Fee","PSID"]
+    : isToken
+     ? ["MVT 2026-27","token tax","31 August","10%"]
+     : isPayment
+      ? ["Online Payment of Excise Dues","payment","excise dues"]
+      : ["Excise & Taxation","vehicle"];
   let exciseVerificationEvidence="";
   for(const u of exciseUrls){
    const t=await fetchOfficialPage(u);
-   if(t) exciseVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+   const relevant=extractRelevantOfficialEvidence(t,relevanceTerms);
+   if(relevant) exciseVerificationEvidence+="\n\nOFFICIAL SOURCE EVIDENCE: "+u+"\n"+relevant;
   }
   if(!exciseVerificationEvidence.trim()){
-   exciseVerificationEvidence=answer;
+   exciseVerificationEvidence="OFFICIAL CURATED EVIDENCE:\n"+answer;
   }
   return directWorkflowResponse({
    answer,

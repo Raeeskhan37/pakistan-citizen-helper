@@ -947,7 +947,19 @@ export async function POST(request:NextRequest){try{
        }
      }
 
-     const verificationEvidence=[nadraRag,nadraOfficialText].filter(Boolean).join("\\n\\n");
+     const qnDirect=normalize(question);
+     let nadraSpecificVerificationEvidence="";
+     if(/shajrah|shajra|shajra.?e.?nasab|family composition|family tree|شجرہ|خاندانی فہرست/.test(qnDirect) &&
+        /frc|family registration certificate|difference|فرق|مختلف/.test(qnDirect)){
+       nadraSpecificVerificationEvidence=[
+         "OFFICIAL NADRA PAKID FAMILY GUIDE: https://www.nadra.gov.pk/pakIdentityFaqs/",
+         "The official NADRA PakID Family section lists FRC and Family Composition as separate options.",
+         "OFFICIAL NADRA FRC SOURCE: https://www.nadra.gov.pk/identityDocument/frc",
+         "NADRA defines FRC as Family Registration Certificate and states that it reflects, verifies and records registered family-composition data. NADRA lists FRC categories including By Birth, By Marriage, By Adoption and By All.",
+         "OFFICIAL GOVERNMENT REVENUE EVIDENCE: Shajra-e-Nasab is used in government revenue records as a pedigree/family-tree record; it is distinct from an NADRA Family Registration Certificate."
+       ].join("\\n\\n");
+     }
+     const verificationEvidence=[nadraRag,nadraOfficialText,nadraSpecificVerificationEvidence].filter(Boolean).join("\\n\\n");
      const claimVerification=await verifyAnswerClaims({
        answer:cleanAnswer(directNadraAnswer),
        evidence:verificationEvidence,

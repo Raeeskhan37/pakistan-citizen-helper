@@ -229,45 +229,6 @@ export async function verifyAnswerClaims(args: {
 
         if (fallbackResponse.ok) {
           response = fallbackResponse;
-        } else if (fallbackResponse.status === 400) {
-          // Retry JSON Object Mode if strict structured output is rejected.
-          const fallbackJsonResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: "Bearer " + apiKey,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: fallbackModel,
-              temperature: 0,
-              max_completion_tokens: MAX_COMPLETION_TOKENS,
-              service_tier: "auto",
-              include_reasoning: false,
-              response_format: { type: "json_object" },
-              messages: [
-                ...messages,
-                {
-                  role: "user",
-                  content:
-                    'Return a valid JSON object only. It MUST contain a top-level "claims" array. Each item MUST contain claim, verdict, and reason. verdict MUST be exactly supported, unsupported, or unclear.',
-                },
-              ],
-            }),
-          });
-
-          if (fallbackJsonResponse.ok) {
-            response = fallbackJsonResponse;
-          } else {
-            const fallbackText = await fallbackJsonResponse.text().catch(() => "");
-            console.error(
-              "Claim verifier fallback JSON-mode provider error:",
-              fallbackJsonResponse.status,
-              fallbackText.slice(0, 500)
-            );
-            return emptyResult(
-              "Verifier fallback provider returned HTTP " + fallbackJsonResponse.status + "."
-            );
-          }
         } else {
           const fallbackText = await fallbackResponse.text().catch(() => "");
           console.error(
@@ -275,24 +236,42 @@ export async function verifyAnswerClaims(args: {
             fallbackResponse.status,
             fallbackText.slice(0, 500)
           );
-          if (fallbackResponse.status === 429) {
-            try {
-              const geminiResponse = await tryGemini();
-              if (geminiResponse?.ok) {
-                response = geminiResponse;
-              } else if (geminiResponse) {
-                const geminiText = await geminiResponse.text().catch(() => "");
-                console.error("Claim verifier Gemini provider error:", geminiResponse.status, geminiText.slice(0, 500));
-                return emptyResult("Groq verifier quota is exhausted and the configured Gemini verifier returned HTTP " + geminiResponse.status + ".");
-              } else {
-                return emptyResult("Groq verifier quota is exhausted. Configure GEMINI_API_KEY for an independent verifier fallback.");
-              }
-            } catch (geminiError) {
-              console.error("Claim verifier Gemini fallback failed:", geminiError);
-              return emptyResult("Groq verifier quota is exhausted and the Gemini fallback failed.");
+
+          // The second Groq model shares the same organization limits and can
+          // also reject structured-output requests. Do not stop verification
+          // here: use the independent provider after any Groq fallback failure.
+          try {
+            const geminiResponse = await tryGemini();
+            if (geminiResponse?.ok) {
+              response = geminiResponse;
+            } else if (geminiResponse) {
+              const geminiText = await geminiResponse.text().catch(() => "");
+              console.error(
+                "Claim verifier Gemini provider error:",
+                geminiResponse.status,
+                geminiText.slice(0, 500)
+              );
+              return emptyResult(
+                "Groq verifier fallback failed with HTTP " +
+                  fallbackResponse.status +
+                  " and the configured Gemini verifier returned HTTP " +
+                  geminiResponse.status +
+                  "."
+              );
+            } else {
+              return emptyResult(
+                "Groq verifier fallback failed with HTTP " +
+                  fallbackResponse.status +
+                  ". Configure GEMINI_API_KEY for an independent verifier fallback."
+              );
             }
-          } else {
-            return emptyResult("Verifier fallback provider returned HTTP " + fallbackResponse.status + ".");
+          } catch (geminiError) {
+            console.error("Claim verifier Gemini fallback failed:", geminiError);
+            return emptyResult(
+              "Groq verifier fallback failed with HTTP " +
+                fallbackResponse.status +
+                " and the Gemini fallback failed."
+            );
           }
         }
       } else {

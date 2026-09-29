@@ -147,7 +147,7 @@ export async function verifyAnswerClaims(args: {
       messages,
     };
 
-    async function tryGemini(): Promise<Response | null> {
+    const tryGemini = async (): Promise<Response | null> => {
       const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
       if (!geminiKey) return null;
       const geminiModel = process.env.GEMINI_VERIFIER_MODEL || "gemini-2.5-flash-lite";
@@ -170,7 +170,7 @@ export async function verifyAnswerClaims(args: {
           }),
         }
       );
-    }
+    };
 
     let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",

@@ -1177,7 +1177,7 @@ According to the official KP e-Domicile system, citizens can apply online to obt
  const detectedQuestionService=detectService(question,"");
  if(detectedQuestionService && !belongsToDepartment(detectedQuestionService,requested)){
  const qn=normalize(question);
- const directDepartmentMatch=(requested==="FBR / Taxation"&&(qn.includes("fbr")||qn.includes("ntn")||qn.includes("iris")||qn.includes("income tax")||qn.includes("tax return")||qn.includes("sales tax")||qn.includes("sales-tax")||qn.includes("gst")||qn.includes("tax registration")||qn.includes("taxpayer registration")||qn.includes("withholding tax")||qn.includes("income tax return")))||(requested==="Government Jobs"&&(qn.includes("government job")||qn.includes("government jobs")||qn.includes("national jobs portal")||qn.includes("njp")||qn.includes("vacancy")||qn.includes("job")||qn.includes("apply for a job")||qn.includes("job application")||qn.includes("نوکری")||qn.includes("ملازمت")||qn.includes("درخواست")))||(requested==="Excise & Taxation"&&(qn.includes("excise")||qn.includes("vehicle")||qn.includes("token tax")||qn.includes("vehicle registration")||qn.includes("ownership transfer")))||(requested==="Land & Revenue"&&(qn.includes("land")||qn.includes("fard")||qn.includes("mutation")||qn.includes("intiqal")||qn.includes("revenue")))||(requested==="Police Services"&&(qn.includes("police")||qn.includes("fir")||qn.includes("character certificate")||qn.includes("police clearance")||qn.includes("verification")))||(requested==="Education & Scholarships"&&(qn.includes("scholarship")||qn.includes("hec")||qn.includes("education")))||(requested==="Driving Licence"&&(qn.includes("driving")||qn.includes("learner")||qn.includes("license")||qn.includes("licence")||qn.includes("ڈرائیونگ")||qn.includes("لائسنس")))||(requested==="Vaccination for Travelling Abroad"&&(qn.includes("vaccination")||qn.includes("vaccine")||qn.includes("polio")||qn.includes("yellow fever")||qn.includes("hajj")||qn.includes("haj")||qn.includes("umrah")||qn.includes("umra")||qn.includes("ویکسین")||qn.includes("حج")||qn.includes("عمرہ")))||(requested==="Arms Licence"&&(qn.includes("arms licence")||qn.includes("arms license")||qn.includes("weapon licence")||qn.includes("weapon license")||qn.includes("gun licence")||qn.includes("gun license")||qn.includes("اسلحہ")||qn.includes("ہتھیار")||qn.includes("لائسنس")));
+ const directDepartmentMatch=(requested==="FBR / Taxation"&&(qn.includes("fbr")||qn.includes("ntn")||qn.includes("iris")||qn.includes("income tax")||qn.includes("income-tax")||qn.includes("tax return")||qn.includes("sales tax")||qn.includes("sales-tax")||qn.includes("gst")||qn.includes("tax registration")||qn.includes("taxpayer registration")||qn.includes("taxpayer")||qn.includes("active taxpayer")||qn.includes("active taxpayer list")||qn.includes("atl")||qn.includes("filer")||qn.includes("filer status")||qn.includes("withholding tax")||qn.includes("income tax return")))||(requested==="Government Jobs"&&(qn.includes("government job")||qn.includes("government jobs")||qn.includes("national jobs portal")||qn.includes("njp")||qn.includes("vacancy")||qn.includes("job")||qn.includes("apply for a job")||qn.includes("job application")||qn.includes("نوکری")||qn.includes("ملازمت")||qn.includes("درخواست")))||(requested==="Excise & Taxation"&&(qn.includes("excise")||qn.includes("vehicle")||qn.includes("token tax")||qn.includes("vehicle registration")||qn.includes("ownership transfer")))||(requested==="Land & Revenue"&&(qn.includes("land")||qn.includes("fard")||qn.includes("mutation")||qn.includes("intiqal")||qn.includes("revenue")))||(requested==="Police Services"&&(qn.includes("police")||qn.includes("fir")||qn.includes("character certificate")||qn.includes("police clearance")||qn.includes("verification")))||(requested==="Education & Scholarships"&&(qn.includes("scholarship")||qn.includes("hec")||qn.includes("education")))||(requested==="Driving Licence"&&(qn.includes("driving")||qn.includes("learner")||qn.includes("license")||qn.includes("licence")||qn.includes("ڈرائیونگ")||qn.includes("لائسنس")))||(requested==="Vaccination for Travelling Abroad"&&(qn.includes("vaccination")||qn.includes("vaccine")||qn.includes("polio")||qn.includes("yellow fever")||qn.includes("hajj")||qn.includes("haj")||qn.includes("umrah")||qn.includes("umra")||qn.includes("ویکسین")||qn.includes("حج")||qn.includes("عمرہ")))||(requested==="Arms Licence"&&(qn.includes("arms licence")||qn.includes("arms license")||qn.includes("weapon licence")||qn.includes("weapon license")||qn.includes("gun licence")||qn.includes("gun license")||qn.includes("اسلحہ")||qn.includes("ہتھیار")||qn.includes("لائسنس")));
  if(!directDepartmentMatch)return NextResponse.json({answer:language==="Urdu"?"یہ سوال منتخب شعبے سے متعلق نہیں لگتا۔ براہ کرم اسی شعبے سے متعلق سوال پوچھیں۔":"This question does not appear to belong to the selected government department. Please ask a question related to the selected department.",source:null});
 }
 if(requested==="Education & Scholarships"){
@@ -1233,17 +1233,35 @@ You can check your **Active Taxpayer Status** through FBR's **IRIS 2.0 / Online 
 
 **Official source:** https://iris.fbr.gov.pk/
 `;
-  const atlEvidence="OFFICIAL FBR EVIDENCE: The current FBR IRIS 2.0 portal provides an Online Verifications section containing Active Taxpayer List (Income Tax). It allows selection of an identifier such as NTN, CNIC, Passport No. or Registration/Inc. No., followed by verification. SOURCE: https://iris.fbr.gov.pk/";
+  const atlUrls=[
+   "https://iris.fbr.gov.pk/",
+   "https://fbr.gov.pk/categ/active-taxpayer-list-income-tax/51147/30859/%2071168"
+  ];
+  let atlVerificationEvidence="";
+  for(const u of atlUrls){
+   const t=await fetchOfficialPage(u);
+   if(t) atlVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+  }
+  // Keep a small deterministic evidence summary so verification remains available
+  // even if the live FBR page is temporarily unreachable.
+  atlVerificationEvidence += [
+   "",
+   "OFFICIAL FBR EVIDENCE SUMMARY:",
+   "FBR IRIS 2.0 provides an Online Verifications section with Active Taxpayer List (Income Tax).",
+   "The IRIS Active Taxpayer List verification form allows an identifier such as NTN, CNIC, Passport No. or Registration/Inc. No. to be selected and then verified.",
+   "FBR's Active Taxpayer List page states that the Active Taxpayer Status can also be checked through the online portal.",
+   "FBR's published ATL guidance states that an individual's status can also be checked by sending ATL followed by a space and the 13-digit CNIC number to 9966. For a company or AOP, ATL followed by a space and the 7-digit NTN can be sent to 9966."
+  ].join("\\n");
   return directWorkflowResponse({
    answer:fbrATLAnswer,
-   source:{department:"FBR / Taxation",title:"FBR IRIS 2.0 — Active Taxpayer List Verification",url:"https://iris.fbr.gov.pk/",lastVerified:"28 September 2026",province:""},
+   source:{department:"FBR / Taxation",title:"FBR IRIS 2.0 — Active Taxpayer List Verification",url:atlUrls[0],lastVerified:"",province:""},
    department:"FBR / Taxation",
    question,
    language,
    jurisdiction:null,
    evidenceAvailable:true,
    verifyClaims:true,
-   verificationEvidence:atlEvidence
+   verificationEvidence:atlVerificationEvidence.trim()
   });
  }
 

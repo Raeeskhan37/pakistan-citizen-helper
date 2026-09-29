@@ -54,7 +54,7 @@ function workingDetectJurisdiction(question:string): WorkingJurisdiction|null {
 function workingDetectTargetJurisdiction(question:string): WorkingJurisdiction|null {
   const q=(question||"").toLowerCase();
   const terms:Array<[WorkingJurisdiction,string[]]>=[
-    ["Punjab",["punjab","پنجاب"]],["Sindh",["sindh","سندھ"]],["Khyber Pakhtunkhwa",["khyber pakhtunkhwa","kpk","خیبر پختونخوا"]],
+    ["Punjab",["punjab","پنجاب"]],["Sindh",["sindh","سندھ"]],["Khyber Pakhtunkhwa",["khyber pakhtunkhwa","kpk","kp","خیبر پختونخوا","خیبرپختونخوا"]],
     ["Balochistan",["balochistan","بلوچستان"]],["Islamabad Capital Territory",["islamabad","ict","اسلام آباد"]],["Azad Jammu and Kashmir",["ajk","azad kashmir","آزاد کشمیر"]],["Gilgit-Baltistan",["gilgit baltistan","gilgit-baltistan","gb","گلگت"]]
   ];
   for(const [j,ts] of terms) for(const t of ts){

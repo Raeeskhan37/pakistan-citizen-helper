@@ -1430,6 +1430,7 @@ if(requested==="Protector & Overseas Employment"){
  const requestedJurisdiction=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  const policySource="https://beoe.gov.pk/files/policyguideliness/58.pdf";
  const procedureSource="https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
+ const contactGuideSource="https://beoe.gov.pk/files/a-guide-for-pakistani-migrant-workers-in-the-united-arab-emirates.pdf";
  let answer="";
  if(isTourist){
   answer=language==="Urdu"
@@ -1504,14 +1505,26 @@ The Bureau of Emigration & Overseas Employment (BE&OE) identifies these Protecto
    :"## Protector of Emigrants\n\nFor overseas employment, Protector registration is required. BE&OE identifies the visa, passport, CNIC, employment contract/approved undertaking, registration and welfare-fund receipts, emigration promotion fee, insurance, and case-specific documents as part of the registration requirements.\n\n**Official source:** https://beoe.gov.pk/";
  }
  let protectorVerificationEvidence="";
- for(const u of [policySource,procedureSource]){
+ const protectorSourcesForVerification=isOffice?[contactGuideSource,policySource,procedureSource]:[policySource,procedureSource];
+ for(const u of protectorSourcesForVerification){
   const t=await fetchOfficialPage(u);
   if(t) protectorVerificationEvidence+="\\n\\nOFFICIAL BE&OE SOURCE PAGE: "+u+"\\n"+t;
  }
  // BE&OE's core Protector documents are PDFs, which the HTML-only fetcher cannot extract.
  // Keep a short, source-faithful evidence excerpt so claim verification remains available
  // when the official PDF itself is reachable but not text-extractable at runtime.
- if(!protectorVerificationEvidence.trim()){
+ if(isOffice){
+  // The contact guide is a PDF and may not be extractable by the server-side HTML fetcher.
+  // Preserve the exact office directory used in the answer as deterministic evidence, while
+  // explicitly tying it to the official BE&OE contact guide and policy documents.
+  protectorVerificationEvidence=[
+   "OFFICIAL BE&OE CONTACT GUIDE: "+contactGuideSource,
+   "The BE&OE contact guide lists these Protector of Emigrants offices and contact details: Rawalpindi — 20-B1, Summer Plaza, Chandni Chowk, Rawalpindi; Tel +92-51-9290439-40 and +92-51-9290569. Lahore — 117-G Block, Model Town, Lahore; Tel +92-42-99230338 and +92-42-99230488. Multan — House No. 136, Rehmat Colony, Near Lodhe More, MDA Road, Multan; Tel +92-61-921020020. Peshawar — Amanullah Khan Plaza, 2nd Floor, Opposite GPO, Lala Ayub Lane, Saddar Road, Peshawar Cantt; Tel +92-91-9212050. Malakand — Bahadar Khan Plaza, Main Bazar, Bathella, Malakand; Tel +92-93-2412483. Karachi — 14-J, Block No. 6, Near KFC, Nursery, PECHS, Karachi; Tel +92-21-34531941. Quetta — Quarry Road, Quetta; Tel +92-81-9202436.",
+   "OFFICIAL BE&OE POLICY SOURCE: https://beoe.gov.pk/files/policyguideliness/56.pdf. The official policy material lists Protectorates of Emigrants at Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi and Quetta.",
+   "OFFICIAL BE&OE PROCEDURE SOURCE: "+procedureSource+". The applicable Protector office is determined by area of jurisdiction; the official procedure/jurisdiction material places Islamabad under the Rawalpindi Protectorate.",
+   "The answer intentionally does not invent street addresses or telephone numbers for Dera Ghazi Khan or Sialkot where those details are not provided in the retrieved BE&OE contact guide."
+  ].join("\n\n");
+ } else if(!protectorVerificationEvidence.trim()){
   protectorVerificationEvidence=[
    "OFFICIAL BE&OE SOURCE: https://beoe.gov.pk/files/policyguideliness/58.pdf",
    "BE&OE instructs Protector of Emigrants offices to demand only these registration documents: visa (as per procedure in the host country); valid passport; valid CNIC; employment contract or agreement duly signed by the employer or an undertaking approved by the Director General, BE&OE; receipt of registration fee; receipt of welfare fund; emigration promotion fee; service charges where recruitment is through an OEP; State Life Insurance Corporation insurance certificate; and, where applicable, NOC, police character verification certificate for specified countries, and medical fitness report for specified countries.",

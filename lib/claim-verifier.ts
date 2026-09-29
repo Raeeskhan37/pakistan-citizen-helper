@@ -112,7 +112,6 @@ export async function verifyAnswerClaims(args: {
       model,
       temperature: 0,
       max_completion_tokens: MAX_COMPLETION_TOKENS,
-      service_tier: "auto",
       include_reasoning: false,
       messages,
     };

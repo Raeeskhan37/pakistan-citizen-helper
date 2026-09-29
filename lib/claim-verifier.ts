@@ -15,8 +15,9 @@ export type ClaimVerificationResult = {
   reason: string;
 };
 
-const MAX_EVIDENCE = 14000;
-const MAX_ANSWER = 7000;
+const MAX_EVIDENCE = 9000;
+const MAX_ANSWER = 4500;
+const MAX_COMPLETION_TOKENS = 1200;
 
 function emptyResult(reason: string): ClaimVerificationResult {
   return {
@@ -110,7 +111,8 @@ export async function verifyAnswerClaims(args: {
     const requestBody = {
       model,
       temperature: 0,
-      max_completion_tokens: 1800,
+      max_completion_tokens: MAX_COMPLETION_TOKENS,
+      service_tier: "auto",
       include_reasoning: false,
       response_format: {
         type: "json_schema",
@@ -144,6 +146,31 @@ export async function verifyAnswerClaims(args: {
       },
       messages,
     };
+
+    async function tryGemini(): Promise<Response | null> {
+      const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+      if (!geminiKey) return null;
+      const geminiModel = process.env.GEMINI_VERIFIER_MODEL || "gemini-2.5-flash-lite";
+      const geminiPrompt =
+        "You are a strict evidence-grounded factual verifier. Use ONLY the supplied evidence. " +
+        'Return JSON only with a top-level claims array. Each claim item must contain claim, verdict (supported|unsupported|unclear), and reason.\\n\\n' +
+        prompt;
+      return fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(geminiModel) + ":generateContent",
+        {
+          method: "POST",
+          headers: { "x-goog-api-key": geminiKey, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: geminiPrompt }] }],
+            generationConfig: {
+              temperature: 0,
+              maxOutputTokens: MAX_COMPLETION_TOKENS,
+              responseMimeType: "application/json",
+            },
+          }),
+        }
+      );
+    }
 
     let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -189,7 +216,8 @@ export async function verifyAnswerClaims(args: {
           body: JSON.stringify({
             model: fallbackModel,
             temperature: 0,
-            max_completion_tokens: 1800,
+            max_completion_tokens: MAX_COMPLETION_TOKENS,
+            service_tier: "auto",
             // GPT-OSS 20B supports Groq Structured Outputs too.
             // Keep the same strict schema as the primary model so the fallback
             // cannot silently change the verifier's response contract.
@@ -212,7 +240,8 @@ export async function verifyAnswerClaims(args: {
             body: JSON.stringify({
               model: fallbackModel,
               temperature: 0,
-              max_completion_tokens: 1800,
+              max_completion_tokens: MAX_COMPLETION_TOKENS,
+              service_tier: "auto",
               include_reasoning: false,
               response_format: { type: "json_object" },
               messages: [
@@ -246,11 +275,25 @@ export async function verifyAnswerClaims(args: {
             fallbackResponse.status,
             fallbackText.slice(0, 500)
           );
-          return emptyResult(
-            fallbackResponse.status === 429
-              ? "Verifier provider rate limit persisted on the primary and fallback models."
-              : "Verifier fallback provider returned HTTP " + fallbackResponse.status + "."
-          );
+          if (fallbackResponse.status === 429) {
+            try {
+              const geminiResponse = await tryGemini();
+              if (geminiResponse?.ok) {
+                response = geminiResponse;
+              } else if (geminiResponse) {
+                const geminiText = await geminiResponse.text().catch(() => "");
+                console.error("Claim verifier Gemini provider error:", geminiResponse.status, geminiText.slice(0, 500));
+                return emptyResult("Groq verifier quota is exhausted and the configured Gemini verifier returned HTTP " + geminiResponse.status + ".");
+              } else {
+                return emptyResult("Groq verifier quota is exhausted. Configure GEMINI_API_KEY for an independent verifier fallback.");
+              }
+            } catch (geminiError) {
+              console.error("Claim verifier Gemini fallback failed:", geminiError);
+              return emptyResult("Groq verifier quota is exhausted and the Gemini fallback failed.");
+            }
+          } else {
+            return emptyResult("Verifier fallback provider returned HTTP " + fallbackResponse.status + ".");
+          }
         }
       } else {
         return emptyResult("Verifier provider returned HTTP " + response.status + ".");

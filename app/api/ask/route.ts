@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runFourAgentWorkflow } from "@/lib/agent-orchestrator";
 import { verifyAnswerClaims } from "@/lib/claim-verifier";
-import { getDirectAdultFreshCnicAnswer, getDirectNadraAnswer } from "@/lib/nadra-rag";
+import { getDirectAdultFreshCnicAnswer, getDirectNadraAnswer, retrieveNadraEvidence } from "@/lib/nadra-rag";
 
 // Ported from the working pakistan-citizen-ai-agent routing/research architecture.
 const WORKING_AGENT_JURISDICTIONS = ["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad Capital Territory","Azad Jammu and Kashmir","Gilgit-Baltistan"] as const;
@@ -931,15 +931,72 @@ export async function POST(request:NextRequest){try{
  if(requested==="NADRA Services"){
    const directNadraAnswer=await getDirectNadraAnswer(question,language);
    if(directNadraAnswer){
-     const workflow=runFourAgentWorkflow({
+     const nadraRag=await retrieveNadraEvidence(question,language);
+     const qTerms=normalize(question)
+       .split(/\\s+/)
+       .filter((term)=>term.length>=4 && !["what","which","where","when","how","difference","between","with","from","this","that","does","have","your"].includes(term));
+     const ragText=normalize(nadraRag);
+     const ragMatches=qTerms.filter((term)=>ragText.includes(term)).length;
+     const ragLikelyRelevant=qTerms.length>0 && ragMatches>=Math.max(1,Math.ceil(qTerms.length*0.35));
+
+     let nadraOfficialText="";
+     let usedWebSearch=false;
+     if(!ragLikelyRelevant){
+       const searchText=await fetchOfficialSearch(question,["nadra.gov.pk"]);
+       if(searchText){
+         nadraOfficialText="\\n\\nOFFICIAL NADRA WEB SEARCH EVIDENCE:\\n"+searchText;
+         usedWebSearch=true;
+       }
+     }
+
+     const verificationEvidence=[nadraRag,nadraOfficialText].filter(Boolean).join("\\n\\n");
+     const claimVerification=await verifyAnswerClaims({
+       answer:cleanAnswer(directNadraAnswer),
+       evidence:verificationEvidence,
+       language
+     });
+     const verificationPassed=
+       claimVerification.available &&
+       claimVerification.unsupportedClaims.length===0 &&
+       claimVerification.unclearClaims.length===0;
+
+     let workflow=runFourAgentWorkflow({
        department:requested,
        question,
        jurisdiction:selected.jurisdiction||null,
        mode:"normal",
-       tools:["NADRA RAG","Source verification","English / Urdu guidance"],
+       tools:["NADRA Policy RAG","Official NADRA web research","Source verification","Claim-level evidence verification","English / Urdu guidance"],
        answer:directNadraAnswer,
-       evidenceAvailable:true
+       evidenceAvailable:verificationPassed
      });
+     workflow.verification={
+       ...workflow.verification,
+       passed:verificationPassed,
+       evidenceAvailable:verificationEvidence.length>100,
+       answerAccepted:verificationPassed
+     };
+     workflow.agents=workflow.agents.map(agent=>agent.id==="verifier"
+       ?{...agent,status:verificationPassed?"completed":"degraded",detail:claimVerification.available
+          ?`Claim-level verification: ${claimVerification.supportedCount}/${claimVerification.totalClaims} claims supported; score ${claimVerification.score}%.`
+          :`Claim-level verification unavailable: ${claimVerification.reason}`}
+       :agent.id==="guidance"
+         ?{...agent,status:verificationPassed?"completed":"waiting",detail:verificationPassed
+            ?"Prepared citizen guidance from evidence that passed claim-level verification."
+            :"Waiting because claim-level verification did not fully pass."}
+         :agent);
+     workflow.stageResults=workflow.stageResults.map(stage=>stage.agent==="verifier"
+       ?{...stage,status:verificationPassed?"completed":"degraded",result:claimVerification.available
+          ?`Claim verification: ${claimVerification.supportedCount}/${claimVerification.totalClaims} claims supported; score ${claimVerification.score}%.`
+          :"Claim-level verification was unavailable; verification did not pass."}
+       :stage.agent==="guidance"
+         ?{...stage,status:verificationPassed?"completed":"waiting",result:verificationPassed
+            ?"Final guidance is prepared from evidence that passed claim-level verification."
+            :"Guidance is waiting for a fully supported answer."}
+         :stage);
+     workflow.summary=verificationPassed
+       ?"Four-agent workflow completed with claim-level evidence verification."
+       :"Four-agent workflow completed with a verification warning; the answer was not fully claim-verified.";
+
      return NextResponse.json({
        answer:cleanAnswer(directNadraAnswer),
        source:{
@@ -951,8 +1008,12 @@ export async function POST(request:NextRequest){try{
        },
        agent:true,
        goalFocused:true,
-       webSearch:false,
-       agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]}}
+       webSearch:usedWebSearch,
+       agentActivity:{
+         ...workflow,
+         memory:{shortTerm:[],longTerm:["User-controlled preferences only"]},
+         claimVerification
+       }
      });
    }
  }
@@ -1822,10 +1883,10 @@ if(requested==="Excise & Taxation"){
  }
  return directWorkflowResponse({answer:language==="Urdu"?"## ایکسائز اینڈ ٹیکسیشن\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔":"## Excise & Taxation\n\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new vehicle registration, or ownership transfer.",source:null,department:"Excise & Taxation",question,language,jurisdiction:null,evidenceAvailable:false});
 }
-const officialUrls=isNadra?[]:Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
+const officialUrls=isNadra ? Array.from(new Set(["https://www.nadra.gov.pk/",sourceUrl,...alternateOfficialUrls].filter(Boolean))) : Array.from(new Set([sourceUrl,...alternateOfficialUrls].filter(Boolean)));
 let officialText="";
 for(const u of officialUrls){const t=await fetchOfficialPage(u);if(t)officialText+=("\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t);}
-const domains=isNadra?[]:(departmentDomains[canonicalDepartment(requested)]||[]);
+const domains=isNadra?["nadra.gov.pk"]:(departmentDomains[canonicalDepartment(requested)]||[]);
 const skipSearch=false;
 if(domains.length && !skipSearch){
  const searchText=await fetchOfficialSearch(question,domains);

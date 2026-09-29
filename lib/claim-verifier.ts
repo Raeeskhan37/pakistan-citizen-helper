@@ -17,7 +17,7 @@ export type ClaimVerificationResult = {
 
 const MAX_EVIDENCE = 9000;
 const MAX_ANSWER = 4500;
-const MAX_COMPLETION_TOKENS = 1400;
+const MAX_COMPLETION_TOKENS = 2200;
 
 function emptyResult(reason: string): ClaimVerificationResult {
   return {
@@ -223,6 +223,7 @@ export async function verifyAnswerClaims(args: {
     );
     const parsed = extractJson(raw) as { claims?: unknown } | null;
     if (!parsed || !Array.isArray(parsed.claims)) {
+      console.error("Claim verifier invalid structured result. Raw model content:", raw.slice(0, 2000));
       return emptyResult("Verifier returned an invalid structured result.");
     }
 

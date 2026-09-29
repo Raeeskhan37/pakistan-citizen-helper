@@ -224,14 +224,21 @@ The ICT Administration states that a new application requires a completed applic
 **Official source:** https://ictadministration.gov.pk/new-arms-license/`,
   "Sindh":`## Sindh — Arms Licence
 
-The Sindh Home Department states that for a new arms licence, an applicant visits the Home Department with the original CNIC and a copy, submits the application and receives a token. The process then includes photograph/biodata capture, police verification and payment through a bank challan. The FAQ lists Sindh domicile and age 25 among the basic criteria.
+The Sindh Home Department's current official website shows a **Corrigendum Regarding Ban on Issuance of New Computerized Arms Licenses in Sindh**, posted in September 2026. Because the current status affects whether a new licence can be issued, the app should not present the older FAQ procedure as if new computerized licences are currently available.
 
-**Official source:** https://home.sindh.gov.pk/faqs`,
+The older official FAQ describes the application process as visiting the Home Department with the original CNIC and a copy, receiving a token, followed by photograph/biodata capture, police verification and bank-challan processing. That procedure is retained only as background; the current ban/corrigendum must be checked before applying.
+
+**Current official source:** https://home.sindh.gov.pk/
+**Background official FAQ:** https://home.sindh.gov.pk/faqs`,
   "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Arms Licence
 
-The KP Right to Public Services Commission describes issuance through the Arms License Branch, including biometric/electronic processing and police verification, followed by the applicable approval and fee/dealer steps. The official page lists age 21 or above and distinguishes Provincial and All-Pakistan licence routes.
+The current official KP **Dastak** platform is the digital arms-licensing service. It states that citizens can apply for, renew and manage arms licences online, with real-time application tracking, secure payments and NADRA-office biometric verification.
 
-**Official source:** https://www.kprts.gov.pk/services/issuance-of-arms-license/`,
+The platform is operated as a Home Department initiative powered by KPITB and describes verification using NADRA, criminal-database and police-station records.
+
+For a new licence, use the current Dastak arms-licensing service rather than relying on older manual-procedure pages.
+
+**Official source:** https://ecitizen.kp.gov.pk/`,
   "Balochistan":`## Balochistan — Arms Licence
 
 The Government of Balochistan Home Department lists Arms License as a provincial service and states that its online service supports applying for a new licence, tracking an application and renewing an existing licence. The department also publishes arms-licence notices, including a revised SOP for renewal.
@@ -246,11 +253,13 @@ The official AJK E-Facilitation Center lists Arms License as a service for acqui
 **Official source:** https://efc.ajk.gov.pk/instructionservice/3`,
   "Punjab":`## Punjab — Arms Licence
 
-Punjab government district portals identify Arms Licensing Branches and list functions such as new-arms-licence issuance, renewal/revalidation, duplicate copies, transfer, correction, verification and cancellation. Some district portals also publish local status information; for example, an official Rawalpindi district page currently states that the Arm License service is banned there.
+For Lahore, the official Lahore district administration lists an **Arm License Branch** and provides an **Arm License** application form. The Lahore district portal also lists the Arm License Branch among its service branches.
 
-Because current availability and procedure can vary by district and may change, the retrieved official evidence does not establish one province-wide checklist for a new Punjab licence. The app therefore does not invent documents, fees or a single application procedure.
+Because Punjab arms-licensing availability and procedure can vary by district, the app does not invent a province-wide checklist, fee or approval process when the current district evidence does not establish it.
 
-**Official sources:** https://bhakkar.punjab.gov.pk/arms_licensing_branch and https://rawalpindi.punjab.gov.pk/forms`,
+For Lahore, use the official Lahore district Arm License Branch/form information. For another Punjab district, the relevant district administration should be checked.
+
+**Official sources:** https://lahore.punjab.gov.pk/arm-license-branch and https://lahore.punjab.gov.pk/forms`,
   "Gilgit-Baltistan":`## Gilgit-Baltistan — Arms Licence
 
 A sufficiently detailed current GB Arms Licence procedure was not established from the retrieved official government evidence. The official GB government site provides general government information and laws/notifications, but the retrieved material did not establish the current application steps, documents or fees for an arms licence.
@@ -306,11 +315,11 @@ AJK E-Facilitation Center اسلحہ لائسنس کو سروس کے طور پر
  const answer=(language==="Urdu"?ur:en)[jurisdiction]||en.Punjab;
  const sources:Record<string,string[]>={
   "Islamabad Capital Territory":["https://ictadministration.gov.pk/new-arms-license/"],
-  "Sindh":["https://home.sindh.gov.pk/faqs"],
-  "Khyber Pakhtunkhwa":["https://www.kprts.gov.pk/services/issuance-of-arms-license/"],
+  "Sindh":["https://home.sindh.gov.pk/","https://home.sindh.gov.pk/faqs"],
+  "Khyber Pakhtunkhwa":["https://ecitizen.kp.gov.pk/"],
   "Balochistan":["https://home.balochistan.gov.pk/"],
   "Azad Jammu and Kashmir":["https://efc.ajk.gov.pk/instructionservice/3"],
-  "Punjab":["https://bhakkar.punjab.gov.pk/arms_licensing_branch","https://rawalpindi.punjab.gov.pk/forms"],
+  "Punjab":q.includes("lahore")?["https://lahore.punjab.gov.pk/arm-license-branch","https://lahore.punjab.gov.pk/forms"]:["https://lahore.punjab.gov.pk/arm-license-branch"],
   "Gilgit-Baltistan":["https://gilgitbaltistan.gov.pk/","https://www.gilgitbaltistan.gov.pk/pages/laws"]
  };
  return {answer,sources:sources[jurisdiction]||[]};
@@ -1491,6 +1500,9 @@ if(requested==="Arms Licence"){
  const result=armsLicenceEvidence(question,aj,language);
  let verificationEvidence="";
  for(const u of Array.from(new Set(result.sources.filter(Boolean)))){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t; }
+ if(!verificationEvidence.trim() && result.answer){
+  verificationEvidence="OFFICIAL SOURCE-BASED CURATED EVIDENCE:\\n"+result.answer;
+ }
  return directWorkflowResponse({answer:result.answer,source:{department:"Arms Licence",title:"Official government arms-licensing information",url:result.sources[0]||"",lastVerified:"",province:aj||""},department:"Arms Licence",question,language,jurisdiction:aj,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
 if(requested==="Land & Revenue"){

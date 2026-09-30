@@ -205,7 +205,6 @@ export default function Home() {
     }
   };
 
-  const copyAnswer = async () => { if (!answer?.answer) return; try { await navigator.clipboard.writeText(answer.answer); setCopied(true); window.setTimeout(() => setCopied(false), 1600); } catch {} };
   const submitFeedback = async () => {
   if (!feedbackRating || feedbackSubmitting || !department) return;
 
@@ -244,7 +243,8 @@ export default function Home() {
     setFeedbackSubmitting(false);
   }
 };
-  const submitSuggestion = async () => {
+
+const submitSuggestion = async () => {
   if (!suggestionType || !suggestionText.trim() || suggestionSubmitting) {
     return;
   }
@@ -286,7 +286,8 @@ export default function Home() {
     setSuggestionSubmitting(false);
   }
 };
-  return (
+
+return (
     <main className="app-shell" dir={isUrdu ? "rtl" : "ltr"}>
       <header className="topbar">
         <div className="topbar-inner">

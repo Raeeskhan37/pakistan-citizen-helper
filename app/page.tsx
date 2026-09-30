@@ -204,7 +204,20 @@ export default function Home() {
       }, remaining);
     }
   };
+  const copyAnswer = async () => {
+    if (!answer?.answer) return;
 
+    try {
+      await navigator.clipboard.writeText(answer.answer);
+      setCopied(true);
+
+      setTimeout(() => {
+      setCopied(false);
+      }, 2000);
+    } catch (error) {
+    console.error("Copy answer error:", error);
+    }
+  };
   const submitFeedback = async () => {
   if (!feedbackRating || feedbackSubmitting || !department) return;
 

@@ -68,6 +68,11 @@ export default function Home() {
   const [feedbackComment, setFeedbackComment] = useState("");
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  const [suggestionType, setSuggestionType] = useState("");
+  const [suggestionText, setSuggestionText] = useState("");
+  const [suggestionSubmitting, setSuggestionSubmitting] = useState(false);
+  const [suggestionSubmitted, setSuggestionSubmitted] = useState(false);
   const agentTimersRef = useRef<number[]>([]);
   const agentRunStartedAtRef = useRef<number>(0);
 
@@ -239,6 +244,48 @@ export default function Home() {
     setFeedbackSubmitting(false);
   }
 };
+  const submitSuggestion = async () => {
+  if (!suggestionType || !suggestionText.trim() || suggestionSubmitting) {
+    return;
+  }
+
+  setSuggestionSubmitting(true);
+
+  try {
+    const response = await fetch("/api/suggestions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        suggestionType,
+        suggestion: suggestionText.trim(),
+        department: department?.name || null,
+        language: isUrdu ? "Urdu" : "English",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error || "Unable to submit suggestion.");
+    }
+
+    setSuggestionSubmitted(true);
+    setSuggestionType("");
+    setSuggestionText("");
+  } catch (error) {
+    console.error("Suggestion submission error:", error);
+
+    alert(
+      isUrdu
+        ? "تجویز جمع نہیں ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔"
+        : "Unable to submit suggestion. Please try again."
+    );
+  } finally {
+    setSuggestionSubmitting(false);
+  }
+};
   return (
     <main className="app-shell" dir={isUrdu ? "rtl" : "ltr"}>
       <header className="topbar">
@@ -381,6 +428,80 @@ export default function Home() {
         </section>}
 
       </section>
+      <div className="suggestion-card">
+  {suggestionSubmitted ? (
+    <div className="suggestion-success">
+      ✓ {isUrdu ? "آپ کی تجویز کا شکریہ!" : "Thank you for your suggestion!"}
+    </div>
+  ) : (
+    <>
+      <div className="suggestion-heading">
+        <strong>
+          {isUrdu ? "ہمیں اپنی تجویز دیں" : "Have a suggestion?"}
+        </strong>
+        <small>
+          {isUrdu
+            ? "اپنی رائے سے پاکستان سٹیزن ہیلپر کو بہتر بنانے میں مدد کریں۔"
+            : "Help us improve Pakistan Citizen Helper."}
+        </small>
+      </div>
+
+      <select
+        value={suggestionType}
+        onChange={e => setSuggestionType(e.target.value)}
+      >
+        <option value="">
+          {isUrdu ? "تجویز کی قسم منتخب کریں" : "Select suggestion type"}
+        </option>
+        <option value="Service Improvement">
+          {isUrdu ? "سروس میں بہتری" : "Service Improvement"}
+        </option>
+        <option value="New Service">
+          {isUrdu ? "نئی سروس" : "New Service"}
+        </option>
+        <option value="Content Improvement">
+          {isUrdu ? "معلومات میں بہتری" : "Content Improvement"}
+        </option>
+        <option value="Other">
+          {isUrdu ? "دیگر" : "Other"}
+        </option>
+      </select>
+
+      <textarea
+        value={suggestionText}
+        onChange={e => setSuggestionText(e.target.value)}
+        placeholder={
+          isUrdu
+            ? "اپنی تجویز یہاں لکھیں..."
+            : "Write your suggestion here..."
+        }
+        rows={4}
+        maxLength={2000}
+      />
+
+      <button
+        type="button"
+        className="secondary"
+        onClick={submitSuggestion}
+        disabled={
+          !suggestionType ||
+          !suggestionText.trim() ||
+          suggestionSubmitting
+        }
+      >
+        {suggestionSubmitting
+          ? isUrdu
+            ? "جمع ہو رہا ہے…"
+            : "Submitting…"
+          : isUrdu
+            ? "تجویز جمع کریں"
+            : "Submit Suggestion"}
+      </button>
+    </>
+  )}
+</div>
+
+<footer>
       <footer><div><strong>Pakistan Citizen Helper</strong><span>•</span><span>{isUrdu ? "مصدقہ سرکاری معلومات" : "Verified Government Information"}</span></div><div className="footer-note">{isUrdu ? "حساس ذاتی معلومات، CNIC نمبر، پاس ورڈ یا OTP درج نہ کریں۔" : "Do not enter sensitive personal information, CNIC numbers, passwords or OTPs."}</div><p>Developed by <strong>Raees Khan</strong> · Assistant Director, NADRA</p></footer>
     </main>
   );

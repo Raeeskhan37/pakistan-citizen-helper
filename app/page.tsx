@@ -64,6 +64,10 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [agentActivity, setAgentActivity] = useState<AgentActivity | null>(null);
   const [shortTermMemory, setShortTermMemory] = useState<string[]>([]);
+  const [feedbackRating, setFeedbackRating] = useState<"positive" | "negative" | null>(null);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const agentTimersRef = useRef<number[]>([]);
   const agentRunStartedAtRef = useRef<number>(0);
 
@@ -197,7 +201,44 @@ export default function Home() {
   };
 
   const copyAnswer = async () => { if (!answer?.answer) return; try { await navigator.clipboard.writeText(answer.answer); setCopied(true); window.setTimeout(() => setCopied(false), 1600); } catch {} };
+  const submitFeedback = async () => {
+  if (!feedbackRating || feedbackSubmitting || !department) return;
 
+  setFeedbackSubmitting(true);
+
+  try {
+    const response = await fetch("/api/feedback", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        rating: feedbackRating,
+        comment: feedbackComment,
+        department: department.name,
+        language: isUrdu ? "Urdu" : "English",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error || "Unable to submit feedback.");
+    }
+
+    setFeedbackSubmitted(true);
+  } catch (error) {
+    console.error("Feedback submission error:", error);
+
+    alert(
+      isUrdu
+        ? "Feedback جمع نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔"
+        : "Unable to submit feedback. Please try again."
+    );
+  } finally {
+    setFeedbackSubmitting(false);
+  }
+};
   return (
     <main className="app-shell" dir={isUrdu ? "rtl" : "ltr"}>
       <header className="topbar">

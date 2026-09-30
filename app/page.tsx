@@ -503,7 +503,24 @@ return (
 </div>
 
 <footer>
-      <footer><div><strong>Pakistan Citizen Helper</strong><span>•</span><span>{isUrdu ? "مصدقہ سرکاری معلومات" : "Verified Government Information"}</span></div><div className="footer-note">{isUrdu ? "حساس ذاتی معلومات، CNIC نمبر، پاس ورڈ یا OTP درج نہ کریں۔" : "Do not enter sensitive personal information, CNIC numbers, passwords or OTPs."}</div><p>Developed by <strong>Raees Khan</strong> · Assistant Director, NADRA</p></footer>
-    </main>
+  <div>
+    <strong>Pakistan Citizen Helper</strong>
+    <span>•</span>
+    <span>
+      {isUrdu ? "مصدقہ سرکاری معلومات" : "Verified Government Information"}
+    </span>
+  </div>
+
+  <div className="footer-note">
+    {isUrdu
+      ? "حساس ذاتی معلومات، CNIC نمبر، پاس ورڈ یا OTP درج نہ کریں۔"
+      : "Do not enter sensitive personal information, CNIC numbers, passwords or OTPs."}
+  </div>
+
+  <p>
+    Developed by <strong>Raees Khan</strong> · Assistant Director, NADRA
+  </p>
+</footer>
+</main>
   );
 }

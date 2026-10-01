@@ -1057,7 +1057,7 @@ export async function POST(request:NextRequest){try{
  // without changing the broader Passport routing or other departments.
  if(requested==="Passport Services" &&
     /(renew|renewal|renew passport|تجدید|تجدیدِ پاسپورٹ)/i.test(question) &&
-    /(7\\s*months?|seven\\s*months?|7\\s*month|7\\s*ماہ|سات\\s*ماہ)/i.test(question)){
+    /(7\s*months?|seven\s*months?|7\s*month|7\s*ماہ|سات\s*ماہ)/i.test(question)){
    const passportOfficialUrl="https://dgip.gov.pk/passport/ordinary-passport.php";
    const passportPage=await fetchOfficialPage(passportOfficialUrl);
    const passportTerms=["Renewal of Passport","no restriction for renewal of passport before its expiry","full validity of 5/10 years","reason for obtaining a new passport before its expiry","relevant passport office"];

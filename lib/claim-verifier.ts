@@ -65,6 +65,87 @@ function extractJson(text: string): unknown {
 
   for (const candidate of candidates) {
     try {
+      return JSON.parse(candidate);
+    } catch {
+      // Continue with the next conservative extraction candidate.
+    }
+  }
+
+  return null;
+}
+
+function normalizeModelContent(content: unknown): string {
+  if (typeof content === "string") return content;
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part: any) => {
+        if (typeof part === "string") return part;
+        if (typeof part?.text === "string") return part.text;
+        if (typeof part?.content === "string") return part.content;
+        return "";
+      })
+      .filter(Boolean)
+      .join("");
+  }
+
+  if (content && typeof content === "object") {
+    const value = content as any;
+    if (typeof value.text === "string") return value.text;
+    if (typeof value.content === "string") return value.content;
+  }
+
+  return "";
+}
+
+function normalizeParsedClaims(value: unknown): { claims?: unknown } | null {
+  if (Array.isArray(value)) return { claims: value };
+  if (!value || typeof value !== "object") return null;
+
+  const object = value as any;
+  if (Array.isArray(object.claims)) return object;
+  if (Array.isArray(object.result?.claims)) return { claims: object.result.claims };
+  if (Array.isArray(object.verification?.claims)) return { claims: object.verification.claims };
+
+  return null;
+}
+
+export async function verifyAnswerClaims(args: {
+  answer: string;
+  evidence: string;
+  language?: "English" | "Urdu";
+}): Promise<ClaimVerificationResult> {
+  const apiKey = process.env.GROQ_API_KEY;
+  const answer = args.answer.trim();
+  const evidence = args.evidence.trim();
+
+  if (!apiKey) return emptyResult("Verifier API key is unavailable.");
+  if (answer.length < 20) return emptyResult("The answer is too short to verify.");
+  if (evidence.length < 100) return emptyResult("Insufficient evidence was supplied to the verifier.");
+
+  const prompt =
+    "You are the Verification Agent for a government-services assistant.\n\n" +
+    "Your ONLY job is to check whether factual claims in the proposed answer are supported by the supplied official/verified evidence.\n\n" +
+    "Rules:\n" +
+    "- Treat the supplied evidence as the only authority.\n" +
+    "- Do not use general knowledge.\n" +
+    "- Do not assume that a claim is true because it sounds plausible.\n" +
+    "- A claim is supported when the evidence explicitly supports it or clearly entails it, even if the answer paraphrases the wording.\n" +
+    "- Treat policy tables, numbered lists, column headings, OCR-like formatting, and line-broken requirements as valid evidence; reconstruct the intended relationship from the surrounding heading/section.\n" +
+    "- Treat ordinary equivalent wording as supported when the evidence clearly refers to the same requirement (for example applicant/application, parent(s)/parent, UC/Union Council, ID holder/identity-card holder, and biometric verification/biometric witness).\n" +
+    "- Do not require the answer to repeat the exact wording or order used in the evidence.\n" +
+    "- A claim is unsupported when the evidence contradicts it or genuinely provides no basis for it.\n" +
+    "- Use unclear when the evidence is ambiguous or insufficient to decide.\n" +
+    "- Ignore headings, greetings, advice to verify, and source URLs as claims.\n" +
+    "- Split compound statements into separate factual claims when practical.\n" +
+    "- Be especially strict with fees, dates, deadlines, documents, eligibility, processing times, office locations, legal requirements, and jurisdiction-specific requirements.\n" +
+    '- Return JSON only with this shape: {"claims":[{"claim":"...","verdict":"supported|unsupported|unclear","reason":"..."}]}\n\n' +
+    "PROPOSED ANSWER:\n" +
+    answer.slice(0, MAX_ANSWER) +
+    "\n\nSUPPLIED EVIDENCE:\n" +
+    evidence.slice(0, MAX_EVIDENCE);
+
+  try {
     const model = process.env.GROQ_VERIFIER_MODEL || "openai/gpt-oss-20b";
     const messages = [
       {
@@ -75,7 +156,7 @@ function extractJson(text: string): unknown {
       { role: "user", content: prompt },
     ];
 
-    const groqBody = {
+    const requestBody = {
       model,
       temperature: 0,
       max_completion_tokens: MAX_COMPLETION_TOKENS,
@@ -83,69 +164,19 @@ function extractJson(text: string): unknown {
       messages,
     };
 
-    const parseProviderResponse = async (
-      response: Response,
-      provider: "Groq" | "Gemini"
-    ): Promise<{ claims: ClaimCheck[] } | null> => {
-      let data: any;
-      try {
-        data = await response.json();
-      } catch (error) {
-        console.error("Claim verifier JSON response parse failed:", provider, error);
-        return null;
-      }
-
-      const raw = normalizeModelContent(
-        data?.choices?.[0]?.message?.content ??
-        data?.candidates?.[0]?.content?.parts ??
-        data?.candidates?.[0]?.content ??
-        ""
-      );
-
-      const parsed = normalizeParsedClaims(extractJson(raw));
-      if (!parsed || !Array.isArray(parsed.claims)) {
-        console.error(
-          "Claim verifier invalid structured result from " + provider + ". Raw model content:",
-          raw.slice(0, 2000)
-        );
-        return null;
-      }
-
-      const claims: ClaimCheck[] = parsed.claims
-        .map((item: any) => ({
-          claim: String(item?.claim || "").trim(),
-          verdict: normalizeVerdict(item?.verdict),
-          reason: String(item?.reason || "").trim(),
-        }))
-        .filter((item: ClaimCheck) => item.claim.length > 0);
-
-      return claims.length ? { claims } : null;
-    };
-
-    const callGemini = async (): Promise<{ claims: ClaimCheck[] } | null> => {
-      const geminiKey =
-        process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
-
+    const tryGemini = async (): Promise<Response | null> => {
+      const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
       if (!geminiKey) return null;
-
-      const geminiModel =
-        process.env.GEMINI_VERIFIER_MODEL || "gemini-2.5-flash-lite";
-
+      const geminiModel = process.env.GEMINI_VERIFIER_MODEL || "gemini-2.5-flash-lite";
       const geminiPrompt =
         "You are a strict evidence-grounded factual verifier. Use ONLY the supplied evidence. " +
         'Return JSON only with a top-level claims array. Each claim item must contain claim, verdict (supported|unsupported|unclear), and reason.\\n\\n' +
         prompt;
-
-      const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/" +
-          encodeURIComponent(geminiModel) +
-          ":generateContent",
+      return fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(geminiModel) + ":generateContent",
         {
           method: "POST",
-          headers: {
-            "x-goog-api-key": geminiKey,
-            "Content-Type": "application/json",
-          },
+          headers: { "x-goog-api-key": geminiKey, "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ role: "user", parts: [{ text: geminiPrompt }] }],
             generationConfig: {
@@ -156,124 +187,105 @@ function extractJson(text: string): unknown {
           }),
         }
       );
-
-      if (!response.ok) {
-        const providerText = await response.text().catch(() => "");
-        console.error(
-          "Claim verifier Gemini provider error:",
-          response.status,
-          providerText.slice(0, 1000)
-        );
-        return null;
-      }
-
-      return parseProviderResponse(response, "Gemini");
     };
 
-    const callGroq = async (): Promise<{
-      claims: ClaimCheck[] | null;
-      rateLimited: boolean;
-      providerError: number | null;
-    }> => {
-      let response = await fetch(
-        "https://api.groq.com/openai/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer " + apiKey,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(groqBody),
-        }
+    let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    // Groq can temporarily return 429 when the verifier model hits a rate limit.
+    // Retry once only, respecting Retry-After when it is supplied.
+    if (response.status === 429) {
+      const retryAfter = Number(response.headers.get("retry-after") || "");
+      const delayMs = Number.isFinite(retryAfter)
+        ? Math.min(Math.max(retryAfter * 1000, 500), 2500)
+        : 1000;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+    }
+
+    if (!response.ok) {
+      const providerText = await response.text().catch(() => "");
+      console.error(
+        "Claim verifier provider error:",
+        response.status,
+        providerText.slice(0, 1000)
       );
 
+      // Do not send a second structured-output request to the same Groq
+      // organization. A normal prompt is sufficient because the verifier
+      // already parses and validates JSON itself.
       if (response.status === 429) {
-        const retryAfter = Number(response.headers.get("retry-after") || "");
-        const delayMs = Number.isFinite(retryAfter)
-          ? Math.min(Math.max(retryAfter * 1000, 500), 2500)
-          : 1000;
-
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-
-        response = await fetch(
-          "https://api.groq.com/openai/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: "Bearer " + apiKey,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(groqBody),
-          }
-        );
-      }
-
-      if (!response.ok) {
-        const providerText = await response.text().catch(() => "");
-        console.error(
-          "Claim verifier Groq provider error:",
-          response.status,
-          providerText.slice(0, 1000)
-        );
-
-        return {
-          claims: null,
-          rateLimited: response.status === 429,
-          providerError: response.status,
-        };
-      }
-
-      return {
-        claims: (await parseProviderResponse(response, "Groq"))?.claims || null,
-        rateLimited: false,
-        providerError: null,
-      };
-    };
-
-    // Primary verifier: Groq. If Groq is rate-limited, unavailable, or returns
-    // malformed structured output, use the independent Gemini verifier.
-    const groqResult = await callGroq();
-
-    let claims = groqResult.claims;
-
-    if (!claims) {
-      const geminiKey =
-        process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
-
-      if (geminiKey) {
         try {
-          claims = await callGemini().then((result) => result?.claims || null);
+          const geminiResponse = await tryGemini();
+          if (geminiResponse?.ok) {
+            response = geminiResponse;
+          } else if (geminiResponse) {
+            const geminiText = await geminiResponse.text().catch(() => "");
+            console.error(
+              "Claim verifier Gemini provider error:",
+              geminiResponse.status,
+              geminiText.slice(0, 1000)
+            );
+            return emptyResult(
+              "Groq verifier rate limit persisted and the configured Gemini verifier returned HTTP " +
+                geminiResponse.status +
+                "."
+            );
+          } else {
+            return emptyResult(
+              "Groq verifier rate limit persisted. Configure GEMINI_API_KEY for an independent verifier fallback."
+            );
+          }
         } catch (geminiError) {
           console.error("Claim verifier Gemini fallback failed:", geminiError);
+          return emptyResult("Groq verifier rate limit persisted and the Gemini fallback failed.");
         }
-      }
-
-      if (!claims) {
-        if (groqResult.rateLimited) {
-          return emptyResult(
-            geminiKey
-              ? "Groq verifier rate limit persisted and the Gemini fallback did not return a valid verification result."
-              : "Groq verifier rate limit persisted. Configure GEMINI_API_KEY for an independent verifier fallback."
-          );
-        }
-
-        if (groqResult.providerError) {
-          return emptyResult(
-            geminiKey
-              ? "Groq verifier failed and the Gemini fallback did not return a valid verification result."
-              : "Verifier provider returned HTTP " +
-                  groqResult.providerError +
-                  ". Configure GEMINI_API_KEY for an independent fallback."
-          );
-        }
-
+      } else {
         return emptyResult(
-          geminiKey
-            ? "Groq verifier returned invalid structured output and the Gemini fallback did not return a valid verification result."
-            : "Verifier returned an invalid structured result. Configure GEMINI_API_KEY for an independent fallback."
+          "Verifier provider returned HTTP " +
+            response.status +
+            ". Provider details were recorded in the server log."
         );
       }
     }
+
+    const data = await response.json();
+    // Normalize Groq's OpenAI-compatible response and Gemini's candidate response.
+    const raw = normalizeModelContent(
+      data?.choices?.[0]?.message?.content ??
+      data?.candidates?.[0]?.content?.parts ??
+      data?.candidates?.[0]?.content ??
+      ""
+    );
+
+    const parsed = normalizeParsedClaims(extractJson(raw));
+    if (!parsed || !Array.isArray(parsed.claims)) {
+      console.error("Claim verifier invalid structured result. Raw model content:", raw.slice(0, 2000));
+      return emptyResult("Verifier returned an invalid structured result.");
+    }
+
+    const claims: ClaimCheck[] = parsed.claims
+      .map((item: any) => ({
+        claim: String(item?.claim || "").trim(),
+        verdict: normalizeVerdict(item?.verdict),
+        reason: String(item?.reason || "").trim(),
+      }))
+      .filter((item: ClaimCheck) => item.claim.length > 0);
+
+    if (!claims.length) return emptyResult("No factual claims were extracted for verification.");
 
     const unsupportedClaims = claims
       .filter((item) => item.verdict === "unsupported")
@@ -283,9 +295,7 @@ function extractJson(text: string): unknown {
       .filter((item) => item.verdict === "unclear")
       .map((item) => item.claim);
 
-    const supportedCount = claims.filter(
-      (item) => item.verdict === "supported"
-    ).length;
+    const supportedCount = claims.filter((item) => item.verdict === "supported").length;
     const score = Math.round((supportedCount / claims.length) * 100);
 
     return {

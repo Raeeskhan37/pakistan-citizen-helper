@@ -949,6 +949,19 @@ export async function POST(request:NextRequest){try{
 
      const qnDirect=normalize(question);
      let nadraSpecificVerificationEvidence="";
+     if(/\bpoc\b|pakistan origin card|pakistani origin card/.test(qnDirect)){
+       const pocPage=await fetchOfficialPage("https://www.nadra.gov.pk/identityDocument/poc");
+       if(pocPage){
+         const relevant=extractRelevantOfficialEvidence(
+           pocPage,
+           ["Pakistan Origin Card","Eligibility","New POC","PakID","Upload required documents","Track your application","foreign nationals of Pakistani origin"]
+         );
+         nadraSpecificVerificationEvidence=[
+           "OFFICIAL NADRA POC SOURCE: https://www.nadra.gov.pk/identityDocument/poc",
+           relevant
+         ].filter(Boolean).join("\\n\\n");
+       }
+     }
      if(/shajrah|shajra|shajra.?e.?nasab|family composition|family tree|شجرہ|خاندانی فہرست/.test(qnDirect) &&
         /frc|family registration certificate|difference|فرق|مختلف/.test(qnDirect)){
        nadraSpecificVerificationEvidence=[

@@ -751,8 +751,12 @@ export async function getDirectNadraVerificationEvidence(question: string): Prom
     if (/crc|b-form|child registration|juvenile|under 18|minor|ب فارم|جووینائل/.test(q)) {
       ids.add("CHUNK-0011"); ids.add("CHUNK-0012"); ids.add("CHUNK-0031");
     }
-    if (/new|fresh|new card|fresh card|new cnic|fresh cnic|نیا کارڈ|نیا شناختی/.test(q)) ids.add("CHUNK-0014");
-    if (/new|fresh|new card|fresh card|new cnic|fresh cnic|18\s*\+|adult|18 years|نیا کارڈ|نیا شناختی/.test(q)) ids.add("CHUNK-0015");
+    if (/new|fresh|new card|fresh card|new cnic|fresh cnic|نیا کارڈ|نیا شناختی/.test(q)) {
+      ids.add("CHUNK-0011");
+      ids.add("CHUNK-0012");
+      ids.add("CHUNK-0014");
+      ids.add("CHUNK-0015");
+    }
 
     const selected = chunks.filter(x => x.chunk_id && ids.has(x.chunk_id));
     if (!selected.length) return "";

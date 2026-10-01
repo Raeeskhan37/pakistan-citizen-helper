@@ -1840,8 +1840,8 @@ const departmentDomains:Record<string,string[]>={
   const src=civilSources[civilJurisdiction];
   if(src){
    const civilAction =
-    /\bcancel(?:ation|led|ling)?\b|\bvoid\b|\bwithdraw\b|\bannul\b|\bterminate\b|\bخاتمہ\b|\bمنسوخ/i.test(question) ? "cancellation" :
-    /\bchange\b|\bcorrect\b|\bcorrection\b|\bmodify\b|\bmodified\b|\brectif\w*\b|\bdate of birth\b|\bdate of death\b|\bage\b|\bدرست\b|\bتبدیل\b|\bترمیم/i.test(question) ? "correction" :
+    /\bcancel(?:ation|led|ling)?\b|\bvoid\b|\bwithdraw\b|\bannul\b|\bterminate\b|\bdelete\b|\bخاتمہ\b|\bمنسوخ/i.test(question) ? "cancellation" :
+    /\bchange\b|\bcorrect\b|\bcorrection\b|\bmodify\b|\bmodified\b|\brectif\w*\b|\bdate of birth\b|\bdob\b|\bbirth date\b|\bdate of death\b|\bdeath date\b|\bage\b|\bname change\b|\bدرست\b|\bتبدیل\b|\bترمیم\b|\bتاریخ پیدائش\b|\bتاریخ وفات\b/i.test(question) ? "correction" :
     "registration";
    let detail="";
    if(civilJurisdiction==="Punjab"){

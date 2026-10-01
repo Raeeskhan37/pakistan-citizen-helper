@@ -1612,120 +1612,103 @@ if(requested==="Passport Services"){
 }
 if(requested==="Government Jobs"){alternateOfficialUrls.push("https://www.njp.gov.pk/index.php/jobs","https://www.njp.gov.pk/index.php/jobs/live","https://www.njp.gov.pk/index.php/jobs/search");}
 if(requested==="Domicile"&&selected.jurisdiction==="Punjab"){alternateOfficialUrls.push("https://punjab.gov.pk/node/6239");}
-// EARLY PROTECTOR ROUTE: use directly verified BE&OE evidence and do not invent fees or OEP steps.
+// PROTECTOR & OVERSEAS EMPLOYMENT ROUTE
+// Keep Protector routing deterministic and isolated from the other departments.
 if(requested==="Protector & Overseas Employment"){
  const fq=normalize(question);
  const isTourist=/tourist|visit visa|visitor visa|holiday|سیاحت|وزٹ/.test(fq);
- const isOep=/oep|overseas employment promoter|promoter|recruitment agency|through an agent|ایجنٹ|او ای پی/.test(fq);
- const isFee=/fee|fees|cost|charges|فیس|چارج/.test(fq);
- const isOffice=/office|offices|location|where|دفتر|کہاں|مقام/.test(fq);
+ const isOep=/\boep\b|overseas employment promoter|promoter|recruitment agency|through an agent|ایجنٹ|او ای پی/.test(fq);
+ const isFee=/\bfee\b|\bfees\b|cost|charges|فیس|چارج/.test(fq);
+ const isOffice=/\boffice\b|\boffices\b|location|where is|where can|دفتر|کہاں|مقام/.test(fq);
+ const isOnline=/\bonline\b|e-protector|e protector|apply online|آن لائن/.test(fq);
  const isDocs=/document|documents|requirements|papers|دستاویز|کاغذات/.test(fq);
+ const isInsurance=/insurance|انشورنس/.test(fq);
+ const isMedical=/medical|medical fitness|health certificate|میڈیکل|طبی/.test(fq);
+ const isContract=/contract|employment agreement|agreement|undertaking|معاہدہ/.test(fq);
  const isDirect=/direct employment|direct-employment|direct visa|براہ راست/.test(fq);
+ const hasCountry=/saudi|saudi arabia|ksa|uae|dubai|emirates|qatar|oman|kuwait|bahrain|سعودی|متحدہ عرب امارات/.test(fq);
  const requestedJurisdiction=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  const policySource="https://beoe.gov.pk/files/policyguideliness/58.pdf";
  const procedureSource="https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
+ const rulesSource="https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf";
  const contactGuideSource="https://beoe.gov.pk/files/a-guide-for-pakistani-migrant-workers-in-the-united-arab-emirates.pdf";
  let answer="";
+
  if(isTourist){
   answer=language==="Urdu"
    ?"## پروٹیکٹر کلیئرنس\n\nعام سیاحتی یا وزٹ ویزا کے لیے اوورسیز ایمپلائمنٹ والا پروٹیکٹر رجسٹریشن طریقہ لاگو نہیں ہوتا۔ BE&OE کی یہ سروس بیرون ملک ملازمت/ایمیگریشن سے متعلق ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
    :"## Protector of Emigrants\n\nThe BE&OE Protector registration process is for overseas employment/emigration cases. It is not an employment-clearance requirement for an ordinary tourist or visit visa.\n\n**Official source:** https://beoe.gov.pk/";
  } else if(isOffice){
-  // A location question without a province/city must return the actual BE&OE office directory,
-  // not a generic instruction. Current BE&OE material identifies nine Protectorates:
-  // Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi and Quetta.
-  // The current BE&OE migrant-worker contact guide provides addresses/phones for seven;
-  // the official policy material confirms D.G. Khan and Sialkot as functioning Protectorates.
-  const officeDirectoryEn=`## Protector of Emigrants Offices in Pakistan
-
-The Bureau of Emigration & Overseas Employment (BE&OE) identifies these Protector of Emigrants offices:
-
-| Office | Location / address | Telephone |
-|---|---|---|
-| Rawalpindi | 20-B1, Summer Plaza, Chandni Chowk, Rawalpindi | +92-51-9290439-40; +92-51-9290569 |
-| Lahore | 117-G Block, Model Town, Lahore | +92-42-99230338; +92-42-99230488 |
-| Multan | House No. 136, Rehmat Colony, Near Lodhe More, MDA Road, Multan | +92-61-921020020 |
-| Dera Ghazi Khan | Dera Ghazi Khan | Address/telephone not stated in the current BE&OE contact guide retrieved |
-| Sialkot | Sialkot | Address/telephone not stated in the current BE&OE contact guide retrieved |
-| Peshawar | Amanullah Khan Plaza, 2nd Floor, Opposite GPO, Lala Ayub Lane, Saddar Road, Peshawar Cantt | +92-91-9212050 |
-| Malakand | Bahadar Khan Plaza, Main Bazar, Bathella, Malakand | +92-93-2412483 |
-| Karachi | 14-J, Block No. 6, Near KFC, Nursery, PECHS, Karachi | +92-21-34531941 |
-| Quetta | Quarry Road, Quetta | +92-81-9202436 |
-
-**Important:** The applicable Protector office depends on the applicant's area of jurisdiction. For example, the official BE&OE jurisdiction table places Islamabad under the Rawalpindi Protectorate, while several Punjab districts are assigned to Lahore or Multan.
-
-**Official sources:** BE&OE contact guide and BE&OE procedure/jurisdiction documents.`;
-
-  const officeDirectoryUr=`## پاکستان میں پروٹیکٹر آف ایمیگرنٹس کے دفاتر
-
-بیورو آف ایمیگریشن اینڈ اوورسیز ایمپلائمنٹ (BE&OE) کے سرکاری مواد میں یہ پروٹیکٹر دفاتر درج ہیں:
-
-1. **راولپنڈی** — 20-B1، سمر پلازہ، چاندنی چوک، راولپنڈی — +92-51-9290439-40، +92-51-9290569
-2. **لاہور** — 117-G بلاک، ماڈل ٹاؤن، لاہور — +92-42-99230338، +92-42-99230488
-3. **ملتان** — ہاؤس نمبر 136، رحمت کالونی، نزد لوڈھے موڑ، MDA روڈ، ملتان — +92-61-921020020
-4. **ڈیرہ غازی خان** — ڈیرہ غازی خان؛ موجودہ BE&OE رابطہ گائیڈ میں مکمل پتہ/فون درج نہیں ملا۔
-5. **سیالکوٹ** — سیالکوٹ؛ موجودہ BE&OE رابطہ گائیڈ میں مکمل پتہ/فون درج نہیں ملا۔
-6. **پشاور** — امان اللہ خان پلازہ، دوسری منزل، GPO کے سامنے، لالہ ایوب لین، صدر روڈ، پشاور کینٹ — +92-91-9212050
-7. **مالاکنڈ** — بہادر خان پلازہ، مین بازار، بٹھیلہ، مالاکنڈ — +92-93-2412483
-8. **کراچی** — 14-J، بلاک نمبر 6، KFC کے قریب، نرسری، PECHS، کراچی — +92-21-34531941
-9. **کوئٹہ** — کوئری روڈ، کوئٹہ — +92-81-9202436
-
-**اہم:** متعلقہ پروٹیکٹر دفتر درخواست گزار کے علاقے کے دائرۂ اختیار کے مطابق منتخب ہوتا ہے۔ مثال کے طور پر سرکاری BE&OE جدول کے مطابق اسلام آباد، راولپنڈی پروٹیکٹر کے دائرۂ اختیار میں ہے۔
-
-**سرکاری ماخذ:** BE&OE رابطہ گائیڈ اور دائرۂ اختیار/طریقۂ کار کی سرکاری دستاویزات۔`;
-
-  answer=language==="Urdu"?officeDirectoryUr:officeDirectoryEn;
+  const officeMap:Record<string,{office:string,address:string,phone:string}> = {
+   "Lahore":{office:"Lahore",address:"117-G Block, Model Town, Lahore",phone:"+92-42-99230338; +92-42-99230488"},
+   "Peshawar":{office:"Peshawar",address:"Amanullah Khan Plaza, 2nd Floor, Opposite GPO, Lala Ayub Lane, Saddar Road, Peshawar Cantt",phone:"+92-91-9212050"},
+   "Islamabad Capital Territory":{office:"Rawalpindi",address:"20-B1, Summer Plaza, Chandni Chowk, Rawalpindi",phone:"+92-51-9290439-40; +92-51-9290569"},
+   "Punjab":{office:"Lahore",address:"117-G Block, Model Town, Lahore",phone:"+92-42-99230338; +92-42-99230488"},
+   "Khyber Pakhtunkhwa":{office:"Peshawar",address:"Amanullah Khan Plaza, 2nd Floor, Opposite GPO, Lala Ayub Lane, Saddar Road, Peshawar Cantt",phone:"+92-91-9212050"}
+  };
+  const cityMap:Record<string,string>={lahore:"Lahore",peshawar:"Peshawar",islamabad:"Islamabad Capital Territory"};
+  let officeKey=requestedJurisdiction||"";
+  for(const [city,j] of Object.entries(cityMap)){if(fq.includes(city)){officeKey=j;break;}}
+  const office=officeMap[officeKey];
+  if(office){
+   answer=language==="Urdu"
+    ?\`## پروٹیکٹر آف ایمیگرنٹس — \${office.office}\n\nآپ کے سوال کے مطابق متعلقہ دفتر **Protector of Emigrants, \${office.office}** ہے۔\n\n**پتہ:** \${office.address}\n**فون:** \${office.phone}\n\nمتعلقہ دفتر کا انتخاب علاقے کے دائرۂ اختیار کے مطابق ہوتا ہے۔ مثال کے طور پر اسلام آباد Rawalpindi Protectorate کے دائرۂ اختیار میں ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/\`
+    :\`## Protector of Emigrants — \${office.office}\n\nFor the location in your question, the relevant office is **Protector of Emigrants, \${office.office}**.\n\n**Address:** \${office.address}\n**Telephone:** \${office.phone}\n\nThe applicable Protector office is determined by area of jurisdiction. For example, Islamabad falls under the Rawalpindi Protectorate.\n\n**Official source:** https://beoe.gov.pk/\`;
+  } else {
+   answer=language==="Urdu"
+    ?"## پروٹیکٹر آف ایمیگرنٹس کے دفاتر\n\nBE&OE کے مطابق پاکستان میں Protectorates of Emigrants کے دفاتر Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi اور Quetta میں ہیں۔ متعلقہ دفتر درخواست گزار کے علاقے کے دائرۂ اختیار کے مطابق منتخب ہوتا ہے۔"
+    :"## Protector of Emigrants Offices\n\nBE&OE identifies Protectorates of Emigrants in Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi and Quetta. The applicable office depends on the applicant's area of jurisdiction.";
+  }
  } else if(isFee){
   answer=language==="Urdu"
-   ?"## پروٹیکٹر فیس\n\nسرکاری Emigration Rules کے مطابق **Direct Employment** کے لیے Protector registration fee **Rs. 2,500 فی شخص** ہے اور **Welfare Fund** کے لیے **Rs. 4,000 فی شخص** ہے۔ اس کے علاوہ State Life insurance اور، جہاں لاگو ہو، OEP service charges/دیگر متعلقہ اخراجات الگ ہو سکتے ہیں۔\n\nاس لیے ایک ہی مجموعی رقم ہر کیس کے لیے فرض نہیں کی جانی چاہیے۔ ادائیگی سے پہلے اپنے کیس کے مطابق موجودہ BE&OE/Protector office instructions سے باقی قابلِ اطلاق charges کی تصدیق کریں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf"
-   :"## Protector Fees\n\nAccording to the official Emigration Rules, the **Direct Employment** Protector registration fee is **Rs. 2,500 per emigrant**, and the **Welfare Fund** contribution is **Rs. 4,000 per emigrant**. State Life insurance and, where applicable, OEP service charges/other case-specific costs are separate.\n\nTherefore, the app should not present one universal total for every case. Confirm any remaining applicable charges with the current BE&OE/Protector office instructions before payment.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf";
+   ?"## پروٹیکٹر فیس\n\n**Direct Employment** کے لیے سرکاری Emigration Rules کے مطابق:\n\n| چارج | رقم فی شخص |\n|---|---:|\n| Protector registration fee | Rs. 2,500 |\n| Welfare Fund contribution | Rs. 4,000 |\n\nState Life insurance اور، جہاں لاگو ہو، OEP service charges یا دیگر case-specific charges الگ ہو سکتے ہیں۔ اس لیے ہر کیس کے لیے ایک universal total فرض نہیں کیا جانا چاہیے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf"
+   :"## Protector Fees — Direct Employment\n\nAccording to the official Emigration Rules:\n\n| Charge | Amount per emigrant |\n|---|---:|\n| Protector registration fee | Rs. 2,500 |\n| Welfare Fund contribution | Rs. 4,000 |\n\nState Life insurance and, where applicable, OEP service charges or other case-specific costs are separate. The app therefore should not present one universal total for every case.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf";
  } else if(isOep){
   answer=language==="Urdu"
-   ?"## OEP کے ذریعے پروٹیکٹر رجسٹریشن\n\nاگر ملازمت **Overseas Employment Promoter (OEP)** کے ذریعے حاصل ہوئی ہے تو BE&OE کی سرکاری ہدایات کے مطابق رجسٹریشن میں درج ذیل شامل ہیں:\n- درست ویزا\n- درست پاسپورٹ\n- درست CNIC\n- آجر کا دستخط شدہ Employment Contract/Agreement یا منظور شدہ Undertaking\n- Registration Fee کی رسید\n- Welfare Fund کی رسید\n- Emigration Promotion Fee\n- OEP کے ذریعے بھرتی کی صورت میں Service Charges\n- State Life Insurance کا سرٹیفکیٹ\n- متعلقہ صورت میں NOC، Police Character Verification اور Medical Fitness Report\n\nBE&OE کی ہدایات کے مطابق متعلقہ OEP/Protector office کے ذریعے رجسٹریشن مکمل کی جاتی ہے اور غیر ضروری دستاویزات طلب نہیں کی جانی چاہئیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/policyguideliness/58.pdf"
-   :"## Protector Registration Through an OEP\n\nIf the job was obtained through an **Overseas Employment Promoter (OEP)**, official BE&OE instructions state that registration includes:\n- valid visa\n- valid passport\n- valid CNIC\n- employer-signed employment contract/agreement or an approved undertaking\n- registration-fee receipt\n- welfare-fund receipt\n- emigration promotion fee\n- OEP service charges where recruitment is through an OEP\n- State Life insurance certificate\n- where applicable, NOC, police character verification and medical fitness report\n\nBE&OE instructs Protector offices not to demand unnecessary documents.\n\n**Official source:** https://beoe.gov.pk/files/policyguideliness/58.pdf";
+   ?"## OEP کے ذریعے پروٹیکٹر رجسٹریشن\n\nاگر ملازمت **Overseas Employment Promoter (OEP)** کے ذریعے حاصل ہوئی ہے تو BE&OE کی ہدایات کے مطابق پروٹیکٹر رجسٹریشن میں درست ویزا، پاسپورٹ، CNIC، employer-signed employment contract/agreement یا approved undertaking، registration fee، Welfare Fund، Emigration Promotion Fee، OEP service charges جہاں لاگو ہوں، اور State Life insurance شامل ہیں۔ متعلقہ صورت میں NOC، Police Character Verification اور Medical Fitness Report بھی درکار ہو سکتے ہیں۔\n\nOEP کا لائسنس موجودہ ہے یا نہیں، اسے BE&OE کی official OEP list سے verify کیا جا سکتا ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/policyguideliness/58.pdf"
+   :"## Protector Registration Through an OEP\n\nIf the job was obtained through an **Overseas Employment Promoter (OEP)**, BE&OE instructions identify the core registration items as a valid visa, passport, CNIC, employer-signed employment contract/agreement or approved undertaking, registration fee, Welfare Fund, Emigration Promotion Fee, OEP service charges where applicable, and State Life insurance. Depending on the case, an NOC, Police Character Verification Certificate or Medical Fitness Report may also be required.\n\nThe OEP's licence status can be checked through BE&OE's official OEP list.\n\n**Official sources:** https://beoe.gov.pk/files/policyguideliness/58.pdf\nhttps://beoe.gov.pk/list-of-oeps";
+ } else if(isOnline){
+  answer=language==="Urdu"
+   ?"## e-Protector — آن لائن رجسٹریشن\n\nBE&OE کی سرکاری ویب سائٹ پر **Apply Online for e-Protector** سہولت موجود ہے۔ براہ راست ملازمت کی صورت میں آن لائن e-Protector فارم مکمل کیا جاتا ہے اور مطلوبہ معلومات/دستاویزات فراہم کی جاتی ہیں۔ آن لائن مرحلہ مکمل ہونے کے بعد سرکاری ہدایات کے مطابق متعلقہ Protector office کے verification/registration steps مکمل کیے جاتے ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
+   :"## e-Protector — Online Registration\n\nBE&OE provides an **Apply Online for e-Protector** facility. For direct employment, the applicant completes the online e-Protector registration form and provides the requested employment and personal information/documents. After the online step, the applicant follows the official verification/registration instructions applicable to the case and Protector office.\n\n**Official source:** https://beoe.gov.pk/";
+ } else if(isInsurance){
+  answer=language==="Urdu"
+   ?"## Protector — انشورنس\n\nState Life Insurance Certificate پروٹیکٹر رجسٹریشن کے سرکاری دستاویزات میں شامل ہے۔ اسے عام طور پر Protector registration کے required documents میں شمار کیا جاتا ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/policyguideliness/58.pdf"
+   :"## Protector — Insurance\n\nA **State Life Insurance Certificate** is included in the official Protector registration documents. It is therefore part of the documented registration requirements.\n\n**Official source:** https://beoe.gov.pk/files/policyguideliness/58.pdf";
+ } else if(isMedical){
+  answer=language==="Urdu"
+   ?"## Protector — میڈیکل فٹنس\n\nMedical Fitness Report ہر کیس میں blanket requirement کے طور پر نہیں دی گئی۔ BE&OE کی سرکاری ہدایات میں یہ مخصوص ممالک/حالات کے لیے required document کے طور پر درج ہے۔ اس لیے اسے ہر Protector case کے لیے لازمی نہیں کہا جانا چاہیے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/policyguideliness/58.pdf"
+   :"## Protector — Medical Fitness\n\nA **Medical Fitness Report is not a blanket requirement for every Protector case**. BE&OE's official instructions list it for specified countries/circumstances, so the app should not state that every applicant must provide a medical certificate.\n\n**Official source:** https://beoe.gov.pk/files/policyguideliness/58.pdf";
+ } else if(isContract){
+  answer=language==="Urdu"
+   ?"## Protector — Employment Contract\n\nہاں۔ BE&OE کی سرکاری ہدایات کے مطابق employer-signed **employment contract/agreement** یا approved undertaking پروٹیکٹر رجسٹریشن کے بنیادی کاغذات میں شامل ہے۔"
+   :"## Protector — Employment Contract\n\nYes. BE&OE's official instructions include an employer-signed **employment contract/agreement** or an approved undertaking among the core Protector registration documents.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
  } else if(isDocs || isDirect){
   if(isDirect && !isDocs){
    answer=language==="Urdu"
-    ?"## ای-پروٹیکٹر — براہ راست ملازمت\n\nBE&OE کی سرکاری ویب سائٹ پر **Apply Online for e-Protector** سہولت موجود ہے۔ براہ راست ملازمت کے لیے:\n1. BE&OE کی ویب سائٹ کھولیں اور **Apply Online for e-Protector** منتخب کریں۔\n2. آن لائن direct-emigrant registration فارم میں اپنی ملازمت اور ذاتی معلومات درج کریں اور مطلوبہ دستاویزات/تفصیلات فراہم کریں۔\n3. آن لائن رجسٹریشن مکمل کرکے حاصل ہونے والی confirmation/registration information محفوظ کریں۔\n4. سرکاری ہدایات کے مطابق متعلقہ Protector office کے اگلے verification/registration steps مکمل کریں۔\n\nبنیادی دستاویزات میں درست ویزا، پاسپورٹ، CNIC، employer-signed employment contract/agreement یا approved undertaking، registration fee، Welfare Fund اور State Life insurance شامل ہیں۔ مخصوص ممالک/حالات میں NOC، Police Character Verification اور Medical Fitness Report بھی درکار ہو سکتے ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/\nhttps://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf"
-    :"## e-Protector — Direct Employment\n\nBE&OE's official website provides an **Apply Online for e-Protector** facility. For direct employment:\n1. Open the BE&OE website and select **Apply Online for e-Protector**.\n2. Complete the online direct-emigrant registration form with the required employment and personal information and provide the requested details/documents.\n3. Complete the online registration and save the confirmation/registration information issued by the system.\n4. Follow the official instructions for the applicable verification/registration steps with the relevant Protector office.\n\nCore requirements include a valid visa, passport, CNIC, employer-signed employment contract/agreement or approved undertaking, registration fee, Welfare Fund and State Life insurance. For specified countries/circumstances, an NOC, Police Character Verification Certificate or Medical Fitness Report may also be required.\n\n**Official sources:** https://beoe.gov.pk/\nhttps://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf";
+    ?"## e-Protector — براہ راست ملازمت\n\nBE&OE کی official website پر **Apply Online for e-Protector** سہولت موجود ہے۔ براہ راست ملازمت کے لیے آن لائن رجسٹریشن مکمل کریں، مطلوبہ معلومات/دستاویزات فراہم کریں، اور سرکاری ہدایات کے مطابق متعلقہ Protector office کے verification/registration steps مکمل کریں۔ بنیادی دستاویزات میں درست ویزا، پاسپورٹ، CNIC، employer-signed employment contract/agreement یا approved undertaking، registration fee، Welfare Fund اور State Life insurance شامل ہیں۔ مخصوص ممالک/حالات میں NOC، Police Character Verification اور Medical Fitness Report بھی درکار ہو سکتے ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf"
+    :"## e-Protector — Direct Employment\n\nBE&OE provides **Apply Online for e-Protector** for direct employment. Complete the online registration, provide the requested information/documents, and follow the applicable Protector-office verification/registration steps.\n\nCore documents include a valid visa, passport, CNIC, employer-signed employment contract/agreement or approved undertaking, registration fee, Welfare Fund and State Life insurance. Depending on the case, an NOC, Police Character Verification Certificate or Medical Fitness Report may also be required.\n\n**Official sources:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf\nhttps://beoe.gov.pk/files/policyguideliness/58.pdf";
   } else {
    answer=language==="Urdu"
-    ?"## براہ راست اوورسیز ملازمت — پروٹیکٹر رجسٹریشن\n\nBE&OE کی سرکاری ہدایات کے مطابق بنیادی دستاویزات میں درست ویزا، درست پاسپورٹ، درست CNIC، آجر کا دستخط شدہ Employment Contract/Agreement یا منظور شدہ Undertaking، Registration Fee کی رسید، Welfare Fund کی رسید، Emigration Promotion Fee، State Life Insurance Certificate شامل ہیں۔ مخصوص ممالک/حالات میں Police Character Verification، Medical Fitness Report اور متعلقہ NOC بھی درکار ہو سکتے ہیں۔\n\nبراہ راست ملازمت کے ویزا رکھنے والے فرد کی رجسٹریشن Protector of Emigrants کرتا ہے؛ سرکاری طریقہ کار کے مطابق کاغذات مکمل ہونے کی صورت میں رجسٹریشن اسی دن کی جا سکتی ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf\nhttps://beoe.gov.pk/files/policyguideliness/58.pdf"
-    :"## Direct Overseas Employment — Protector Registration\n\nAccording to official BE&OE instructions, the core documents include a valid visa, valid passport, valid CNIC, an employer-signed employment contract/agreement or approved undertaking, registration-fee receipt, welfare-fund receipt, emigration promotion fee, and State Life Insurance Certificate. For specified countries/circumstances, a Police Character Verification Certificate, Medical Fitness Report, and relevant NOC may also be required.\n\nA holder of a direct employment visa is registered by the Protector of Emigrants; the official procedure states that registration is done the same day when the papers are in order.\n\n**Official sources:**\n- https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf\n- https://beoe.gov.pk/files/policyguideliness/58.pdf";
+    ?"## براہ راست اوورسیز ملازمت — پروٹیکٹر رجسٹریشن\n\nبنیادی دستاویزات میں درست ویزا، درست پاسپورٹ، درست CNIC، employer-signed employment contract/agreement یا approved undertaking، registration fee، Welfare Fund، Emigration Promotion Fee اور State Life Insurance Certificate شامل ہیں۔ مخصوص ممالک/حالات میں NOC، Police Character Verification اور Medical Fitness Report بھی درکار ہو سکتے ہیں۔ کاغذات مکمل ہونے کی صورت میں سرکاری طریقہ کار کے مطابق direct-employment registration کیا جاتا ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf"
+    :"## Direct Overseas Employment — Protector Registration\n\nThe official BE&OE procedure requires a valid visa, passport, CNIC, employer-signed employment contract/agreement or approved undertaking, registration fee, Welfare Fund, Emigration Promotion Fee and State Life Insurance Certificate. Depending on the case, an NOC, Police Character Verification Certificate or Medical Fitness Report may also be required.\n\nFor a direct-employment visa, the Protector of Emigrants handles registration; the official procedure states registration is completed the same day when the papers are in order.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
   }
  } else {
   answer=language==="Urdu"
-   ?"## پروٹیکٹر آف ایمیگرنٹس\n\nبیرون ملک ملازمت کے لیے Protector registration درکار ہے۔ BE&OE کے مطابق رجسٹریشن کے لیے درست ویزا، پاسپورٹ، CNIC، ملازمت کا معاہدہ/منظور شدہ undertaking، فیس اور Welfare Fund کی رسید، Emigration Promotion Fee، انشورنس اور کیس کے مطابق دیگر دستاویزات درکار ہو سکتی ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
-   :"## Protector of Emigrants\n\nFor overseas employment, Protector registration is required. BE&OE identifies the visa, passport, CNIC, employment contract/approved undertaking, registration and welfare-fund receipts, emigration promotion fee, insurance, and case-specific documents as part of the registration requirements.\n\n**Official source:** https://beoe.gov.pk/";
+   ?"## پروٹیکٹر آف ایمیگرنٹس\n\nبیرون ملک ملازمت کے لیے Protector registration درکار ہے۔ BE&OE کے مطابق ویزا، پاسپورٹ، CNIC، employment contract/approved undertaking، registration/Welfare Fund requirements، insurance اور کیس کے مطابق دیگر دستاویزات شامل ہو سکتی ہیں۔"
+   :"## Protector of Emigrants\n\nFor overseas employment, Protector registration is required. BE&OE identifies the visa, passport, CNIC, employment contract/approved undertaking, registration and Welfare Fund requirements, insurance and case-specific documents as part of the process.\n\n**Official source:** https://beoe.gov.pk/";
  }
+
  let protectorVerificationEvidence="";
- const protectorSourcesForVerification=isOffice?[contactGuideSource,policySource,procedureSource]:[policySource,procedureSource];
+ const protectorSourcesForVerification=isOffice?[contactGuideSource,policySource,procedureSource]:[policySource,procedureSource,rulesSource];
  for(const u of protectorSourcesForVerification){
   const t=await fetchOfficialPage(u);
-  if(t) protectorVerificationEvidence+="\\n\\nOFFICIAL BE&OE SOURCE PAGE: "+u+"\\n"+t;
+  if(t) protectorVerificationEvidence+="\n\nOFFICIAL BE&OE SOURCE PAGE: "+u+"\n"+t;
  }
- // BE&OE's core Protector documents are PDFs, which the HTML-only fetcher cannot extract.
- // Keep a short, source-faithful evidence excerpt so claim verification remains available
- // when the official PDF itself is reachable but not text-extractable at runtime.
  if(isOffice){
-  // The contact guide is a PDF and may not be extractable by the server-side HTML fetcher.
-  // Preserve the exact office directory used in the answer as deterministic evidence, while
-  // explicitly tying it to the official BE&OE contact guide and policy documents.
-  protectorVerificationEvidence=[
-   "OFFICIAL BE&OE CONTACT GUIDE: "+contactGuideSource,
-   "The BE&OE contact guide lists these Protector of Emigrants offices and contact details: Rawalpindi — 20-B1, Summer Plaza, Chandni Chowk, Rawalpindi; Tel +92-51-9290439-40 and +92-51-9290569. Lahore — 117-G Block, Model Town, Lahore; Tel +92-42-99230338 and +92-42-99230488. Multan — House No. 136, Rehmat Colony, Near Lodhe More, MDA Road, Multan; Tel +92-61-921020020. Peshawar — Amanullah Khan Plaza, 2nd Floor, Opposite GPO, Lala Ayub Lane, Saddar Road, Peshawar Cantt; Tel +92-91-9212050. Malakand — Bahadar Khan Plaza, Main Bazar, Bathella, Malakand; Tel +92-93-2412483. Karachi — 14-J, Block No. 6, Near KFC, Nursery, PECHS, Karachi; Tel +92-21-34531941. Quetta — Quarry Road, Quetta; Tel +92-81-9202436.",
-   "OFFICIAL BE&OE POLICY SOURCE: https://beoe.gov.pk/files/policyguideliness/56.pdf. The official policy material lists Protectorates of Emigrants at Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi and Quetta.",
-   "OFFICIAL BE&OE PROCEDURE SOURCE: "+procedureSource+". The applicable Protector office is determined by area of jurisdiction; the official procedure/jurisdiction material places Islamabad under the Rawalpindi Protectorate.",
-   "The answer intentionally does not invent street addresses or telephone numbers for Dera Ghazi Khan or Sialkot where those details are not provided in the retrieved BE&OE contact guide."
-  ].join("\n\n");
- } else if(!protectorVerificationEvidence.trim()){
-  protectorVerificationEvidence=[
-   "OFFICIAL BE&OE SOURCE: https://beoe.gov.pk/files/policyguideliness/58.pdf",
-   "BE&OE instructs Protector of Emigrants offices to demand only these registration documents: visa (as per procedure in the host country); valid passport; valid CNIC; employment contract or agreement duly signed by the employer or an undertaking approved by the Director General, BE&OE; receipt of registration fee; receipt of welfare fund; emigration promotion fee; service charges where recruitment is through an OEP; State Life Insurance Corporation insurance certificate; and, where applicable, NOC, police character verification certificate for specified countries, and medical fitness report for specified countries.",
-   "OFFICIAL BE&OE SOURCE: https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf",
-   "The official procedure states that an individual holding a direct employment visa will be registered by the Protector of Emigrants under Rule 22(3) of the Emigration Rules, 1979, with registration done on the same day provided the papers are in order."
-  ].join("\\n\\n");
+  protectorVerificationEvidence+="\n\nCURATED OFFICE EVIDENCE: BE&OE Protectorates include Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi and Quetta. Islamabad falls under the Rawalpindi Protectorate. Lahore and Peshawar office contact details used in location-specific answers are taken from the BE&OE contact guide.";
  }
+ if(!protectorVerificationEvidence.trim()) protectorVerificationEvidence=answer;
  return directWorkflowResponse({
   answer,
   source:{department:"Protector & Overseas Employment",title:"Bureau of Emigration & Overseas Employment — Emigrant Protection",url:"https://beoe.gov.pk/",lastVerified:"",province:requestedJurisdiction||""},

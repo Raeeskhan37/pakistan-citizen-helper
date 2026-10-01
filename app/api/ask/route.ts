@@ -1866,9 +1866,17 @@ const departmentDomains:Record<string,string[]>={
     else if(civilService==="Marriage Certificate") detail="KP's official CRVS rules require the prescribed marriage application, a registered Nikah Nama or applicable marriage certificate, and CNIC copies of the husband and wife and their parents, with the concerned council responsible for registration.";
     else detail="KP's official Local Government/CRVS framework places divorce registration with the concerned council and requires the prescribed application and supporting divorce documentation.";
    } else if(civilJurisdiction==="Sindh"){
-    detail="Sindh's official CRMS information states that birth, death, marriage and divorce registration are being provided through an integrated digital civil-registration platform. The service is being implemented across local councils and the province has announced online/mobile registration through CRMS.";
+    if(civilAction==="correction" || civilAction==="cancellation"){
+      detail="The current official Sindh CRMS material verified here confirms digital registration of birth, death, marriage and divorce, but it does not publish a complete current procedure for correcting or cancelling the requested certificate. Therefore, I will not substitute the normal registration process for a correction/cancellation request or invent unverified documents, fees, forms or approval steps.";
+    } else {
+      detail="Sindh's official CRMS information states that birth, death, marriage and divorce registration are being provided through an integrated digital civil-registration platform. The service is being implemented across local councils and the province has announced online/mobile registration through CRMS.";
+    }
    } else if(civilJurisdiction==="Balochistan"){
-    detail="Balochistan's official Local Government & Rural Development Department states that the Pak-ID mobile application provides online issuance of Birth, Death, Marriage and Divorce Certificates through CRMS, allowing citizens to obtain these certificates without visiting local council offices.";
+    if(civilAction==="correction" || civilAction==="cancellation"){
+      detail="The current official Balochistan Local Government & Rural Development Department material verified here confirms online issuance/registration of birth, death, marriage and divorce certificates through CRMS, but it does not publish a complete current procedure for correcting or cancelling the requested certificate. Therefore, I will not substitute the normal registration process for a correction/cancellation request or invent unverified documents, fees, forms or approval steps.";
+    } else {
+      detail="Balochistan's official Local Government & Rural Development Department states that the Pak-ID mobile application provides online issuance of Birth, Death, Marriage and Divorce Certificates through CRMS, allowing citizens to obtain these certificates without visiting local council offices.";
+    }
    } else if(civilJurisdiction==="Islamabad Capital Territory"){
     detail="ICT Administration officially lists this civil-registration service among its citizen services. Where the dedicated ICT service page publishes detailed requirements, the application should use those requirements; otherwise it should not invent missing documents or fees.";
    } else if(civilJurisdiction==="Azad Jammu and Kashmir"){

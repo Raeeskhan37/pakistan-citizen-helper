@@ -1843,10 +1843,72 @@ const departmentDomains:Record<string,string[]>={
 
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
 if (requested === "NADRA Services") {
-  const directNadraAnswer = await getDirectAdultFreshCnicAnswer(question, language);
+  // Direct NADRA handlers must run BEFORE the generic AI path.
+  // Previously only the narrow 18+ fresh-CNIC handler was called here,
+  // so DOB/FRC/Smart-CNIC/parent-correction handlers in nadra-rag.ts
+  // were never reached.
+  const directNadraAnswer = await getDirectNadraAnswer(question, language);
   if (directNadraAnswer) {
+    const qn = normalize(question);
+    const isFrc = /\\bfrc\\b|family registration certificate|family registration/.test(qn);
+    const isPoc = /\\bpoc\\b|pakistan origin card|pakistani origin card/.test(qn);
+    const officialUrls = isFrc
+      ? ["https://www.nadra.gov.pk/identityDocument/certificates/frc"]
+      : isPoc
+        ? ["https://www.nadra.gov.pk/identityDocument/poc"]
+        : ["https://www.nadra.gov.pk/identityDocument/cnic"];
+
+    let officialEvidence = "";
+    for (const url of officialUrls) {
+      const page = await fetchOfficialPage(url);
+      if (page) {
+        officialEvidence += "\\n\\nOFFICIAL NADRA SOURCE: " + url + "\\n" + page;
+      }
+    }
+
+    const focusedEvidence = await getDirectNadraVerificationEvidence(question);
+    const verificationEvidence = [
+      focusedEvidence,
+      officialEvidence,
+      // If no focused policy evidence exists, retain the normal policy
+      // retrieval so the verifier still has a chance to support the answer.
+      focusedEvidence ? "" : ragEvidence
+    ].filter(Boolean).join("\\n\\n");
+
+    const sourceUrl = isFrc
+      ? officialUrls[0]
+      : isPoc
+        ? officialUrls[0]
+        : "https://www.nadra.gov.pk/identityDocument/cnic";
+
     return directWorkflowResponse({
       answer: directNadraAnswer,
+      source: {
+        department: "NADRA",
+        title: isFrc
+          ? "NADRA — Family Registration Certificate"
+          : isPoc
+            ? "NADRA — Pakistan Origin Card"
+            : "NADRA Registration Policy RP-6.0.2",
+        url: sourceUrl,
+        lastVerified: "1 October 2026",
+        province: ""
+      },
+      department: "NADRA Services",
+      question,
+      language,
+      evidenceAvailable: verificationEvidence.length > 100,
+      verifyClaims: true,
+      verificationEvidence
+    });
+  }
+
+  // Keep the existing specialized 18+ fresh-CNIC handler as a fallback
+  // for cases where the general direct resolver intentionally returns null.
+  const directAdultFreshCnicAnswer = await getDirectAdultFreshCnicAnswer(question, language);
+  if (directAdultFreshCnicAnswer) {
+    return directWorkflowResponse({
+      answer: directAdultFreshCnicAnswer,
       source: {
         department: "NADRA",
         title: "NADRA Registration Policy RP-6.0.2 — Fresh/New Registration 18+",

@@ -1652,8 +1652,8 @@ if(requested==="Protector & Overseas Employment"){
   const office=officeMap[officeKey];
   if(office){
    answer=language==="Urdu"
-    ?\`## پروٹیکٹر آف ایمیگرنٹس — \${office.office}\n\nآپ کے سوال کے مطابق متعلقہ دفتر **Protector of Emigrants, \${office.office}** ہے۔\n\n**پتہ:** \${office.address}\n**فون:** \${office.phone}\n\nمتعلقہ دفتر کا انتخاب علاقے کے دائرۂ اختیار کے مطابق ہوتا ہے۔ مثال کے طور پر اسلام آباد Rawalpindi Protectorate کے دائرۂ اختیار میں ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/\`
-    :\`## Protector of Emigrants — \${office.office}\n\nFor the location in your question, the relevant office is **Protector of Emigrants, \${office.office}**.\n\n**Address:** \${office.address}\n**Telephone:** \${office.phone}\n\nThe applicable Protector office is determined by area of jurisdiction. For example, Islamabad falls under the Rawalpindi Protectorate.\n\n**Official source:** https://beoe.gov.pk/\`;
+    ? ("## پروٹیکٹر آف ایمیگرنٹس — "+office.office+"\n\nآپ کے سوال کے مطابق متعلقہ دفتر **Protector of Emigrants, "+office.office+"** ہے۔\n\n**پتہ:** "+office.address+"\n**فون:** "+office.phone+"\n\nمتعلقہ دفتر کا انتخاب علاقے کے دائرۂ اختیار کے مطابق ہوتا ہے۔ مثال کے طور پر اسلام آباد Rawalpindi Protectorate کے دائرۂ اختیار میں ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/")
+    : ("## Protector of Emigrants — "+office.office+"\n\nFor the location in your question, the relevant office is **Protector of Emigrants, "+office.office+"**.\n\n**Address:** "+office.address+"\n**Telephone:** "+office.phone+"\n\nThe applicable Protector office is determined by area of jurisdiction. For example, Islamabad falls under the Rawalpindi Protectorate.\n\n**Official source:** https://beoe.gov.pk/");
   } else {
    answer=language==="Urdu"
     ?"## پروٹیکٹر آف ایمیگرنٹس کے دفاتر\n\nBE&OE کے مطابق پاکستان میں Protectorates of Emigrants کے دفاتر Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi اور Quetta میں ہیں۔ متعلقہ دفتر درخواست گزار کے علاقے کے دائرۂ اختیار کے مطابق منتخب ہوتا ہے۔"

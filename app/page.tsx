@@ -306,9 +306,9 @@ return (
         <div className="topbar-inner">
           <button className="brand" onClick={goHome} aria-label="Home">
             <span className="brand-mark">🇵🇰</span>
-            <span><strong>Pakistan Citizen Helper</strong><small>{isUrdu ? "مصدقہ سرکاری معلومات" : "Verified Government Information Portal"}</small></span>
+            <span><strong>Pakistan Citizen Helper</strong><small>{isUrdu ? "آزاد شہری معلوماتی منصوبہ" : "Independent Citizen Information Project"}</small></span>
           </button>
-          <div className="top-actions"><span className="secure-pill">✓ {isUrdu ? "مصدقہ معلومات" : "Verified"}</span><button className={`lang ${!isUrdu ? "active" : ""}`} onClick={() => setLanguage("English")}>English</button><button className={`lang ${isUrdu ? "active" : ""}`} onClick={() => setLanguage("Urdu")}>اردو</button></div>
+          <div className="top-actions"><span className="secure-pill">✓ {isUrdu ? "سرکاری ذرائع سے معلومات" : "Official-source information"}</span><button className={`lang ${!isUrdu ? "active" : ""}`} onClick={() => setLanguage("English")}>English</button><button className={`lang ${isUrdu ? "active" : ""}`} onClick={() => setLanguage("Urdu")}>اردو</button></div>
         </div>
       </header>
 
@@ -526,14 +526,14 @@ return (
     <strong>Pakistan Citizen Helper</strong>
     <span>•</span>
     <span>
-      {isUrdu ? "مصدقہ سرکاری معلومات" : "Verified Government Information"}
+      {isUrdu ? "آزاد منصوبہ — سرکاری ویب سائٹ نہیں" : "Independent project — not an official government website"}
     </span>
   </div>
 
   <div className="footer-note">
     {isUrdu
-      ? "حساس ذاتی معلومات، CNIC نمبر، پاس ورڈ یا OTP درج نہ کریں۔"
-      : "Do not enter sensitive personal information, CNIC numbers, passwords or OTPs."}
+      ? "یہ ایک آزاد شہری معلوماتی منصوبہ ہے، سرکاری ویب سائٹ نہیں۔ معلومات سرکاری ذرائع سے مرتب کی گئی ہیں۔ حساس ذاتی معلومات، CNIC نمبر، پاس ورڈ یا OTP درج نہ کریں۔"
+      : "This is an independent citizen information project, not an official government website. Information is compiled from official government sources. Do not enter sensitive personal information, CNIC numbers, passwords or OTPs."}
   </div>
 
   <p>

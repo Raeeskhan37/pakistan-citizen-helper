@@ -359,14 +359,6 @@ export async function verifyAnswerClaims(args: {
       );
     }
 
-    const claims: ClaimCheck[] = parsed.claims
-      .map((item: any) => ({
-        claim: String(item?.claim || "").trim(),
-        verdict: normalizeVerdict(item?.verdict),
-        reason: String(item?.reason || "").trim(),
-      }))
-      .filter((item: ClaimCheck) => item.claim.length > 0);
-
     if (!claims.length) return emptyResult("No factual claims were extracted for verification.");
 
     const unsupportedClaims = claims

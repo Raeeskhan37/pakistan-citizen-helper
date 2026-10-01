@@ -1777,7 +1777,7 @@ const departmentDomains:Record<string,string[]>={
 };
 
 
- // UNIVERSAL CIVIL-REGISTRATION ROUTER:
+ // Local Government civil-registration review: correction routing is handled below.\n // UNIVERSAL CIVIL-REGISTRATION ROUTER:
  // One resolver covers Birth, Death, Marriage and Divorce across all seven
  // jurisdictions. Existing jurisdiction-specific routes above remain first.
  const civilService =

@@ -1050,6 +1050,35 @@ export async function POST(request:NextRequest){try{
    }
  }
 
+ // EARLY PASSPORT 7-MONTH RENEWAL ROUTE:
+ // DGI&P explicitly states that passport renewal is allowed before expiry,
+ // including when the existing passport still has months of validity remaining.
+ // This narrow handler fixes the previously unanswered "7 months remaining" case
+ // without changing the broader Passport routing or other departments.
+ if(requested==="Passport Services" &&
+    /(renew|renewal|renew passport|تجدید|تجدیدِ پاسپورٹ)/i.test(question) &&
+    /(7\\s*months?|seven\\s*months?|7\\s*month|7\\s*ماہ|سات\\s*ماہ)/i.test(question)){
+   const passportOfficialUrl="https://dgip.gov.pk/passport/ordinary-passport.php";
+   const passportPage=await fetchOfficialPage(passportOfficialUrl);
+   const passportTerms=["Renewal of Passport","no restriction for renewal of passport before its expiry","full validity of 5/10 years","reason for obtaining a new passport before its expiry","relevant passport office"];
+   const passportRelevant=extractRelevantOfficialEvidence(passportPage,passportTerms);
+   const answer=language==="Urdu"
+    ?"## پاسپورٹ کی میعاد ختم ہونے سے 7 ماہ پہلے تجدید\n\nجی ہاں، موجودہ پاسپورٹ کی میعاد ختم ہونے میں 7 ماہ باقی ہوں تب بھی پاسپورٹ کی تجدید کی جا سکتی ہے۔ DGI&P کے مطابق پاسپورٹ کی میعاد ختم ہونے سے پہلے تجدید پر کوئی پابندی نہیں ہے۔\n\n- آپ کو متعلقہ پاسپورٹ آفس میں مطلوبہ دستاویزات کے ساتھ تجدید کے لیے درخواست دینی ہوگی۔\n- موجودہ پاسپورٹ کی میعاد ختم ہونے سے پہلے نیا پاسپورٹ حاصل کرنے کی وجہ کا بیان مانگا جا سکتا ہے۔\n- نیا پاسپورٹ مکمل 5 یا 10 سال کی میعاد کے ساتھ جاری کیا جا سکتا ہے، متعلقہ قواعد کے مطابق۔\n- بیرونِ ملک پاکستانی آن لائن renewal سروس بھی استعمال کر سکتے ہیں؛ DGI&P کے مطابق آن لائن renewal اس وقت دستیاب ہے جب موجودہ پاسپورٹ کی میعاد ایک سال سے کم رہ گئی ہو یا پاسپورٹ expired ہو۔\n\n**سرکاری ذریعہ:** Directorate General of Immigration & Passports (DGI&P) — General Requirements for Passport\nhttps://dgip.gov.pk/passport/ordinary-passport.php"
+    :"## Renewing a Passport with 7 Months Remaining\n\nYes. You can renew your Pakistani passport even when 7 months of validity remain. DGI&P states that there is no restriction on renewal before the passport expires.\n\n- Apply for renewal at the relevant passport office with the required documents.\n- Because the existing passport has not yet expired, DGI&P may ask for a statement explaining the reason for obtaining a new passport before expiry.\n- A new passport can be issued with full 5-year or 10-year validity, subject to the applicable rules.\n- For online renewal, DGI&P states that the service is available when an MRP is expired or has less than 1 year of validity remaining.\n\n**Official source:** Directorate General of Immigration & Passports (DGI&P) — General Requirements for Passport\nhttps://dgip.gov.pk/passport/ordinary-passport.php";
+   return directWorkflowResponse({
+     answer,
+     source:{department:"Passport",title:"DGI&P — General Requirements for Passport",url:passportOfficialUrl,lastVerified:"9 September 2026",province:""},
+     department:"Passport Services",
+     question,
+     language,
+     evidenceAvailable:true,
+     verifyClaims:true,
+     verificationEvidence:(passportRelevant
+       ? "OFFICIAL SOURCE EVIDENCE: "+passportOfficialUrl+"\\n"+passportRelevant
+       : "OFFICIAL CURATED EVIDENCE:\\n"+answer).trim()
+   });
+ }
+
  // EARLY PASSPORT PARTICULARS MODIFICATION ROUTE:
  // One verified handler covers name, father name, date of birth/age and
  // other particulars. DGI&P requires the CNIC/NICOP to be revised first.

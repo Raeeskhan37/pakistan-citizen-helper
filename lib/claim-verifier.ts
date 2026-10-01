@@ -189,6 +189,76 @@ export async function verifyAnswerClaims(args: {
       );
     };
 
+    const callGemini = async (): Promise<ClaimCheck[] | null> => {
+      const geminiKey =
+        process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+      if (!geminiKey) return null;
+
+      const geminiModel =
+        process.env.GEMINI_VERIFIER_MODEL || "gemini-2.5-flash-lite";
+      const geminiPrompt =
+        "Return JSON only with a top-level claims array. Each claim item must contain claim, verdict (supported|unsupported|unclear), and reason.\\n\\n" +
+        prompt;
+
+      const geminiResponse = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/" +
+          encodeURIComponent(geminiModel) +
+          ":generateContent",
+        {
+          method: "POST",
+          headers: {
+            "x-goog-api-key": geminiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: geminiPrompt }] }],
+            generationConfig: {
+              temperature: 0,
+              maxOutputTokens: MAX_COMPLETION_TOKENS,
+              responseMimeType: "application/json",
+            },
+          }),
+        }
+      );
+
+      if (!geminiResponse.ok) {
+        console.error(
+          "Claim verifier Gemini provider error:",
+          geminiResponse.status,
+          (await geminiResponse.text().catch(() => "")).slice(0, 1000)
+        );
+        return null;
+      }
+
+      const data = await geminiResponse.json();
+      const raw = normalizeModelContent(
+        data?.candidates?.[0]?.content?.parts ??
+        data?.candidates?.[0]?.content ??
+        ""
+      );
+      const parsed = normalizeParsedClaims(extractJson(raw));
+      if (!parsed || !Array.isArray(parsed.claims)) {
+        console.error(
+          "Claim verifier invalid structured result from Gemini:",
+          raw.slice(0, 2000)
+        );
+        return null;
+      }
+
+      const claims = parsed.claims
+        .map((item: any) => ({
+          claim: String(item?.claim || "").trim(),
+          verdict: normalizeVerdict(item?.verdict),
+          reason: String(item?.reason || "").trim(),
+        }))
+        .filter((item: ClaimCheck) => item.claim.length > 0);
+
+      return claims.length ? claims : null;
+    };
+
+    const geminiKey =
+      process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+
     let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -198,8 +268,10 @@ export async function verifyAnswerClaims(args: {
       body: JSON.stringify(requestBody),
     });
 
-    // Groq can temporarily return 429 when the verifier model hits a rate limit.
-    // Retry once only, respecting Retry-After when it is supplied.
+    // Retry Groq once for transient 429s, then move to the independent
+    // Gemini verifier. The fallback is also used when Groq returns malformed
+    // structured output, so a provider-formatting problem does not disable
+    // the Verification Agent.
     if (response.status === 429) {
       const retryAfter = Number(response.headers.get("retry-after") || "");
       const delayMs = Number.isFinite(retryAfter)
@@ -216,65 +288,75 @@ export async function verifyAnswerClaims(args: {
       });
     }
 
-    if (!response.ok) {
-      const providerText = await response.text().catch(() => "");
-      console.error(
-        "Claim verifier provider error:",
-        response.status,
-        providerText.slice(0, 1000)
-      );
+    let claims: ClaimCheck[] | null = null;
 
-      // Do not send a second structured-output request to the same Groq
-      // organization. A normal prompt is sufficient because the verifier
-      // already parses and validates JSON itself.
-      if (response.status === 429) {
-        try {
-          const geminiResponse = await tryGemini();
-          if (geminiResponse?.ok) {
-            response = geminiResponse;
-          } else if (geminiResponse) {
-            const geminiText = await geminiResponse.text().catch(() => "");
-            console.error(
-              "Claim verifier Gemini provider error:",
-              geminiResponse.status,
-              geminiText.slice(0, 1000)
-            );
-            return emptyResult(
-              "Groq verifier rate limit persisted and the configured Gemini verifier returned HTTP " +
-                geminiResponse.status +
-                "."
-            );
-          } else {
-            return emptyResult(
-              "Groq verifier rate limit persisted. Configure GEMINI_API_KEY for an independent verifier fallback."
-            );
-          }
-        } catch (geminiError) {
-          console.error("Claim verifier Gemini fallback failed:", geminiError);
-          return emptyResult("Groq verifier rate limit persisted and the Gemini fallback failed.");
-        }
-      } else {
-        return emptyResult(
-          "Verifier provider returned HTTP " +
-            response.status +
-            ". Provider details were recorded in the server log."
+    if (response.ok) {
+      try {
+        const data = await response.json();
+        const raw = normalizeModelContent(
+          data?.choices?.[0]?.message?.content ??
+          data?.candidates?.[0]?.content?.parts ??
+          data?.candidates?.[0]?.content ??
+          ""
         );
+        const parsed = normalizeParsedClaims(extractJson(raw));
+        if (parsed && Array.isArray(parsed.claims)) {
+          claims = parsed.claims
+            .map((item: any) => ({
+              claim: String(item?.claim || "").trim(),
+              verdict: normalizeVerdict(item?.verdict),
+              reason: String(item?.reason || "").trim(),
+            }))
+            .filter((item: ClaimCheck) => item.claim.length > 0);
+        } else {
+          console.error(
+            "Claim verifier invalid structured result from Groq:",
+            raw.slice(0, 2000)
+          );
+        }
+      } catch (error) {
+        console.error("Claim verifier Groq response parsing failed:", error);
+      }
+    } else {
+      console.error(
+        "Claim verifier Groq provider error:",
+        response.status,
+        (await response.text().catch(() => "")).slice(0, 1000)
+      );
+    }
+
+    if (!claims?.length && geminiKey) {
+      try {
+        claims = await callGemini();
+      } catch (error) {
+        console.error("Claim verifier Gemini fallback failed:", error);
       }
     }
 
-    const data = await response.json();
-    // Normalize Groq's OpenAI-compatible response and Gemini's candidate response.
-    const raw = normalizeModelContent(
-      data?.choices?.[0]?.message?.content ??
-      data?.candidates?.[0]?.content?.parts ??
-      data?.candidates?.[0]?.content ??
-      ""
-    );
+    if (!claims?.length) {
+      if (response.status === 429) {
+        return emptyResult(
+          geminiKey
+            ? "Groq verifier rate limit persisted and Gemini fallback did not return a valid verification result."
+            : "Groq verifier rate limit persisted. Configure GEMINI_API_KEY for an independent verifier fallback."
+        );
+      }
 
-    const parsed = normalizeParsedClaims(extractJson(raw));
-    if (!parsed || !Array.isArray(parsed.claims)) {
-      console.error("Claim verifier invalid structured result. Raw model content:", raw.slice(0, 2000));
-      return emptyResult("Verifier returned an invalid structured result.");
+      if (!response.ok) {
+        return emptyResult(
+          geminiKey
+            ? "Groq verifier failed and Gemini fallback did not return a valid verification result."
+            : "Verifier provider returned HTTP " +
+                response.status +
+                ". Configure GEMINI_API_KEY for an independent fallback."
+        );
+      }
+
+      return emptyResult(
+        geminiKey
+          ? "Groq verifier returned invalid structured output and Gemini fallback did not return a valid verification result."
+          : "Verifier returned an invalid structured result. Configure GEMINI_API_KEY for an independent fallback."
+      );
     }
 
     const claims: ClaimCheck[] = parsed.claims

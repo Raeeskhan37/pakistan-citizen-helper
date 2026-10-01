@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runFourAgentWorkflow } from "@/lib/agent-orchestrator";
 import { verifyAnswerClaims } from "@/lib/claim-verifier";
-import { getDirectAdultFreshCnicAnswer, getDirectNadraAnswer, retrieveNadraEvidence } from "@/lib/nadra-rag";
+import { getDirectAdultFreshCnicAnswer, getDirectNadraAnswer, getDirectNadraVerificationEvidence, retrieveNadraEvidence } from "@/lib/nadra-rag";
 
 // Ported from the working pakistan-citizen-ai-agent routing/research architecture.
 const WORKING_AGENT_JURISDICTIONS = ["Punjab","Sindh","Khyber Pakhtunkhwa","Balochistan","Islamabad Capital Territory","Azad Jammu and Kashmir","Gilgit-Baltistan"] as const;
@@ -959,7 +959,16 @@ export async function POST(request:NextRequest){try{
          "OFFICIAL GOVERNMENT REVENUE EVIDENCE: Shajra-e-Nasab is used in government revenue records as a pedigree/family-tree record; it is distinct from an NADRA Family Registration Certificate."
        ].join("\\n\\n");
      }
-     const verificationEvidence=[nadraRag,nadraOfficialText,nadraSpecificVerificationEvidence].filter(Boolean).join("\\n\\n");
+     // Use narrowly scoped RP-6.0.2 chunks for NADRA claim verification.
+     // General RAG retrieval remains available for research, but unrelated
+     // chunks must not dominate the verifier evidence.
+     const focusedNadraEvidence=await getDirectNadraVerificationEvidence(question);
+     const verificationEvidence=[
+       focusedNadraEvidence,
+       nadraSpecificVerificationEvidence,
+       focusedNadraEvidence ? "" : nadraRag,
+       focusedNadraEvidence ? "" : nadraOfficialText
+     ].filter(Boolean).join("\\n\\n");
      const claimVerification=await verifyAnswerClaims({
        answer:cleanAnswer(directNadraAnswer),
        evidence:verificationEvidence,

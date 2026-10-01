@@ -221,15 +221,15 @@ function armsLicenceEvidence(question:string,jurisdiction:WorkingJurisdiction|nu
  const detectedQuestionJurisdiction=workingDetectJurisdiction(question)||workingDetectTargetJurisdiction(question);
  const j=detectedQuestionJurisdiction || (q.includes("peshawar") ? "Khyber Pakhtunkhwa" : null);
 
- const newQ=/\\bnew\\b|\\bfresh\\b|\\bfirst[- ]time\\b|\\bobtain\\b|\\bapply\\b|نیا|نئی|حاصل/i.test(q);
- const docs=/\\bdocument(s)?\\b|\\brequired\\b|\\brequirements\\b|\\bchecklist\\b|دستاویز|کاغذات|ضروری/i.test(q);
- const fee=/\\bfee\\b|\\bcost\\b|\\bcharges\\b|\\bprice\\b|\\bhow much\\b|فیس/i.test(q);
- const lost=/\\blost\\b|\\bloss\\b|\\bmissing\\b|\\bduplicate\\b|\\breplacement\\b|گم|گمشدہ|ڈپلیکیٹ|متبادل/i.test(q);
- const change=/\\bchange\\b|\\bchanging\\b|\\bchanged\\b|\\bcorrect\\b|\\bcorrection\\b|\\bmodify\\b|\\bmodification\\b|\\bupdate\\b|\\bupdating\\b|\\bedit\\b|\\bedited\\b|\\balter\\b|\\balteration\\b|\\bnumber.*change\\b|تبدیلی|درست|تصحیح|ترمیم|تبدیل/i.test(q);
+ const newQ=/\bnew\b|\bfresh\b|\bfirst[- ]time\b|\bobtain\b|\bapply\b|نیا|نئی|حاصل/i.test(q);
+ const docs=/\bdocument(s)?\b|\brequired\b|\brequirements\b|\bchecklist\b|دستاویز|کاغذات|ضروری/i.test(q);
+ const fee=/\bfee\b|\bcost\b|\bcharges\b|\bprice\b|\bhow much\b|فیس/i.test(q);
+ const lost=/\blost\b|\bloss\b|\bmissing\b|\bduplicate\b|\breplacement\b|گم|گمشدہ|ڈپلیکیٹ|متبادل/i.test(q);
+ const change=/\bchange\b|\bchanging\b|\bchanged\b|\bcorrect\b|\bcorrection\b|\bmodify\b|\bmodification\b|\bupdate\b|\bupdating\b|\bedit\b|\bedited\b|\balter\b|\balteration\b|\bnumber.*change\b|تبدیلی|درست|تصحیح|ترمیم|تبدیل/i.test(q);
 
  // "NPB/PB" inside a document/fee/process question is not a definition request.
- const asksDefinition=/\\bwhat (?:is|are|does)\\b|\\bdefine\\b|\\bmeaning\\b|\\bdifference\\b|\\bwhat do .* mean\\b|کیا ہے|کیا ہیں|مطلب|فرق/i.test(q);
- const boreTerms=/\\bprohibited bore\\b|\\bnon[- ]prohibited bore\\b|\\bnpb\\b|\\bpb\\b/i.test(q);
+ const asksDefinition=/\bwhat (?:is|are|does)\b|\bdefine\b|\bmeaning\b|\bdifference\b|\bwhat do .* mean\b|کیا ہے|کیا ہیں|مطلب|فرق/i.test(q);
+ const boreTerms=/\bprohibited bore\b|\bnon[- ]prohibited bore\b|\bnpb\b|\bpb\b/i.test(q);
  const definition=boreTerms && asksDefinition && !docs && !fee && !lost && !change && !newQ;
 
  const mode=definition?"definition":change?"change":lost?"lost":fee?"fee":docs?"docs":newQ?"new":"generic";

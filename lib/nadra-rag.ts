@@ -259,7 +259,8 @@ function nadraField(question: string): string | null {
 export async function getDirectNadraAnswer(question: string, language: "English"|"Urdu"): Promise<string|null> {
   const q = normalize(question);
 
-  const hasCnic = /cnic|smart cnic|smart nic|snic|شناختی کارڈ|شناختی/.test(q);
+  const hasCnic = /cnic|smart cnic|smart nic|snic|شناختی کارڈ|شناختی/.test(q) ||
+    (/\bcard\b|identity card/.test(q) && /place of birth|birthplace|مقام پیدائش/.test(q));
   const hasCrc = /\bcrc\b|b-form|b form|child registration|juvenile|چائلڈ رجسٹریشن|ب فارم|جووینائل/.test(q);
   const hasNicop = /\bnicop\b|smart nicop/.test(q);
   const hasPoc = /\bpoc\b|pakistan origin card|pakistani origin card|پاکستان اوریجن کارڈ/.test(q);
@@ -615,6 +616,16 @@ If a Birth Certificate exists in NADRA/CRMS, the Birth Certificate must first be
     }
 
     // ------------------------------------------------------------
+    // CNIC PLACE-OF-BIRTH CORRECTION.
+    // "place of birth" + "card" is a NADRA identity-document correction
+    // question, not a Union Council birth-certificate request.
+    if (hasCnic && isModify && nadraQ(question, [/place of birth|birthplace|مقام پیدائش/])) {
+      const body = language === "Urdu"
+        ? `### CNIC — جائے پیدائش کی تبدیلی / درستگی\n\n1. **درخواست:** CNIC میں جائے پیدائش کی تبدیلی/درستگی کے لیے NADRA identity-document modification process استعمال ہوتا ہے۔\n2. **دستاویز:** Birth Certificate یا کوئی دوسرا متعلقہ documentary evidence درکار ہے۔\n3. اگر Birth Certificate پہلے سے NADRA یا CRMS record میں موجود ہے تو CNIC record میں change/correction صرف اسی صورت میں کیا جائے گا جب پہلے اسی UC سے جاری Birth Certificate میں correction/change کیا گیا ہو۔\n4. Change cases میں **attestation required نہیں ہے**۔\n5. اصل document دیکھا اور scan کیا جائے گا؛ NADRA کے اپنے جاری کردہ identity/vital-event documents کو scan کرنا لازم نہیں۔\n6. Original identity document جمع کرایا جائے گا؛ اگر اصل ID card دستیاب نہ ہو تو system-generated undertaking دستخط کے ساتھ جمع کرانی ہوگی۔\n7. بعض exceptional cases کو Zonal/Regional board یا متعلقہ approval کے لیے refer کیا جا سکتا ہے۔\n\n**Policy:** NADRA Registration Policy RP-6.0.2 — Change / Correction of Identity Documents, Various Fields Requirements, page 16.`
+        : `### CNIC — Change / Correction of Place of Birth\n\n1. **Application:** Use the NADRA identity-document modification/correction process for changing or correcting the place of birth on the CNIC.\n2. **Evidence required:** A Birth Certificate or other relevant documentary evidence is required.\n3. If a Birth Certificate already exists in NADRA or CRMS records, the CNIC change/correction can only be made after the Birth Certificate is corrected/changed by the same Union Council (UC).\n4. **No attestation is required** in change cases.\n5. The original document must be seen and scanned; NADRA-issued identity/vital-event documents do not need to be scanned.\n6. The previously issued original identity document is to be submitted; if the original ID card is unavailable, a system-generated undertaking with signature is required.\n7. Exceptions may be referred for Zonal/Regional board or relevant approval according to the policy.\n\n**Policy:** NADRA Registration Policy RP-6.0.2 — Change / Correction of Identity Documents, Various Fields Requirements, page 16.`;
+      return out(language === "Urdu" ? "CNIC — جائے پیدائش کی تبدیلی / درستگی" : "CNIC — Change / Correction of Place of Birth", body);
+    }
+
     // CNIC DATE-OF-BIRTH / AGE CORRECTION.
     // IMPORTANT: never call getDirectNadraAnswer() recursively here.
     // The previous implementation did exactly that, causing age/DOB
@@ -759,6 +770,7 @@ export async function getDirectNadraVerificationEvidence(question: string): Prom
 
     if (/\bfrc\b|family registration certificate|family registration/.test(q)) ids.add("CHUNK-0035");
     if (/date of birth|dob|birth date|age|تاریخ پیدائش|عمر/.test(q)) ids.add("CHUNK-0022");
+    if (/place of birth|birthplace|مقام پیدائش/.test(q)) ids.add("CHUNK-0029");
     if (/father.?s? name|mother.?s? name|parent.?s? info|والد|والدہ/.test(q)) ids.add("CHUNK-0021");
     if (/address|residential address|پتہ/.test(q)) { ids.add("CHUNK-0023"); ids.add("CHUNK-0024"); }
     if (/renew|renewal|تجدید/.test(q)) ids.add("CHUNK-0032");

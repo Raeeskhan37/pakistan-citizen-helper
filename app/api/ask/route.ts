@@ -215,115 +215,52 @@ ITP-DLIMS میں نیا لائسنس، لرنر، ڈرائیونگ ٹیسٹ، ت
 
 function armsLicenceEvidence(question:string,jurisdiction:WorkingJurisdiction|null,language:"English"|"Urdu"):{answer:string,sources:string[]}{
  const q=normalize(question);
- const en:Record<string,string>={
-  "Islamabad Capital Territory":`## Islamabad Capital Territory — Arms Licence
-
-The ICT Administration states that a new application requires a completed application, 3 passport-size photographs, 3 attested CNIC copies, 3 attested NTN copies, proof of residence in Islamabad, and a departmental NOC for government servants. The applicant must appear in person with original documents. The published procedure is to complete the application, submit it at the Citizen Facilitation Center, receive a token, and collect the licence on the date given on the receipt.
-
-**Official source:** https://ictadministration.gov.pk/new-arms-license/`,
-  "Sindh":`## Sindh — Arms Licence
-
-The Sindh Home Department's current official website shows a **Corrigendum Regarding Ban on Issuance of New Computerized Arms Licenses in Sindh**, posted in September 2026. Because the current status affects whether a new licence can be issued, the app should not present the older FAQ procedure as if new computerized licences are currently available.
-
-The older official FAQ describes the application process as visiting the Home Department with the original CNIC and a copy, receiving a token, followed by photograph/biodata capture, police verification and bank-challan processing. That procedure is retained only as background; the current ban/corrigendum must be checked before applying.
-
-**Current official source:** https://home.sindh.gov.pk/
-**Background official FAQ:** https://home.sindh.gov.pk/faqs`,
-  "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Arms Licence
-
-The current official KP **Dastak** platform is the digital arms-licensing service. It states that citizens can apply for, renew and manage arms licences online, with real-time application tracking, secure payments and NADRA-office biometric verification.
-
-The platform is operated as a Home Department initiative powered by KPITB and describes verification using NADRA, criminal-database and police-station records.
-
-For a new licence, use the current Dastak arms-licensing service rather than relying on older manual-procedure pages.
-
-**Official source:** https://ecitizen.kp.gov.pk/`,
-  "Balochistan":`## Balochistan — Arms Licence
-
-The Government of Balochistan Home Department lists Arms License as a provincial service and states that its online service supports applying for a new licence, tracking an application and renewing an existing licence. The department also publishes arms-licence notices, including a revised SOP for renewal.
-
-The retrieved official evidence does not establish a complete current checklist of documents, fees or eligibility conditions for a new licence, so those details are not added here.
-
-**Official source:** https://home.balochistan.gov.pk/`,
-  "Azad Jammu and Kashmir":`## Azad Jammu and Kashmir — Arms Licence
-
-The official AJK E-Facilitation Center lists Arms License as a service for acquiring an arms licence in AJK. It identifies the AJK Interior Department as the issuance authority and lists a computerized certificate issuance fee of Rs. 1,500; the service page also lists an application form and fitness certificate.
-
-**Official source:** https://efc.ajk.gov.pk/instructionservice/3`,
-  "Punjab":`## Punjab — Arms Licence
-
-For Lahore, the official Lahore district administration lists an **Arm License Branch** and provides an **Arm License** application form. The Lahore district portal also lists the Arm License Branch among its service branches.
-
-Because Punjab arms-licensing availability and procedure can vary by district, the app does not invent a province-wide checklist, fee or approval process when the current district evidence does not establish it.
-
-For Lahore, use the official Lahore district Arm License Branch/form information. For another Punjab district, the relevant district administration should be checked.
-
-**Official sources:** https://lahore.punjab.gov.pk/arm-license-branch and https://lahore.punjab.gov.pk/forms`,
-  "Gilgit-Baltistan":`## Gilgit-Baltistan — Arms Licence
-
-A sufficiently detailed current GB Arms Licence procedure was not established from the retrieved official government evidence. The official GB government site provides general government information and laws/notifications, but the retrieved material did not establish the current application steps, documents or fees for an arms licence.
-
-To avoid inventing requirements, those details are not stated here.
-
-**Official sources:** https://gilgitbaltistan.gov.pk/ and https://www.gilgitbaltistan.gov.pk/pages/laws`
- };
- const ur:Record<string,string>={
-  "Islamabad Capital Territory":`## اسلام آباد — اسلحہ لائسنس
-
-اسلام آباد انتظامیہ کے سرکاری صفحے کے مطابق نئی درخواست کے لیے مکمل درخواست، 3 پاسپورٹ سائز تصاویر، CNIC کی 3 تصدیق شدہ نقول، NTN کی 3 تصدیق شدہ نقول، اسلام آباد میں رہائش کا ثبوت، اور سرکاری ملازمین کے لیے محکمانہ NOC درکار ہے۔ اصل دستاویزات کے ساتھ ذاتی حاضری ضروری ہے۔ طریقہ کار میں درخواست مکمل کرنا، Citizen Facilitation Center میں جمع کرانا، ٹوکن لینا اور رسید پر دی گئی تاریخ کو لائسنس وصول کرنا شامل ہے۔
-
-**سرکاری ماخذ:** https://ictadministration.gov.pk/new-arms-license/`,
-  "Sindh":`## سندھ — اسلحہ لائسنس
-
-سندھ ہوم ڈیپارٹمنٹ کے مطابق نئی درخواست کے لیے اصل CNIC اور اس کی نقل کے ساتھ Home Department جانا، درخواست جمع کرانا اور ٹوکن لینا شامل ہے۔ اس کے بعد تصویر/بائیو ڈیٹا، پولیس تصدیق اور بینک چالان کے ذریعے فیس کا عمل ہوتا ہے۔ بنیادی معیار میں سندھ ڈومیسائل اور عمر 25 سال درج ہیں۔
-
-**سرکاری ماخذ:** https://home.sindh.gov.pk/faqs`,
-  "Khyber Pakhtunkhwa":`## خیبر پختونخوا — اسلحہ لائسنس
-
-KP Right to Public Services Commission کے مطابق Arms License Branch میں بائیومیٹرک/الیکٹرانک پراسیسنگ اور پولیس تصدیق کے مراحل شامل ہیں، اس کے بعد متعلقہ منظوری اور فیس کے مراحل مکمل کیے جاتے ہیں۔ سرکاری صفحہ کم از کم عمر 21 سال بیان کرتا ہے اور Provincial اور All-Pakistan لائسنس روٹس الگ کرتا ہے۔
-
-**سرکاری ماخذ:** https://www.kprts.gov.pk/services/issuance-of-arms-license/`,
-  "Balochistan":`## بلوچستان — اسلحہ لائسنس
-
-حکومت بلوچستان کے Home Department کی سرکاری ویب سائٹ Arms License کو صوبائی سروس کے طور پر درج کرتی ہے اور بتاتی ہے کہ آن لائن سروس کے ذریعے نئے لائسنس کے لیے درخواست، درخواست کا اسٹیٹس ٹریک اور موجودہ لائسنس کی تجدید کی جا سکتی ہے۔ محکمہ اسلحہ لائسنس کی renewal سے متعلق موجودہ SOP/نوٹس بھی شائع کرتا ہے۔
-
-نئے لائسنس کے مکمل موجودہ دستاویزات، فیس یا اہلیت کی فہرست دستیاب سرکاری شواہد سے واضح طور پر ثابت نہیں ہوئی، اس لیے یہ تفصیلات شامل نہیں کی گئیں۔
-
-**سرکاری ماخذ:** https://home.balochistan.gov.pk/`,
-  "Azad Jammu and Kashmir":`## آزاد جموں و کشمیر — اسلحہ لائسنس
-
-AJK E-Facilitation Center اسلحہ لائسنس کو سروس کے طور پر درج کرتا ہے اور Interior Department کو issuing authority بتاتا ہے۔ سروس صفحے پر computerized certificate issuance fee Rs. 1,500 اور application form اور fitness certificate درج ہیں۔
-
-**سرکاری ماخذ:** https://efc.ajk.gov.pk/instructionservice/3`,
-  "Punjab":`## پنجاب — اسلحہ لائسنس
-
-پنجاب کے سرکاری ضلعی پورٹلز Arms Licensing Branches کو متعلقہ دفاتر کے طور پر ظاہر کرتے ہیں اور نئی لائسنس issuance، renewal/revalidation، duplicate، transfer، correction، verification اور cancellation جیسی خدمات درج کرتے ہیں۔ بعض اضلاع موجودہ مقامی صورتحال بھی الگ سے شائع کرتے ہیں؛ مثال کے طور پر Rawalpindi کے سرکاری صفحے پر اس وقت Arm License سروس کو banned بتایا گیا ہے۔
-
-موجودہ دستیاب سرکاری شواہد سے پورے پنجاب کے لیے نئی درخواست کی ایک مشترکہ موجودہ دستاویزاتی فہرست یا طریقہ کار ثابت نہیں ہوتا، اس لیے غیر مصدقہ تفصیلات شامل نہیں کی گئیں۔
-
-**سرکاری ماخذ:** https://bhakkar.punjab.gov.pk/arms_licensing_branch اور https://rawalpindi.punjab.gov.pk/forms`,
-  "Gilgit-Baltistan":`## گلگت بلتستان — اسلحہ لائسنس
-
-دستیاب سرکاری شواہد سے گلگت بلتستان کے موجودہ Arms Licence طریقہ کار کی مکمل تصدیق نہیں ہو سکی۔ سرکاری GB ویب سائٹ پر عمومی قوانین/نوٹیفکیشن موجود ہیں، لیکن دستیاب مواد سے موجودہ درخواست کے مراحل، دستاویزات یا فیس واضح طور پر ثابت نہیں ہوئی۔
-
-غیر مصدقہ تقاضے شامل نہیں کیے گئے۔
-
-**سرکاری ماخذ:** https://gilgitbaltistan.gov.pk/`
- };
- if(!jurisdiction) return {answer:language==="Urdu"?"## اسلحہ لائسنس\n\nپاکستان میں اسلحہ لائسنس کا طریقہ کار صوبے/علاقے کے مطابق مختلف ہے۔ براہ کرم صوبہ یا علاقہ بتائیں تاکہ متعلقہ سرکاری طریقہ کار دیا جا سکے۔":"## Arms Licence\n\nArms-licensing procedure is jurisdiction-specific in Pakistan. Please specify the province or territory so the applicable official procedure can be provided without mixing provincial rules.",sources:[]};
- const answer=(language==="Urdu"?ur:en)[jurisdiction]||en.Punjab;
+ const j=jurisdiction || (q.includes("peshawar") ? "Khyber Pakhtunkhwa" : null);
+ const newQ=/\bnew\b|\bfresh\b|\bfirst[- ]time\b|\bobtain\b|\bapply\b|نیا|نئی|حاصل/i.test(q);
+ const docs=/\bdocument|\bdocuments\b|\brequired\b|\brequirements\b|دستاویز|کاغذات|ضروری/i.test(q);
+ const fee=/\bfee\b|\bcost\b|\bcharges\b|\bprice\b|فیس/i.test(q);
+ const lost=/\blost\b|\bloss\b|\bmissing\b|\bduplicate\b|\breplacement\b|گم|گمشدہ|ڈپلیکیٹ|متبادل/i.test(q);
+ const change=/\bchange\b|\bcorrect\b|\bcorrection\b|\bmodify\b|\bmodification\b|\bnumber.*change\b|تبدیلی|درست|تصحیح|ترمیم/i.test(q);
+ const definition=/\bprohibited bore\b|\bnon[- ]prohibited bore\b|\bnpb\b|\bpb\b|\bdifference.*bore\b/i.test(q);
+ const mode=definition?"definition":change?"change":lost?"lost":fee?"fee":docs?"docs":newQ?"new":"generic";
  const sources:Record<string,string[]>={
-  "Islamabad Capital Territory":["https://ictadministration.gov.pk/new-arms-license/"],
-  "Sindh":["https://home.sindh.gov.pk/","https://home.sindh.gov.pk/faqs"],
-  "Khyber Pakhtunkhwa":["https://ecitizen.kp.gov.pk/"],
-  "Balochistan":["https://home.balochistan.gov.pk/"],
-  "Azad Jammu and Kashmir":["https://efc.ajk.gov.pk/instructionservice/3"],
-  "Punjab":q.includes("lahore")?["https://lahore.punjab.gov.pk/arm-license-branch","https://lahore.punjab.gov.pk/forms"]:["https://lahore.punjab.gov.pk/arm-license-branch"],
-  "Gilgit-Baltistan":["https://gilgitbaltistan.gov.pk/","https://www.gilgitbaltistan.gov.pk/pages/laws"]
+  "Khyber Pakhtunkhwa":["https://www.kprts.gov.pk/services/issuance-of-arms-license/","https://ecitizen.kp.gov.pk/","https://kpcode.kp.gov.pk/homepage/RuleDetails/163"],
+  "Islamabad Capital Territory":["https://ictadministration.gov.pk/new-arms-license/","https://ictadministration.gov.pk/computerization-of-arms-license/","https://ictadministration.gov.pk/license-verification/"],
+  "Punjab":["https://lahore.punjab.gov.pk/arm-license-branch"],"Sindh":["https://home.sindh.gov.pk/"],"Balochistan":["https://home.balochistan.gov.pk/"],"Azad Jammu and Kashmir":["https://efc.ajk.gov.pk/instructionservice/3"],"Gilgit-Baltistan":["https://gilgitbaltistan.gov.pk/"]
  };
- return {answer,sources:sources[jurisdiction]||[]};
+ if(!j) return {answer:language==="Urdu"?"## اسلحہ لائسنس\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ سروس بتائیں، مثلاً نیا لائسنس، NPB دستاویزات، فیس، تجدید، گمشدہ/ڈپلیکیٹ یا لائسنس میں تبدیلی۔":"## Arms Licence\n\nArms-licensing services are jurisdiction-specific. Please specify the province/territory and service, such as new licence, NPB documents, fee, renewal, lost/duplicate licence, or licence correction.",sources:[]};
+ let a="## Arms Licence\n\nPlease specify the exact arms-licence service."; 
+ if(j==="Khyber Pakhtunkhwa"){
+  if(definition) a="## Prohibited Bore (PB) vs Non-Prohibited Bore (NPB)\n\nProhibited-bore weapons are those notified by the Federal Government as prohibited bore; licences for them are issued by the Federal Government. Provincial governments have authority to issue licences for non-prohibited weapons, subject to law. KP rules define non-prohibited bore weapons as weapons allowed to be manufactured, repaired, sold, possessed or transported by an individual under licence, and separately use restricted-bore and non-restricted-bore categories. A specific weapon category should be confirmed from the current government notification or licensing authority.\n\nOfficial sources: https://pakistancode.gov.pk/pdffiles/administrator4db83e5d472d4e9ffae90f007476a3ed.pdf and https://kpcode.kp.gov.pk/homepage/RuleDetails/163";
+  else if(lost) a="## Khyber Pakhtunkhwa — Lost Arms Licence\n\nIf the licence card/document itself is lost, this is a duplicate/replacement matter, not a new licence. KP rules provide for a duplicate of a lost or accidentally destroyed licence and list Rs. 1,500 for a duplicate individual arms licence. If the weapon itself was lost or stolen, report it forthwith to the nearest police station and the Deputy Commissioner.\n\nOfficial source: https://kpcode.kp.gov.pk/homepage/RuleDetails/163";
+  else if(fee) a="## Khyber Pakhtunkhwa — Arms Licence Fee\n\nThe current KP Right to Public Services Commission page lists Provincial licence Rs. 3,910, All-Pakistan licence Rs. 9,410 and Government employees Rs. 315. It also lists stamp paper Rs. 300 and Rs. 2,000 for heavy weapons such as 222/223. Confirm the applicable amount at application time.\n\nOfficial source: https://www.kprts.gov.pk/services/issuance-of-arms-license/";
+  else if(docs) a="## Khyber Pakhtunkhwa — NPB Arms Licence\n\nCurrent notified requirements are: prescribed application form, CNIC, two photographs, minimum age 21, and Rs. 300 stamp paper. Government servants additionally provide their last pay slip and a departmental letter signed by the relevant district/departmental officer. The current Dastak platform also supports digital application, tracking, payments and NADRA biometric verification.\n\nOfficial sources: https://www.kprts.gov.pk/services/issuance-of-arms-license/ and https://ecitizen.kp.gov.pk/";
+  else if(change) a="## Khyber Pakhtunkhwa — Arms Licence Record Change\n\nChanging an existing licence number is not a new-licence application. The current verified KP material covers issuance, renewal, duplicate licensing and loss/theft reporting, but does not publish a complete procedure for changing an already-issued licence number. I therefore would not give the new-licence document list as the answer. The existing record should be examined by the issuing Arms Licence Branch/competent authority.\n\nOfficial source: https://ecitizen.kp.gov.pk/";
+  else if(newQ) a="## Khyber Pakhtunkhwa — New Arms Licence\n\nCurrent official information lists a prescribed application form, CNIC, two photographs, minimum age 21 and Rs. 300 stamp paper; it separately lists Rs. 2,000 for heavy weapons such as 222/223. Government servants additionally provide their last pay slip and departmental letter. The notified process includes biometric/electronic processing and police verification. KP Dastak is the current digital arms-licensing platform.\n\nOfficial sources: https://www.kprts.gov.pk/services/issuance-of-arms-license/ and https://ecitizen.kp.gov.pk/";
+  else a="## Khyber Pakhtunkhwa — Arms Licence\n\nKP Dastak is the current digital arms-licensing platform for applying, renewing and managing licences. Please specify whether you need a new licence, NPB documents, renewal, duplicate/lost licence, fee or another service.\n\nOfficial source: https://ecitizen.kp.gov.pk/";
+ } else if(j==="Islamabad Capital Territory"){
+  if(change) a="## Islamabad Capital Territory — Arms Licence Record Change\n\nChanging an existing licence number is a record/correction matter, not a new-licence application. Current ICT Administration pages publish new licence, renewal, computerization and verification procedures, but not a specific current procedure for changing an already-issued licence number. I therefore would not substitute the new-licence document list. The existing record should be taken to the competent Arms Branch/ICT Administration authority.\n\nOfficial sources: https://ictadministration.gov.pk/computerization-of-arms-license/ and https://ictadministration.gov.pk/license-verification/";
+  else if(lost) a="## Islamabad Capital Territory — Lost Arms Licence\n\nIf the licence card/document is lost, this is not a new-licence application. The current ICT Administration pages do not publish a complete current duplicate/lost-card procedure, so I will not invent one or substitute new-licence requirements.\n\nOfficial sources: https://ictadministration.gov.pk/computerization-of-arms-license/ and https://ictadministration.gov.pk/license-verification/";
+  else if(fee) a="## Islamabad Capital Territory — Arms Licence Fee\n\nThe current ICT New Arms License page does not publish a new-licence fee amount. I therefore will not invent a fee; confirm the applicable amount with the competent ICT Arms Branch.\n\nOfficial source: https://ictadministration.gov.pk/new-arms-license/";
+  else if(newQ||docs) a="## Islamabad Capital Territory — New Arms Licence\n\nThe current ICT Administration page requires a completed application, 3 passport-size photographs, 3 attested CNIC copies, 3 attested NTN copies, proof of residence in Islamabad and a departmental NOC for government servants. Personal appearance with originals is required; submit at the Citizen Facilitation Center, obtain a token/receipt and collect the licence on the date given.\n\nOfficial source: https://ictadministration.gov.pk/new-arms-license/";
+  else a="## Islamabad Capital Territory — Arms Licence\n\nICT Administration publishes separate procedures for new licence, renewal, computerization and verification. Please specify the required service so these are not mixed.\n\nOfficial source: https://ictadministration.gov.pk/";
+ } else {
+  const label=lost?"lost/duplicate licence":change?"licence correction/change":fee?"fee":docs?"documents":newQ?"new licence":"arms licence";
+  if(j==="Sindh") a="## Sindh — Arms Licence\n\nThe current Sindh Home Department publishes arms-licensing information and current notices. For "+label+", the currently verified official material does not establish enough detail for a complete current checklist or fee, so unverified requirements are not added. For new-licence questions, current Home Department notices should control over older FAQ material.\n\nOfficial source: https://home.sindh.gov.pk/";
+  else if(j==="Balochistan") a="## Balochistan — Arms Licence\n\nThe Home Department lists Arms Licence as a provincial service and publishes arms-licence notices. The currently verified material does not establish a complete current checklist or fee for this specific "+label+" request, so unverified details are not added.\n\nOfficial source: https://home.balochistan.gov.pk/";
+  else if(j==="Punjab") a="## Punjab — Arms Licence\n\nArms licensing is administered through the relevant district/competent authority. A single current province-wide checklist or fee was not established for this specific "+label+" request, so the app should not invent one.\n\nOfficial source: https://lahore.punjab.gov.pk/arm-license-branch";
+  else if(j==="Azad Jammu and Kashmir") a="## Azad Jammu and Kashmir — Arms Licence\n\nThe official AJK E-Facilitation Center lists Arms License under the Interior Department and lists an application form, fitness certificate and computerized certificate issuance fee of Rs. 1,500. Follow the current AJK service page for the specific "+label+" request.\n\nOfficial source: https://efc.ajk.gov.pk/instructionservice/3";
+  else a="## Gilgit-Baltistan — Arms Licence\n\nThe currently verified GB government material does not establish a complete current procedure, document checklist or fee for this specific arms-licence request. I therefore will not invent those details.\n\nOfficial source: https://gilgitbaltistan.gov.pk/";
+ }
+ if(language==="Urdu" && j==="Khyber Pakhtunkhwa"){
+  if(lost) a="## خیبر پختونخوا — گمشدہ اسلحہ لائسنس\n\nاگر خود لائسنس کارڈ/دستاویز گم ہوئی ہے تو یہ نیا لائسنس نہیں بلکہ duplicate/replacement کا معاملہ ہے۔ KP قواعد duplicate کی اجازت دیتے ہیں اور duplicate individual arms licence کی فیس Rs. 1,500 درج ہے۔ اگر ہتھیار خود گم یا چوری ہوا ہے تو اسے فوراً قریبی پولیس اسٹیشن اور متعلقہ ڈپٹی کمشنر کو رپورٹ کرنا ضروری ہے۔\n\nسرکاری ماخذ: https://kpcode.kp.gov.pk/homepage/RuleDetails/163";
+  else if(docs) a="## خیبر پختونخوا — NPB اسلحہ لائسنس\n\nبنیادی تقاضے: Rs. 300 stamp paper، مقررہ application form، CNIC، دو تصاویر، عمر کم از کم 21 سال، اور سرکاری ملازم کے لیے آخری pay slip اور متعلقہ محکمہ/ضلع کے افسر کا خط۔ Dastak online application، tracking، payment اور NADRA biometric verification بھی فراہم کرتا ہے۔\n\nسرکاری ماخذ: https://www.kprts.gov.pk/services/issuance-of-arms-license/";
+  else if(fee) a="## خیبر پختونخوا — اسلحہ لائسنس فیس\n\nKP کے موجودہ notified service page پر Provincial licence Rs. 3,910، All-Pakistan Rs. 9,410 اور Government employees Rs. 315 درج ہیں۔ Stamp paper Rs. 300 اور بعض heavy weapons (222/223) کے لیے Rs. 2,000 درج ہے۔\n\nسرکاری ماخذ: https://www.kprts.gov.pk/services/issuance-of-arms-license/";
+  else if(change) a="## خیبر پختونخوا — اسلحہ لائسنس میں تبدیلی\n\nموجودہ لائسنس نمبر تبدیل کرنا نئے لائسنس کی درخواست نہیں ہے۔ دستیاب سرکاری مواد میں پہلے سے جاری لائسنس نمبر تبدیل کرنے کا مکمل موجودہ طریقہ شائع نہیں ہے، اس لیے نئے لائسنس کے کاغذات اس سوال کے جواب میں دینا درست نہیں ہوگا۔ موجودہ ریکارڈ کو متعلقہ Arms Licence Branch/مجاز اتھارٹی سے چیک کروانا ہوگا۔\n\nسرکاری ماخذ: https://ecitizen.kp.gov.pk/";
+  else if(definition) a="## ممنوعہ بور (PB) اور غیر ممنوعہ بور (NPB)\n\nممنوعہ بور وہ اسلحہ ہے جسے وفاقی حکومت ممنوعہ بور کے طور پر نوٹیفائی کرے؛ ایسے لائسنس وفاقی حکومت کے اختیار میں ہیں۔ غیر ممنوعہ اسلحہ کے لائسنس متعلقہ قانونی اختیار کے تحت جاری ہو سکتے ہیں۔ KP قواعد میں non-prohibited bore کے اندر restricted اور non-restricted bore کی اصطلاحات بھی استعمال ہوتی ہیں۔ کسی مخصوص ہتھیار کی category سرکاری نوٹیفکیشن یا لائسنسنگ اتھارٹی سے تصدیق کی جانی چاہیے۔\n\nسرکاری ماخذ: https://pakistancode.gov.pk/pdffiles/administrator4db83e5d472d4e9ffae90f007476a3ed.pdf";
+ }
+ return {answer:a,sources:sources[j]||[]};
 }
-
 function exciseEvidence(question:string,jurisdiction:string,language:"English"|"Urdu"):string{
  const q=normalize(question);
  const isToken=q.includes("token")||q.includes("motor vehicle tax")||q.includes("vehicle tax")||q.includes("ٹوکن");

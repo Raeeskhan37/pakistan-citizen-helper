@@ -338,6 +338,20 @@ export async function getDirectNadraAnswer(question: string, language: "English"
     }
 
     // ------------------------------------------------------------
+    // POC (Pakistan Origin Card) must never be expanded as
+    // "Passport of Pakistan". POC is Pakistan Origin Card.
+    // The current NADRA policy RAG is not the authoritative source
+    // for the complete POC workflow, so the API route can use NADRA's
+    // current official POC page as the online evidence fallback.
+    // ------------------------------------------------------------
+    if (hasPoc && (isApply || isDocs) && !isModify && !isDuplicate && !isCancel) {
+      const body = language === "Urdu"
+        ? "### Pakistan Origin Card (POC) — نئی درخواست\n\nPOC **Pakistan Origin Card** ہے، Passport of Pakistan نہیں۔ یہ NADRA غیر ملکی پاکستانی نژاد افراد کے لیے جاری کرتا ہے۔\n\nموجودہ NADRA معلومات کے مطابق POC کے لیے اہلیت میں سابق پاکستانی شہری، پاکستانی/سابق پاکستانی والدین یا grandparents سے تعلق رکھنے والے بعض foreign nationals، اور پاکستانی شہری/پاکستانی origin فرد کے بعض foreign spouses شامل ہیں، subject to NADRA کی eligibility conditions۔\n\n**PakID کے ذریعے بنیادی عمل:**\n1. NADRA PakID app میں account بنائیں یا sign in کریں۔\n2. **New POC** منتخب کریں۔\n3. اپنی معلومات مکمل کریں۔\n4. مطلوبہ documents upload کریں۔\n5. اگر required ہو تو NADRA Registration Centre جائیں۔\n6. PakID میں application status track کریں۔\n\nBiometric verification اور photograph کے لیے Registration Centre visit درکار ہو سکتا ہے۔\n\n**سرکاری ماخذ:** NADRA — Pakistan Origin Card (POC)\nhttps://www.nadra.gov.pk/identityDocument/poc"
+        : "### Pakistan Origin Card (POC) — New Application\n\nPOC means **Pakistan Origin Card**, not Passport of Pakistan. NADRA issues POC to eligible foreign nationals of Pakistani origin.\n\nCurrent NADRA information includes eligibility categories such as a former Pakistani citizen, certain foreign nationals with a Pakistani/ex-Pakistani parent or grandparent, and certain foreign spouses of Pakistani citizens/origin individuals, subject to NADRA's eligibility conditions.\n\n**Basic PakID process:**\n1. Create an account or sign in to the NADRA PakID app.\n2. Select **New POC**.\n3. Complete the personal details.\n4. Upload the required documents.\n5. Visit a NADRA Registration Centre if required.\n6. Track the application status in the app.\n\nBiometric verification and a photograph may require a visit to a Registration Centre.\n\n**Official source:** NADRA — Pakistan Origin Card (POC)\nhttps://www.nadra.gov.pk/identityDocument/poc";
+      return out(language === "Urdu" ? "NADRA — Pakistan Origin Card (POC)" : "NADRA — Pakistan Origin Card (POC)", body);
+    }
+
+    // ------------------------------------------------------------
     // FRC BY BIRTH / BY MARRIAGE / BY ADOPTION / BY ALL.
     // These are distinct FRC certificate types, not a generic
     // "family registration" question. Keep this direct so the request

@@ -1862,9 +1862,10 @@ const departmentDomains:Record<string,string[]>={
     detail="The Government of Gilgit-Baltistan official portal is the authoritative government entry point, but a detailed service-specific checklist for this civil certificate was not available in the official material I could verify. The app therefore will not invent documents, fees or office details.";
    }
 
+   const serviceName = civilService.replace(" Certificate","").replace(" Registration","");
    const answer=language==="Urdu"
-    ? "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+src.scope+"\\n\\n**آپ کے سوال کے مطابق:** "+detail+"\\n\\n**اہم:** جہاں سرکاری ذریعہ مکمل دستاویزات یا فیس واضح طور پر شائع نہیں کرتا، وہاں میں غیرمصدقہ معلومات شامل نہیں کر رہا۔\\n\\n**سرکاری ذریعہ:** "+src.url
-    : "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+src.scope+"\\n\\n**For your question:** "+detail+"\\n\\n**Important:** Where the official source does not publish a complete current document or fee checklist, I will not invent unverified requirements.\\n\\n**Official source:** "+src.url;
+    ? "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+detail+"\\n\\n**اہم:** اس جواب میں صرف **"+serviceName+"** سروس سے متعلق معلومات شامل ہیں۔ جہاں سرکاری ذریعہ مکمل دستاویزات یا فیس واضح طور پر شائع نہیں کرتا، وہاں غیرمصدقہ معلومات شامل نہیں کی جا رہی۔\\n\\n**سرکاری ذریعہ:** "+src.url
+    : "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+detail+"\\n\\n**Important:** This answer is limited to **"+serviceName+"** service. Where the official source does not publish a complete current document or fee checklist, I will not invent unverified requirements.\\n\\n**Official source:** "+src.url;
 
    return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:src.title,url:src.url,lastVerified:"",province:civilJurisdiction},department:"Union Council / Local Government",question,language,jurisdiction:civilJurisdiction,evidenceAvailable:true,verifyClaims:true,verificationEvidence:`${src.scope}\n\n${detail}`});
   }

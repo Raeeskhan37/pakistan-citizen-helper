@@ -591,7 +591,7 @@ If a Birth Certificate exists in NADRA/CRMS, the Birth Certificate must first be
     // ------------------------------------------------------------
     if (hasCrc) {
       if (isModify && !/name|نام/.test(q) &&
-          !nadraQ(question,[/date of birth|dob|age|address|father|mother|والد|والدہ|پتہ|تاریخ پیدائش/])) {
+          !nadraQ(question,[/date of birth|dob|age|address|place of birth|birthplace|father|mother|والد|والدہ|پتہ|مقام پیدائش|تاریخ پیدائش/])) {
         return out(
           language === "Urdu" ? "CRC میں ترمیم" : "CRC Modification",
           language === "Urdu"

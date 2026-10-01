@@ -337,6 +337,45 @@ export async function getDirectNadraAnswer(question: string, language: "English"
       );
     }
 
+    // ------------------------------------------------------------
+    // FRC BY BIRTH / BY MARRIAGE / BY ADOPTION / BY ALL.
+    // These are distinct FRC certificate types, not a generic
+    // "family registration" question. Keep this direct so the request
+    // does not fall into the slow generic web-search path.
+    // ------------------------------------------------------------
+    if (/\bfrc\b|family registration certificate|family registration/.test(q) &&
+        /difference|different|by birth|by marriage|by adoption|by all|فرق|مختلف|پیدائش|شادی|گود/.test(q)) {
+      const body = language === "Urdu"
+        ? `### FRC کی اقسام
+
+**FRC by Birth:** والدین اور بہن بھائیوں کی تفصیلات شامل کرتا ہے۔
+
+**FRC by Marriage:** spouse اور بچوں کی تفصیلات شامل کرتا ہے۔
+
+**FRC by Adoption:** guardian اور adopted family members کی تفصیلات شامل کرتا ہے۔
+
+**FRC by All:** دونوں family groups کی تفصیلات شامل کرتا ہے۔
+
+NADRA کے مطابق FRC family-composition data کا سرکاری record ہے۔ FRC کی یہ categories NADRA کے official FRC page پر درج ہیں۔
+
+**اہم:** FRC کی category اس family relationship کے مطابق منتخب کی جاتی ہے جس کی معلومات certificate میں درکار ہوں۔`
+        : `### FRC Types
+
+**FRC by Birth:** includes details of parents and siblings.
+
+**FRC by Marriage:** includes details of spouse and children.
+
+**FRC by Adoption:** includes details of the guardian and adopted family members.
+
+**FRC by All:** includes both family groups.
+
+NADRA describes the FRC as a certificate that reflects, verifies and records a registered person's family-composition data. These FRC categories are listed on NADRA's official FRC page.
+
+**Important:** Select the FRC category that matches the family relationship you need represented on the certificate.`;
+
+      return out(language === "Urdu" ? "NADRA — FRC کی اقسام" : "NADRA — FRC Types", body);
+    }
+
     // 2. FRC / FAMILY REGISTRATION.
     // "Family registration information" is NOT automatically treated
     // as an FRC application or parent-information correction.
@@ -447,6 +486,47 @@ export async function getDirectNadraAnswer(question: string, language: "English"
     }
 
     // ------------------------------------------------------------
+    // PARENT INFORMATION CORRECTION.
+    // Keep this ahead of the generic identity-document fallback so
+    // father/mother-name questions use the exact RP-6.0.2 standard.
+    // ------------------------------------------------------------
+    if (hasCnic &&
+        /father.?s? name|mother.?s? name|parent.?s? info|والد|والدہ/.test(q) &&
+        isModify) {
+      const body = language === "Urdu"
+        ? `### CNIC — والد/والدہ کی معلومات کی درستگی
+
+**اگر والدین زندہ ہیں:**
+1. درخواست گزار کی درخواست۔
+2. متعلقہ والد/والدہ کا شناختی کارڈ نمبر۔
+3. جس والد/والدہ کی معلومات درست کی جا رہی ہیں ان کی **بایومیٹرک گواہی**۔
+4. اسی parent information والے کسی ایک sibling کی **بایومیٹرک گواہی**۔
+5. Non-resident citizen کی صورت میں applicable passport/residence/work permit/travel document یا attested Undertaking “A”۔
+
+**اگر biometric witness دستیاب نہ ہو:** پالیسی کے مطابق parent/sibling کی attested/notarized undertaking درکار ہو سکتی ہے؛ اور اگر ایک یا کوئی sibling موجود نہ ہو تو verified Birth Certificate، old B-Form، RG-I/RG-III، old passport، CNICF یا verified Matric/equivalent certificate جیسی irrefutable documentary evidence استعمال کی جا سکتی ہے۔
+
+**اہم:** Parent information کی correction **صرف ایک مرتبہ** کی جا سکتی ہے۔
+
+اگر Birth Certificate NADRA/CRMS میں موجود ہے تو parent information کی correction سے پہلے Birth Certificate میں correction ضروری ہے۔`
+        : `### CNIC — Parent Information Correction
+
+**If the parents are alive:**
+1. Application by the applicant.
+2. Identity-card number of the relevant parent.
+3. **Biometric witness:** the father or mother whose information is being corrected.
+4. **Biometric witness:** one sibling whose identity document contains the same parent information.
+5. For a non-resident citizen, the applicable passport/residence/work permit/travel document or attested Undertaking “A”.
+
+**If a biometric witness cannot be captured:** the policy provides for an attested/notarized undertaking from the parent(s)/sibling(s); where one or no sibling is available, irrefutable documentary evidence such as a verified Birth Certificate, old B-Form, RG-I/RG-III, old passport, CNICF or verified Matric/equivalent certificate may be required.
+
+**Important:** Parent information can be corrected **only once**.
+
+If a Birth Certificate exists in NADRA/CRMS, the Birth Certificate must first be corrected before parent information is corrected in the identity record.`;
+
+      return out(language === "Urdu" ? "CNIC — والد/والدہ کی معلومات کی درستگی" : "CNIC — Parent Information Correction", body);
+    }
+
+    // ------------------------------------------------------------
     // 8. GENERIC CRC application/documents only after conversion and
     // under-18 intent have been handled.
     // ------------------------------------------------------------
@@ -476,10 +556,39 @@ export async function getDirectNadraAnswer(question: string, language: "English"
       }
     }
 
-    // Keep the existing targeted CNIC DOB/address behaviour and generic
-    // cancellation for CNIC/POC below the more specific NICOP branch.
-    if(hasCnic && isModify && nadraQ(question,[/date of birth|dob|birth date|age|تاریخ پیدائش|عمر/])) {
-      return getDirectNadraAnswer(question.replace(/NICOP/ig, "CNIC"), language);
+    // ------------------------------------------------------------
+    // CNIC DATE-OF-BIRTH / AGE CORRECTION.
+    // IMPORTANT: never call getDirectNadraAnswer() recursively here.
+    // The previous implementation did exactly that, causing age/DOB
+    // questions to hang until the API timed out.
+    // ------------------------------------------------------------
+    if (hasCnic && isModify && nadraQ(question, [/date of birth|dob|birth date|age|تاریخ پیدائش|عمر/])) {
+      const evidence = byId("CHUNK-0022");
+      const body = language === "Urdu"
+        ? `### CNIC — تاریخِ پیدائش / عمر کی درستگی
+
+1. **درخواست:** درخواست گزار کی جانب سے درخواست۔
+2. **اگر عمر میں تبدیلی 5 سال تک ہے:** تصدیق شدہ کمپیوٹرائزڈ Birth Certificate (Union Council / Municipal Committee / Cantonment) یا پالیسی میں درج قابلِ قبول دستاویزات میں سے ایک، مثلاً Matric/Equivalent certificate، 9th/10th marks sheet، valid passport، verified government/semi-government service record، یا دیگر سرکاری DOB document۔
+3. **اگر تبدیلی 5 سال سے زیادہ ہے:** اوپر والی documentary evidence میں سے ایک کے ساتھ DG Ops / HOD IOOD یا Regional DG کی approval درکار ہے۔
+4. اگر Birth Certificate NADRA/CRMS میں موجود ہے تو DOB change سے پہلے اسی Birth Certificate میں correction ضروری ہے۔
+5. **10 سال یا اس سے زیادہ کی age change** unrealistic-age-change case کے طور پر DG approval اور reasoning/justification/documents کے ساتھ process ہوتی ہے۔
+6. اگر پہلے سے استعمال شدہ age-proof document میں مختلف DOB ہے تو اسے policy کے مطابق correct/cancel کرنا ہوگا، سوائے Manual Pakistani Passport / MNIC کے۔
+7. اگر applicant matriculate ہے اور Birth Certificate کے علاوہ کسی دوسرے document میں مختلف DOB ہے تو policy کے مطابق Matric certificate کو preference دی جاتی ہے۔
+
+**اہم:** DOB change کی exact category اور approval اس بات پر depend کرتی ہے کہ تبدیلی کتنے سال کی ہے اور موجودہ NADRA/CRMS record میں کون سا birth evidence موجود ہے۔`
+        : `### CNIC — Date of Birth / Age Correction
+
+1. **Application:** Apply as the applicant.
+2. **For a change up to 5 years:** a verified computerized Birth Certificate from the Union Council / Municipal Committee / Cantonment, or one of the policy's accepted documents such as a Matric/equivalent certificate, 9th/10th mark sheet, valid passport, verified government/semi-government service record, or another government-issued DOB document.
+3. **For a change of more than 5 years:** one of the documentary proofs above plus approval from DG Ops / HOD IOOD or the Regional DG.
+4. If a Birth Certificate already exists in NADRA/CRMS, the Birth Certificate must first be corrected before the DOB is changed in the identity record.
+5. An **age change of 10 years or more** is treated as an unrealistic age-change case requiring DG approval with reasoning/justification/documents.
+6. If a previously used age-proof document contains a different DOB, it must be corrected or cancelled according to the policy, except for a Manual Pakistani Passport / MNIC.
+7. If the applicant is matriculate and another non-birth-certificate document has a different DOB, the policy gives preference to the Matric certificate.
+
+**Important:** The exact approval path depends on the size of the DOB change and the birth evidence already held in NADRA/CRMS.`;
+
+      return out(language === "Urdu" ? "CNIC — تاریخِ پیدائش / عمر کی درستگی" : "CNIC — Date of Birth / Age Correction", body);
     }
 
     if(hasCnic && isModify && nadraQ(question,[/address|residential address|پتہ|رہائشی پتہ/])) {

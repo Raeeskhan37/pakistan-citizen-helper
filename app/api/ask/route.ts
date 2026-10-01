@@ -88,131 +88,130 @@ function workingDepartmentTerms(department:string):string[] {
  const out:string[]=[]; for(const k of Object.keys(groups)){for(const term of groups[k]){if(q.includes(normalize(term))){if(out.indexOf(k)<0)out.push(k);break;}}} if(out.length===0)out.push("general driving licence"); return out;
 }
 function drivingEvidence(question:string,jurisdiction:string,language:"English"|"Urdu"):string{
+ const q=normalize(question);
  const cats=drivingCategories(question);
  const has=(name:string)=>cats.indexOf(name)>=0;
+ const renewal=/\brenew(?:al|ing)?\b|\brenewed\b|تجدید/i.test(q);
+ const learner=/\blearner\b|\blearner permit\b|لرنر/i.test(q);
+ const duplicate=/\bduplicate\b|\blost\b|\breplacement\b|ڈپلیکیٹ|گمشدہ/i.test(q);
+ const international=/\binternational\b|\bidp\b|بین الاقوامی/i.test(q);
+ const isNew=/\bnew\b|\bnew license\b|\bnew licence\b|\bobtain\b|\bget\b|\bapply\b|نیا|نئی|حاصل/i.test(q);
+ const category=cats.find(x=>["motorcycle","car","ltv","htv","psv"].includes(x))||"general";
+ const categoryLabel:Record<string,string>={motorcycle:"motorcycle",car:"motor car",ltv:"LTV",htv:"HTV",psv:"PSV",general:"driving licence"};
+ const label=categoryLabel[category]||"driving licence";
  const en:Record<string,string>={
   Punjab:`## Punjab — Driving Licence
 **Official authority:** Punjab DLIMS 2.0.
 
-**For the requested service:** ${has("learner")?"Learner licence information is requested.":has("renewal")?"Renewal information is requested.":has("duplicate")?"Duplicate/replacement information is requested.":has("international")?"International driving licence information is requested.":"General driving licence information is requested."}
+**Requested service:** ${renewal?"Renewal":learner?"Learner licence":duplicate?"Duplicate/replacement":international?"International driving licence":isNew?"New licence":"Driving licence information"}${category!=="general"?`  
+**Category:** ${label}`:""}.
 
-The official DLIMS provides learner, regular and international driving licence services. The online workflow includes account/login, application form, PSID generation and payment, followed by applicable processing/approval steps.
+The current official DLIMS provides separate learner, regular and international licence services. Its current workflow distinguishes learner applications from regular-licence processing, while the current fee structure has a separate **Regular License Renewal** section with category-specific renewal fees.
 
-**Licence categories:** motorcycle, car/jeep, LTV, HTV and PSV.
-
-For exact documents or fees, only the current official DLIMS evidence should be used for the selected service/category.
+For renewal questions, do not present learner or first-issue test steps as renewal requirements. The current official renewal evidence lists renewal fees and does not state that a new theory or road test is part of ordinary renewal.
 
 **Source:** https://dlims.punjab.gov.pk/
 **Fee structure:** https://dlims.punjab.gov.pk/fee_structure`,
   Sindh:`## Sindh — Driving Licence
 **Official authority:** Sindh Police — Driving License Sindh (DLS).
 
-**Requested service:** ${has("learner")?"Learner licence":has("renewal")?"Renewal":has("duplicate")?"Duplicate/replacement":has("international")?"International driving licence":"General driving licence"}.
+**Requested service:** ${renewal?"Renewal":learner?"Learner licence":duplicate?"Duplicate/replacement":international?"International driving permit":isNew?"New licence":"Driving licence information"}${category!=="general"?`  
+**Category:** ${label}`:""}.
 
-The official computerized process includes:
-1. DLS online application/registration.
-2. Appearance at the DLS front desk.
-3. Screening and registration.
-4. Medical examination.
-5. Fee payment.
-6. Written/oral computer test.
-7. Road test where applicable.
-8. Final licence receipt.
+${renewal
+?`For renewal, the official Sindh DLS procedure states that the DLS system renews the driving licence for a further five years from the date of processing. The official renewal information does **not** state that the applicant must repeat the theoretical or road competency tests. Those tests are described by DLS under the process for obtaining a permanent licence after the learner period, not as an ordinary renewal requirement.`
+:learner
+?`For a learner licence, the applicant must appear physically at the concerned driving-licence branch with the original CNIC and undergo the prescribed medical fitness process. Sindh DLS lists learner licensing separately from permanent/renewal licensing.`
+:international
+?`Sindh DLS lists International Driving Permit as a separate service and identifies the branches that issue it.`
+:duplicate
+?`Sindh DLS lists duplicate licence as a separate service. The exact current duplicate requirements should be stated only where the official DLS evidence supports them.`
+:`For a new/permanent licence, Sindh DLS states that applicants appear physically at the concerned branch with the original CNIC, undergo medical fitness assessment, and complete the prescribed competency tests after the learner period. The DLS page describes a theoretical test and a road test for obtaining a permanent licence.`}
 
-The official source identifies a valid original CNIC, physical fitness and minimum age 18 for the general process. Categories include motorcycle, motor car, LTV and HTV.
+Categories published by DLS include motorcycle, motor car, LTV and HTV. Minimum age is 18 for non-commercial licences and 21 for commercial licences; HTV endorsement has an additional age/experience requirement in the official DLS information.
 
-**Sources:** https://dls.gos.pk/ and https://dls.gos.pk/pro-comp-lic.html`,
+**Sources:** https://dls.gos.pk/how-to-ob-dr-lic.html and https://dls.gos.pk/FeeStructure.html`,
   "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Driving Licence
 **Official authority:** Khyber Pakhtunkhwa Transport & Mass Transit Department.
 
-The official KP Transport Online Services portal provides online driving-licence renewal.
+**Requested service:** ${renewal?"Renewal":learner?"Learner permit":duplicate?"Duplicate licence":isNew?"New/permanent licence":"Driving licence information"}${category!=="general"?`  
+**Category:** ${label}`:""}.
 
-For the online service:
-1. Create an account using your CNIC and mobile number.
-2. Verify your identity through biometric or OTP verification.
-3. Select the required service.
-4. Complete the required information, upload documents and make payment.
+The current KP Transport Department Driving License page lists separate Dastak services for **Apply for Learner Permit, Apply for New Permanent License, Renew Existing License, and Apply for Duplicate License**.
 
-The official portal lists these driving-licence documents for the online service:
-- Copy of CNIC.
-- Existing driving licence, when renewing.
-- Medical fitness certificate.
-- Two passport-size photographs.
+${renewal
+?`For renewal, the official KP online service is specifically **Renew Existing License**. The current online-services page does not state a theory or road test as an ordinary renewal step.`
+:learner
+?`For a learner permit, the current KP Dastak procedure requires registration with CNIC and mobile number, selection of the learner service, completion of the required information, CNIC upload and online fee payment.`
+:duplicate
+?`For a duplicate licence, the current KP Transport Department lists **Apply for Duplicate License** as a separate Dastak service.`
+:`For a new permanent licence, the current KP procedure says to apply after the learner-validity period, select the permanent-licence service, upload the required documents, pay the fee online, and visit the branch for a test if required. The official KP material does not expose a complete category-specific document checklist in the verified page, so the app should not invent one.`}
 
-The portal lists the online driving-licence renewal service as active with a stated processing time of 3–5 working days.
+The KP Transport Department separately lists LTV/HTV/PSV licence services and their notified delivery times.
 
-For a new licence, learner permit, or a category other than renewal, the exact current procedure should be confirmed from the relevant official KP service.
-
-**Source:** https://transport.kp.gov.pk/tp/online-services.php`,
+**Sources:** https://www.transport.kp.gov.pk/DL.html and https://transport.kp.gov.pk/public-service.php`,
   Balochistan:`## Balochistan — Driving Licence
 **Official authority:** Balochistan Police / Police Mobile Khidmat Markaz.
 
-The official service covers learner driving licence, renewal, international driving licence, duplicate licence and endorsement.
+**Requested service:** ${renewal?"Renewal":learner?"Learner licence":duplicate?"Duplicate licence":international?"International driving licence":isNew?"New licence":"Driving licence information"}${category!=="general"?`  
+**Category:** ${label}`:""}.
 
-**Learner licence evidence:**
-- Original CNIC and one copy.
-- Traffic rules/code book.
-- Medical certificate for applicants aged 50 or above.
-- Published learner age: 18 years for motorcycle/motor car and 21 years for LTV.
-- Learner licence validity: six months.
-
-These learner requirements should not be presented as the complete regular-licence procedure.
+The official Police Mobile Khidmat Markaz service page lists learner licence, renewal, international driving licence, duplicate licence and endorsement as separate services. Learner-specific requirements must not be presented as renewal or regular-licence requirements.
 
 **Source:** https://pkm.balochistanpolice.gov.pk/public/home/services`,
   "Islamabad Capital Territory":`## Islamabad Capital Territory — Driving Licence
 **Official authority:** Islamabad Traffic Police (ITP).
 
-The official ITP-DLIMS provides:
-- New driving licence
-- Learner permit
-- Driving tests
-- Renewal
-- Duplicate licence
-- International driving permit
+**Requested service:** ${renewal?"Renewal":learner?"Learner permit":duplicate?"Duplicate licence":international?"International driving permit":isNew?"New licence":"Driving licence information"}${category!=="general"?`  
+**Category:** ${label}`:""}.
 
-For ${has("learner")?"learner permit":has("renewal")?"renewal":has("duplicate")?"duplicate licence":has("international")?"international driving permit":"general driving licence"} questions, the exact documents, fees and processing time should only be stated when supported by current official ITP evidence.
+The official ITP-DLIMS provides separate services for new licence, learner permit, driving tests, renewal, duplicate licence and international driving permit. The app should not transfer test requirements from new/permanent licensing into renewal unless the current official ITP evidence explicitly requires them.
 
 **Official portal:** https://dlims.islamabadpolice.gov.pk/`,
   "Azad Jammu and Kashmir":`## Azad Jammu and Kashmir — Driving Licence
-The official Traffic Police AJ&K portal provides licence procedure, verification, application tracking, office locations, DLMS forms, medical form, fee challan, licence fee details, theory book and traffic signs.
-
-Use the official procedure/form for the selected licence category.
+The official Traffic Police AJ&K portal provides separate licence procedures, forms, medical forms, fee information, verification and application tracking. The requested category/service should be answered from the corresponding official form or procedure.
 
 **Source:** https://trafficpolice.ajk.gov.pk/`,
   "Gilgit-Baltistan":`## Gilgit-Baltistan — Driving Licence
-The official DLMIS provides regular licence application, renewal, duplicate licence, international driving licence, medical form and licensing-centre information. The regular application covers categories including motorcycle, motor car, LTV, HTV and other listed vehicle classes.
+The official DLMIS provides regular licence application, renewal, duplicate licence, international driving licence, medical form and licensing-centre information. The requested category and action should be kept separate so renewal requirements are not mixed with first-issue requirements.
 
 **Source:** https://dlmis.gbp.gov.pk/`
  };
  const ur:Record<string,string>={
   Punjab:`## پنجاب — ڈرائیونگ لائسنس
-سرکاری DLIMS 2.0 میں لرنر، ریگولر اور انٹرنیشنل ڈرائیونگ لائسنس کی سہولیات موجود ہیں۔ کیٹیگریز میں موٹر سائیکل، کار/جیپ، LTV، HTV اور PSV شامل ہیں۔
-لرنر، تجدید، ڈپلیکیٹ یا انٹرنیشنل لائسنس کے لیے درست موجودہ فیس اور دستاویزات سرکاری DLIMS کی متعلقہ معلومات کے مطابق ہی بتائی جانی چاہئیں۔
-ماخذ: https://dlims.punjab.gov.pk/
-فیس اسٹرکچر: https://dlims.punjab.gov.pk/fee_structure`,
+**سروس:** ${renewal?"تجدید":learner?"لرنر لائسنس":duplicate?"ڈپلیکیٹ/متبادل":international?"انٹرنیشنل ڈرائیونگ لائسنس":isNew?"نیا لائسنس":"ڈرائیونگ لائسنس"}${category!=="general"?`  
+**کیٹیگری:** ${label}`:""}۔
+سرکاری DLIMS میں لرنر، ریگولر، تجدید اور انٹرنیشنل لائسنس کے عمل کو الگ رکھا گیا ہے۔ تجدید کے سوال میں نئے لائسنس یا لرنر کے ٹیسٹ مراحل کو خودکار طور پر شامل نہیں کیا جائے گا۔
+ماخذ: https://dlims.punjab.gov.pk/`,
   Sindh:`## سندھ — ڈرائیونگ لائسنس
-سرکاری DLS کے مطابق عمل میں آن لائن رجسٹریشن، فرنٹ ڈیسک، اسکریننگ/رجسٹریشن، میڈیکل، فیس، تحریری/کمپیوٹر ٹیسٹ، جہاں لاگو ہو روڈ ٹیسٹ اور لائسنس کی وصولی شامل ہے۔
-عمومی عمل کے لیے اصل CNIC، جسمانی فٹنس اور کم از کم عمر 18 سال درج ہے۔ کیٹیگریز میں موٹر سائیکل، موٹر کار، LTV اور HTV شامل ہیں۔
-ماخذ: https://dls.gos.pk/`,
+**سروس:** ${renewal?"تجدید":learner?"لرنر":duplicate?"ڈپلیکیٹ":international?"انٹرنیشنل ڈرائیونگ پرمٹ":isNew?"نیا/مستقل لائسنس":"ڈرائیونگ لائسنس"}${category!=="general"?`  
+**کیٹیگری:** ${label}`:""}۔
+${renewal?"سرکاری DLS کے مطابق تجدید کے بعد لائسنس مزید پانچ سال کے لیے renew کیا جاتا ہے۔ عام تجدید کے لیے تھیوری یا روڈ competency test دوبارہ دینے کی شرط سرکاری تجدیدی معلومات میں بیان نہیں کی گئی؛ یہ ٹیسٹ مستقل لائسنس حاصل کرنے کے عمل میں بیان کیے گئے ہیں۔":"سرکاری DLS میں لرنر، مستقل لائسنس اور تجدید کے مراحل الگ بیان کیے گئے ہیں۔ نئے مستقل لائسنس کے لیے مقررہ میڈیکل اور competency tests متعلقہ مرحلے پر لاگو ہوتے ہیں۔"}
+ماخذ: https://dls.gos.pk/how-to-ob-dr-lic.html`,
   "Khyber Pakhtunkhwa":`## خیبر پختونخوا — ڈرائیونگ لائسنس
-سرکاری معلومات کے مطابق Dastak App KP ٹرانسپورٹ/ڈرائیونگ لائسنس خدمات کا اہم ڈیجیٹل ذریعہ ہے۔ سسٹم میں لرنر، LTV، HTV اور انٹرنیشنل ڈرائیونگ لائسنس شامل ہیں۔ Police Sahulat Markaz مخصوص ڈرائیونگ خدمات بھی فراہم کرتا ہے، جن میں لرنر پرمٹ اور ڈپلیکیٹ لائسنس شامل ہیں۔
-ماخذ: https://transport.kp.gov.pk/public-service.php`,
+**سروس:** ${renewal?"تجدید":learner?"لرنر پرمٹ":duplicate?"ڈپلیکیٹ لائسنس":isNew?"نیا/مستقل لائسنس":"ڈرائیونگ لائسنس"}${category!=="general"?`  
+**کیٹیگری:** ${label}`:""}۔
+سرکاری KP Transport Department میں لرنر پرمٹ، نیا مستقل لائسنس، موجودہ لائسنس کی تجدید اور ڈپلیکیٹ لائسنس الگ خدمات ہیں۔ تجدید کے سوال میں نئے لائسنس کے ٹیسٹ مراحل شامل نہیں کیے جانے چاہئیں۔
+ماخذ: https://www.transport.kp.gov.pk/DL.html`,
   Balochistan:`## بلوچستان — ڈرائیونگ لائسنس
-Police Mobile Khidmat Markaz لرنر، تجدید، انٹرنیشنل، ڈپلیکیٹ اور اینڈورسمنٹ خدمات فراہم کرتا ہے۔ لرنر کے لیے اصل CNIC اور ایک کاپی، ٹریفک رولز/کوڈ بک، اور 50 سال یا اس سے زیادہ عمر میں میڈیکل سرٹیفکیٹ درج ہے۔
+**سروس:** ${renewal?"تجدید":learner?"لرنر":duplicate?"ڈپلیکیٹ":international?"انٹرنیشنل":isNew?"نیا لائسنس":"ڈرائیونگ لائسنس"}${category!=="general"?`  
+**کیٹیگری:** ${label}`:""}۔
+سرکاری Police Mobile Khidmat Markaz میں لرنر، تجدید، انٹرنیشنل، ڈپلیکیٹ اور اینڈورسمنٹ الگ خدمات ہیں۔
 ماخذ: https://pkm.balochistanpolice.gov.pk/public/home/services`,
   "Islamabad Capital Territory":`## اسلام آباد — ڈرائیونگ لائسنس
-اسلام آباد ٹریفک پولیس کا ITP-DLIMS نیا لائسنس، لرنر پرمٹ، ڈرائیونگ ٹیسٹ، تجدید، ڈپلیکیٹ اور انٹرنیشنل ڈرائیونگ پرمٹ کی سہولیات فراہم کرتا ہے۔
+**سروس:** ${renewal?"تجدید":learner?"لرنر پرمٹ":duplicate?"ڈپلیکیٹ":international?"انٹرنیشنل پرمٹ":isNew?"نیا لائسنس":"ڈرائیونگ لائسنس"}${category!=="general"?`  
+**کیٹیگری:** ${label}`:""}۔
+ITP-DLIMS میں نیا لائسنس، لرنر، ڈرائیونگ ٹیسٹ، تجدید، ڈپلیکیٹ اور انٹرنیشنل پرمٹ الگ خدمات ہیں۔ تجدید کے لیے نئے لائسنس کے ٹیسٹ مراحل خودکار طور پر شامل نہیں کیے جائیں گے۔
 ماخذ: https://dlims.islamabadpolice.gov.pk/`,
   "Azad Jammu and Kashmir":`## آزاد جموں و کشمیر — ڈرائیونگ لائسنس
-سرکاری Traffic Police AJ&K پورٹل پر لائسنس طریقہ کار، تصدیق، ٹریکنگ، دفاتر، فارم، میڈیکل فارم، فیس چالان اور ٹریفک علامات کی معلومات موجود ہیں۔
+سرکاری Traffic Police AJ&K پورٹل پر لائسنس کے طریقہ کار، فارم، میڈیکل فارم، فیس، تصدیق اور ٹریکنگ کی معلومات موجود ہیں۔
 ماخذ: https://trafficpolice.ajk.gov.pk/`,
   "Gilgit-Baltistan":`## گلگت بلتستان — ڈرائیونگ لائسنس
-سرکاری DLMIS پر ریگولر لائسنس، تجدید، ڈپلیکیٹ، انٹرنیشنل لائسنس، میڈیکل فارم اور لائسنسنگ مراکز کی معلومات موجود ہیں۔
+سرکاری DLMIS پر ریگولر لائسنس، تجدید، ڈپلیکیٹ، انٹرنیشنل لائسنس، میڈیکل فارم اور مراکز کی معلومات موجود ہیں۔ تجدید اور نئے لائسنس کے تقاضے الگ رکھے جانے چاہئیں۔
 ماخذ: https://dlmis.gbp.gov.pk/`
  };
  return (language==="Urdu"?ur:en)[jurisdiction]||en.Punjab;
 }
-
 
 function armsLicenceEvidence(question:string,jurisdiction:WorkingJurisdiction|null,language:"English"|"Urdu"):{answer:string,sources:string[]}{
  const q=normalize(question);

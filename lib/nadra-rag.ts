@@ -826,7 +826,7 @@ export async function getDirectNadraVerificationEvidence(question: string): Prom
 
     if (/\bfrc\b|family registration certificate|family registration/.test(q)) ids.add("CHUNK-0035");
     if (/date of birth|dob|birth date|age|تاریخ پیدائش|عمر/.test(q)) ids.add("CHUNK-0022");
-    if (/place of birth|birthplace|مقام پیدائش/.test(q)) ids.add("CHUNK-0029");
+    if (/place of birth|birthplace|مقام پیدائش/.test(q)) { ids.add("CHUNK-0019"); ids.add("CHUNK-0029"); }
     if (/father.?s? name|mother.?s? name|parent.?s? info|والد|والدہ/.test(q)) ids.add("CHUNK-0021");
     if (/address|residential address|پتہ/.test(q)) { ids.add("CHUNK-0023"); ids.add("CHUNK-0024"); }
     if (/renew|renewal|تجدید/.test(q)) ids.add("CHUNK-0032");

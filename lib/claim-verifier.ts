@@ -42,24 +42,72 @@ function normalizeVerdict(value: unknown): ClaimCheck["verdict"] {
 function extractJson(text: string): unknown {
   const cleaned = text
     .trim()
-    .replace(/^\`\`\`json\s*/i, "")
-    .replace(/^\`\`\`\s*/i, "")
-    .replace(/\s*\`\`\`$/i, "");
+    .replace(/^\\`\\`\\`json\\s*/i, "")
+    .replace(/^\\`\\`\\`\\s*/i, "")
+    .replace(/\\s*\\`\\`\\`$/i, "")
+    .trim();
 
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    const start = cleaned.indexOf("{");
-    const end = cleaned.lastIndexOf("}");
-    if (start >= 0 && end > start) {
-      try {
-        return JSON.parse(cleaned.slice(start, end + 1));
-      } catch {
-        return null;
-      }
-    }
-    return null;
+  const candidates = [cleaned];
+
+  // Models sometimes prepend a short sentence or return a JSON object
+  // followed by a short explanation. Extract the outermost JSON object/array.
+  const objectStart = cleaned.indexOf("{");
+  const objectEnd = cleaned.lastIndexOf("}");
+  if (objectStart >= 0 && objectEnd > objectStart) {
+    candidates.push(cleaned.slice(objectStart, objectEnd + 1));
   }
+
+  const arrayStart = cleaned.indexOf("[");
+  const arrayEnd = cleaned.lastIndexOf("]");
+  if (arrayStart >= 0 && arrayEnd > arrayStart) {
+    candidates.push(cleaned.slice(arrayStart, arrayEnd + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // Continue with the next conservative extraction candidate.
+    }
+  }
+
+  return null;
+}
+
+function normalizeModelContent(content: unknown): string {
+  if (typeof content === "string") return content;
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part: any) => {
+        if (typeof part === "string") return part;
+        if (typeof part?.text === "string") return part.text;
+        if (typeof part?.content === "string") return part.content;
+        return "";
+      })
+      .filter(Boolean)
+      .join("");
+  }
+
+  if (content && typeof content === "object") {
+    const value = content as any;
+    if (typeof value.text === "string") return value.text;
+    if (typeof value.content === "string") return value.content;
+  }
+
+  return "";
+}
+
+function normalizeParsedClaims(value: unknown): { claims?: unknown } | null {
+  if (Array.isArray(value)) return { claims: value };
+  if (!value || typeof value !== "object") return null;
+
+  const object = value as any;
+  if (Array.isArray(object.claims)) return object;
+  if (Array.isArray(object.result?.claims)) return { claims: object.result.claims };
+  if (Array.isArray(object.verification?.claims)) return { claims: object.verification.claims };
+
+  return null;
 }
 
 export async function verifyAnswerClaims(args: {
@@ -216,12 +264,14 @@ export async function verifyAnswerClaims(args: {
 
     const data = await response.json();
     // Normalize Groq's OpenAI-compatible response and Gemini's candidate response.
-    const raw = String(
-      data?.choices?.[0]?.message?.content ||
-      data?.candidates?.[0]?.content?.parts?.map((part: any) => String(part?.text || "")).join("") ||
+    const raw = normalizeModelContent(
+      data?.choices?.[0]?.message?.content ??
+      data?.candidates?.[0]?.content?.parts ??
+      data?.candidates?.[0]?.content ??
       ""
     );
-    const parsed = extractJson(raw) as { claims?: unknown } | null;
+
+    const parsed = normalizeParsedClaims(extractJson(raw));
     if (!parsed || !Array.isArray(parsed.claims)) {
       console.error("Claim verifier invalid structured result. Raw model content:", raw.slice(0, 2000));
       return emptyResult("Verifier returned an invalid structured result.");

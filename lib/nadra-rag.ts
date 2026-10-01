@@ -600,6 +600,62 @@ If a Birth Certificate exists in NADRA/CRMS, the Birth Certificate must first be
         );
       }
 
+      // CRC / B-Form place-of-birth correction.
+      // Keep this ahead of the generic CRC application branch so
+      // "How to change ..." cannot fall back to fresh registration.
+      if (nadraQ(question,[/place of birth|birthplace|مقام پیدائش/])) {
+        const body = language === "Urdu"
+          ? `### CRC / B-Form — جائے پیدائش کی تبدیلی / درستگی
+
+CRC/B-Form میں جائے پیدائش کی تبدیلی **Change / Correction in Card / Certificate** کے تحت آتی ہے۔
+
+1. **Birth Certificate یا کوئی دوسرا متعلقہ documentary evidence** درکار ہوگا۔
+2. اگر Birth Certificate پہلے سے NADRA یا CRMS میں موجود ہے تو پہلے **اسی UC سے جاری Birth Certificate** میں تبدیلی/درستگی کرانی ہوگی، پھر NADRA record میں correction کیا جائے گا۔
+3. Change case میں **attestation required نہیں ہے**۔
+4. اصل document دیکھا اور scan کیا جائے گا۔
+
+**Policy:** NADRA Registration Policy RP-6.0.2، Rule 13(1)، Change / Correction in Card / Certificate — Place of Birth requirements (Page 16).`
+          : `### CRC / B-Form — Change / Correction of Place of Birth
+
+Changing the place of birth on a CRC/B-Form is handled under **Change / Correction in Card / Certificate**.
+
+1. A **Birth Certificate or other relevant documentary evidence** is required.
+2. If the Birth Certificate already exists in NADRA or CRMS records, the Birth Certificate must first be corrected/changed by the **same Union Council (UC)** before the NADRA record is changed.
+3. **No attestation is required** in a change case.
+4. The original document must be seen and scanned.
+
+**Policy:** NADRA Registration Policy RP-6.0.2, Rule 13(1), Change / Correction in Card / Certificate — Place of Birth requirements (Page 16).`;
+        return out(language === "Urdu" ? "CRC / B-Form — جائے پیدائش کی تبدیلی / درستگی" : "CRC / B-Form — Change / Correction of Place of Birth", body);
+      }
+
+      // CRC / B-Form address correction.
+      if (nadraQ(question,[/address|residential address|پتہ|رہائشی پتہ/])) {
+        const body = language === "Urdu"
+          ? `### CRC / B-Form — پتہ تبدیل کرنے کا طریقہ
+
+CRC/B-Form میں پتے کی تبدیلی **Change / Correction in Card / Certificate** کے تحت آتی ہے۔
+
+**عارضی پتہ:** درج ذیل میں سے متعلقہ ثبوت استعمال ہو سکتا ہے: خود، والدین، خون کے رشتہ دار یا spouse کے ID پر متعلقہ پتہ؛ computerized utility bill (بجلی، گیس یا پانی)؛ applicant/parent/spouse کی residential property document؛ verified Local/Domicile/PRC؛ notarized affidavit/rent deed؛ Society/Government allotment letter؛ یا Sindh میں UC کا Resident Certificate۔
+
+**مستقل پتہ:** spouse کا identity document with same address؛ computerized utility bill؛ applicant/parent/spouse کی residential property document؛ verified Local/Domicile/PRC؛ Society/Government allotment letter (کم از کم 3 سال پہلے allotted)؛ یا house owner کا ID card اور original property document کے ساتھ affidavit۔
+
+Non-resident applicants کے لیے متعلقہ passport/residence/work/travel document یا Undertaking A کی شرط policy میں دی گئی ہے۔ **Foreign address change کے لیے کوئی document required نہیں ہے۔**
+
+**Policy:** NADRA Registration Policy RP-6.0.2، Change / Correction in Card / Certificate — Address requirements (Pages 15–16).`
+          : `### CRC / B-Form — Change / Correction of Address
+
+Changing the address on a CRC/B-Form is handled under **Change / Correction in Card / Certificate**.
+
+**Temporary address:** Depending on the case, the policy accepts evidence such as the applicant's, parent/relative's or spouse's ID address; a computerized electricity, gas or water bill; residential property documentation of the applicant/parent/spouse; verified Local/Domicile/PRC; a notarized affidavit/rent deed; a Society/Government allotment letter; or, in Sindh, a UC Resident Certificate.
+
+**Permanent address:** The policy lists a spouse's identity document with the same address; computerized utility bill; residential property document of applicant/parent/spouse; verified Local/Domicile/PRC; Society/Government allotment letter (allotted at least 3 years earlier); or an affidavit with the house owner's ID card and original property document.
+
+For non-resident citizens, the policy lists the applicable passport/residence/work/travel document or Undertaking A. **No document is required for a change of foreign address.**
+
+**Policy:** NADRA Registration Policy RP-6.0.2, Change / Correction in Card / Certificate — Address requirements (Pages 15–16).`;
+        return out(language === "Urdu" ? "CRC / B-Form — پتے کی تبدیلی" : "CRC / B-Form — Change / Correction of Address", body);
+      }
+
       if (nadraQ(question,[/correct.*name|change.*name|name.*crc|child.?s name|نام.*ب فارم|ب فارم.*نام|نام.*crc/])) {
         const body = language === "Urdu"
           ? "بچے کے نام کی تبدیلی کے لیے RP-6.0.2 میں **C1 Undertaking for Name Change — Form-B / Juvenile Card / NICOP (citizens less than 18 years)** موجود ہے۔ اگر Birth Certificate NADRA/CRMS میں موجود ہے تو پہلے Birth Certificate میں نام درست کرنا ہوگا۔"

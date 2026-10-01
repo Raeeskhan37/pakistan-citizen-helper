@@ -164,31 +164,6 @@ export async function verifyAnswerClaims(args: {
       messages,
     };
 
-    const tryGemini = async (): Promise<Response | null> => {
-      const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
-      if (!geminiKey) return null;
-      const geminiModel = process.env.GEMINI_VERIFIER_MODEL || "gemini-2.5-flash-lite";
-      const geminiPrompt =
-        "You are a strict evidence-grounded factual verifier. Use ONLY the supplied evidence. " +
-        'Return JSON only with a top-level claims array. Each claim item must contain claim, verdict (supported|unsupported|unclear), and reason.\\n\\n' +
-        prompt;
-      return fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(geminiModel) + ":generateContent",
-        {
-          method: "POST",
-          headers: { "x-goog-api-key": geminiKey, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: geminiPrompt }] }],
-            generationConfig: {
-              temperature: 0,
-              maxOutputTokens: MAX_COMPLETION_TOKENS,
-              responseMimeType: "application/json",
-            },
-          }),
-        }
-      );
-    };
-
     const callGemini = async (): Promise<ClaimCheck[] | null> => {
       const geminiKey =
         process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;

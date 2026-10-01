@@ -824,31 +824,114 @@ export async function getDirectNadraVerificationEvidence(question: string): Prom
     const q = normalize(question);
     const ids = new Set<string>();
 
-    if (/\bfrc\b|family registration certificate|family registration/.test(q)) ids.add("CHUNK-0035");
-    if (/date of birth|dob|birth date|age|تاریخ پیدائش|عمر/.test(q)) ids.add("CHUNK-0022");
-    if (/place of birth|birthplace|مقام پیدائش/.test(q)) { ids.add("CHUNK-0019"); ids.add("CHUNK-0029"); }
-    if (/father.?s? name|mother.?s? name|parent.?s? info|والد|والدہ/.test(q)) ids.add("CHUNK-0021");
-    if (/address|residential address|پتہ/.test(q)) { ids.add("CHUNK-0023"); ids.add("CHUNK-0024"); }
-    if (/renew|renewal|تجدید/.test(q)) ids.add("CHUNK-0032");
-    if (/crc|b-form|child registration|juvenile|under 18|minor|ب فارم|جووینائل/.test(q)) {
-      ids.add("CHUNK-0011"); ids.add("CHUNK-0012"); ids.add("CHUNK-0031");
-    }
-    if (/new|fresh|new card|fresh card|new cnic|fresh cnic|نیا کارڈ|نیا شناختی/.test(q)) {
+    // Common policy foundations.
+    ids.add("CHUNK-0001"); // breeder-document / prior birth-record correction rule
+    ids.add("CHUNK-0019"); // Rule 13(1), change/correction framework
+
+    // Intent-specific evidence. This is deliberately broader than the old
+    // seven-condition map so the verifier receives the actual policy section
+    // for the service being answered, rather than unrelated nearby chunks.
+    if (/fresh|new|registration|first[- ]?time|نیا|اندراج/.test(q)) {
       ids.add("CHUNK-0011");
       ids.add("CHUNK-0012");
       ids.add("CHUNK-0014");
       ids.add("CHUNK-0015");
+      ids.add("CHUNK-0017");
     }
 
-    const selected = chunks.filter(x => x.chunk_id && ids.has(x.chunk_id));
+    if (/crc|b-form|b form|child registration|juvenile|under 18|below 18|minor|ب فارم|جووینائل/.test(q)) {
+      ids.add("CHUNK-0011");
+      ids.add("CHUNK-0012");
+      ids.add("CHUNK-0031");
+    }
+
+    if (/date of birth|dob|birth date|age|تاریخ پیدائش|عمر/.test(q)) ids.add("CHUNK-0022");
+
+    if (/place of birth|birthplace|مقام پیدائش/.test(q)) ids.add("CHUNK-0029");
+
+    if (/address|residential address|temporary address|permanent address|foreign address|پتہ|رہائشی پتہ/.test(q)) {
+      ids.add("CHUNK-0023");
+      ids.add("CHUNK-0024");
+    }
+
+    if (/name|نام/.test(q)) {
+      ids.add("CHUNK-0020");
+      ids.add("CHUNK-0055");
+      ids.add("CHUNK-0056");
+    }
+
+    if (/father.?s? name|mother.?s? name|parent.?s? info|parent information|والد|والدہ/.test(q)) {
+      ids.add("CHUNK-0021");
+    }
+
+    if (/marital|marriage|divorce|widow|marital status|ازدواجی|شادی|طلاق|بیوہ/.test(q)) {
+      ids.add("CHUNK-0025");
+    }
+
+    if (/religion|مذہب/.test(q)) ids.add("CHUNK-0026");
+    if (/gender|جنس/.test(q)) ids.add("CHUNK-0027");
+    if (/relative|family member|add.*sibling|linkage|رشتہ دار|خاندان/.test(q)) ids.add("CHUNK-0028");
+
+    if (/renew|renewal|reprint|duplicate|lost|stolen|damaged|تجدید|ڈپلیکیٹ|گم|چوری|خراب/.test(q)) {
+      ids.add("CHUNK-0030");
+      ids.add("CHUNK-0032");
+    }
+
+    if (/frc|family registration certificate|family registration|family information|family record/.test(q)) {
+      ids.add("CHUNK-0035");
+    }
+
+    if (/poc|pakistan origin card|pakistani origin card|پاکستان اوریجن کارڈ/.test(q)) {
+      ids.add("CHUNK-0038");
+      ids.add("CHUNK-0041");
+      ids.add("CHUNK-0042");
+      ids.add("CHUNK-0043");
+      if (/renew|renewal|reprint|change|modify|correction|address|name|dob/.test(q)) ids.add("CHUNK-0046");
+      ids.add("CHUNK-0048");
+    }
+
+    if (/nicop|smart nicop/.test(q)) {
+      ids.add("CHUNK-0013");
+      ids.add("CHUNK-0016");
+      if (/cancel|cancellation|surrender|renoun|death|وفات|منسوخ/.test(q)) {
+        ids.add("CHUNK-0050");
+        ids.add("CHUNK-0051");
+        ids.add("CHUNK-0058");
+      }
+    }
+
+    if (/cancel|cancellation|surrender|renoun|death|deceased|وفات|منسوخ|شہریت ترک/.test(q)) {
+      ids.add("CHUNK-0050");
+      ids.add("CHUNK-0051");
+    }
+
+    if (/shajrah|shajra|shajra.?e.?nasab|family composition|family tree|شجرہ|خاندانی فہرست/.test(q)) {
+      // The NADRA FRC side is still supported by policy; the Revenue-side
+      // Shajra-e-Nasab evidence is supplied by the API route when needed.
+      ids.add("CHUNK-0035");
+    }
+
+    if (/effective date|effective_date|مؤثر ہونے کی تاریخ|نافذ العمل تاریخ/.test(q)) {
+      ids.add("CHUNK-0001");
+    }
+
+    const selected = chunks.filter((x) => x.chunk_id && ids.has(x.chunk_id));
+
     if (!selected.length) return "";
-    return selected.map(x => `SOURCE: NADRA Registration Policy RP-6.0.2
+
+    return selected
+      .map(
+        (x) =>
+          `SOURCE: NADRA Registration Policy RP-6.0.2
 PAGE: ${x.page || ""}
 SECTION: ${x.subsection || x.major_section || ""}
 CHUNK: ${x.chunk_id}
 EVIDENCE:
-${x.text || ""}`).join("\n\n");
-  } catch {
+${x.text || ""}`
+      )
+      .join("\n\n");
+  } catch (error) {
+    console.error("NADRA verification evidence selection failed:", error);
     return "";
   }
 }

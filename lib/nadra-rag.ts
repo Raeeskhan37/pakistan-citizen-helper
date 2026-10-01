@@ -486,6 +486,50 @@ NADRA describes the FRC as a certificate that reflects, verifies and records a r
     }
 
     // ------------------------------------------------------------
+    // GENERIC NEW/FRESH CNIC CARD PROCESS.
+    // "What is the process for a new card?" does not necessarily
+    // mention age/documents, so the older resolver missed it and the
+    // request fell through to the generic AI path. Keep this direct
+    // and policy-grounded.
+    // ------------------------------------------------------------
+    if (hasCnic &&
+        isApply &&
+        /\b(new|fresh)\b|new card|fresh card|new cnic|fresh cnic|نیا کارڈ|نیا شناختی|نئے شناختی/.test(q) &&
+        !isDuplicate && !isModify && !isCancel) {
+      const body = language === "Urdu"
+        ? `### نیا CNIC / Smart CNIC — Fresh Registration
+
+**اگر عمر 18 سال یا اس سے زیادہ ہے:**
+- درخواست گزار کی درخواست۔
+- خون کے رشتہ دار موجود ہوں تو والدین/خون کے رشتہ دار کا شناختی کارڈ نمبر، verified Birth Certificate یا قابلِ اطلاق citizenship document، اور parent/sibling کی biometric verification یا CNICF attestation۔
+- اگر خون کا رشتہ دار موجود نہ ہو تو verified Birth Certificate/Citizenship document، دو 18+ ID holders کی biometric گواہی کے ساتھ Affidavit “B”، اور CNICF attestation درکار ہے۔ ایسے cases میں اضافی verification/scrutiny ہو سکتی ہے۔
+
+**اگر عمر 18 سال سے کم ہے:**
+- NADRA policy میں minor کے لیے CRC یا Juvenile Card کا الگ process ہے؛ adult CNIC پہلے بنوانا ضروری نہیں۔
+- Juvenile Card کے لیے minor primary applicant ہوتا ہے اور parent/guardian کی identity information اور applicable biometric verification درکار ہوتی ہے۔
+
+**اہم:** 18+ fresh registration میں blood-relative اور no-blood-relative cases کے تقاضے مختلف ہیں۔ درست case کے مطابق documents اور verification requirements لاگو ہوں گی۔
+
+**پالیسی:** NADRA Registration Policy RP-6.0.2 — مؤثر 21 ستمبر 2026۔`
+        : `### New CNIC / Smart CNIC — Fresh Registration
+
+**If the applicant is 18 or above:**
+- Application by the applicant.
+- Where a blood relative is available: parent/blood-relative identity-card number, a verified Birth Certificate or applicable citizenship document, and biometric verification by a parent/sibling above 18 or CNICF attestation.
+- Where no blood relative is available: verified Birth Certificate/citizenship document, biometric witness by two ID holders above 18 with Affidavit “B”, and CNICF attestation. Such cases may require additional verification/scrutiny.
+
+**If the applicant is under 18:**
+- NADRA policy provides a separate CRC/Juvenile Card process for minors; an adult CNIC does not have to be obtained first.
+- For a Juvenile Card, the minor is the primary applicant and parent/guardian identity information and applicable biometric verification are required.
+
+**Important:** The requirements differ between 18+ fresh registration with a blood relative and a no-blood-relative case. The applicable documents and verification requirements depend on the applicant's circumstances.
+
+**Policy:** NADRA Registration Policy RP-6.0.2 — effective 21 September 2026.`;
+
+      return out(language === "Urdu" ? "NADRA — نیا شناختی کارڈ" : "NADRA — New CNIC / Smart CNIC", body);
+    }
+
+    // ------------------------------------------------------------
     // PARENT INFORMATION CORRECTION.
     // Keep this ahead of the generic identity-document fallback so
     // father/mother-name questions use the exact RP-6.0.2 standard.
@@ -687,6 +731,39 @@ export async function getDirectAdultFreshCnicAnswer(
   } catch (error) {
     console.error("Direct NADRA adult CNIC answer failed:", error);
     return null;
+  }
+}
+
+// Returns narrowly scoped policy evidence for the claim verifier.
+// Keeping this separate from general retrieval prevents unrelated chunks
+// from overwhelming the verifier and causing weak/invalid verification.
+export async function getDirectNadraVerificationEvidence(question: string): Promise<string> {
+  try {
+    const chunks = await getEnglishChunks();
+    const q = normalize(question);
+    const ids = new Set<string>();
+
+    if (/\bfrc\b|family registration certificate|family registration/.test(q)) ids.add("CHUNK-0035");
+    if (/date of birth|dob|birth date|age|تاریخ پیدائش|عمر/.test(q)) ids.add("CHUNK-0022");
+    if (/father.?s? name|mother.?s? name|parent.?s? info|والد|والدہ/.test(q)) ids.add("CHUNK-0021");
+    if (/address|residential address|پتہ/.test(q)) { ids.add("CHUNK-0023"); ids.add("CHUNK-0024"); }
+    if (/renew|renewal|تجدید/.test(q)) ids.add("CHUNK-0032");
+    if (/crc|b-form|child registration|juvenile|under 18|minor|ب فارم|جووینائل/.test(q)) {
+      ids.add("CHUNK-0011"); ids.add("CHUNK-0012"); ids.add("CHUNK-0031");
+    }
+    if (/new|fresh|new card|fresh card|new cnic|fresh cnic|نیا کارڈ|نیا شناختی/.test(q)) ids.add("CHUNK-0014");
+    if (/new|fresh|new card|fresh card|new cnic|fresh cnic|18\s*\+|adult|18 years|نیا کارڈ|نیا شناختی/.test(q)) ids.add("CHUNK-0015");
+
+    const selected = chunks.filter(x => x.chunk_id && ids.has(x.chunk_id));
+    if (!selected.length) return "";
+    return selected.map(x => `SOURCE: NADRA Registration Policy RP-6.0.2
+PAGE: ${x.page || ""}
+SECTION: ${x.subsection || x.major_section || ""}
+CHUNK: ${x.chunk_id}
+EVIDENCE:
+${x.text || ""}`).join("\n\n");
+  } catch {
+    return "";
   }
 }
 

@@ -259,7 +259,7 @@ function armsLicenceEvidence(question:string,jurisdiction:WorkingJurisdiction|nu
   else if(change) a="## خیبر پختونخوا — اسلحہ لائسنس میں تبدیلی\n\nموجودہ لائسنس نمبر تبدیل کرنا نئے لائسنس کی درخواست نہیں ہے۔ دستیاب سرکاری مواد میں پہلے سے جاری لائسنس نمبر تبدیل کرنے کا مکمل موجودہ طریقہ شائع نہیں ہے، اس لیے نئے لائسنس کے کاغذات اس سوال کے جواب میں دینا درست نہیں ہوگا۔ موجودہ ریکارڈ کو متعلقہ Arms Licence Branch/مجاز اتھارٹی سے چیک کروانا ہوگا۔\n\nسرکاری ماخذ: https://ecitizen.kp.gov.pk/";
   else if(definition) a="## ممنوعہ بور (PB) اور غیر ممنوعہ بور (NPB)\n\nممنوعہ بور وہ اسلحہ ہے جسے وفاقی حکومت ممنوعہ بور کے طور پر نوٹیفائی کرے؛ ایسے لائسنس وفاقی حکومت کے اختیار میں ہیں۔ غیر ممنوعہ اسلحہ کے لائسنس متعلقہ قانونی اختیار کے تحت جاری ہو سکتے ہیں۔ KP قواعد میں non-prohibited bore کے اندر restricted اور non-restricted bore کی اصطلاحات بھی استعمال ہوتی ہیں۔ کسی مخصوص ہتھیار کی category سرکاری نوٹیفکیشن یا لائسنسنگ اتھارٹی سے تصدیق کی جانی چاہیے۔\n\nسرکاری ماخذ: https://pakistancode.gov.pk/pdffiles/administrator4db83e5d472d4e9ffae90f007476a3ed.pdf";
  }
- return {answer:a,sources:sources[j]||[]};
+ return {answer:a,sources:j ? (sources[j]||[]) : []};
 }
 function exciseEvidence(question:string,jurisdiction:string,language:"English"|"Urdu"):string{
  const q=normalize(question);

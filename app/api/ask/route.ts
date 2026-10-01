@@ -922,6 +922,128 @@ export async function POST(request:NextRequest){try{
  else if(workingJurisdiction && !selected.jurisdiction){selected.jurisdiction=workingJurisdiction;}
  const civilTargetJurisdiction=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
 
+// Local Government civil-registration review: correction routing is handled below.\n // UNIVERSAL CIVIL-REGISTRATION ROUTER:
+ // One resolver covers Birth, Death, Marriage and Divorce across all seven
+ // jurisdictions. Existing jurisdiction-specific routes above remain first.
+ const civilService =
+  /birth certificate|birth registration|birth\b|پیدائش|پیدائش سرٹیفکیٹ/i.test(question) ? "Birth Certificate" :
+  /death certificate|death registration|death\b|وفات|ڈیتھ سرٹیفکیٹ/i.test(question) ? "Death Certificate" :
+  /marriage certificate|marriage registration|marriage\b|نکاح|شادی|میریج سرٹیفکیٹ/i.test(question) ? "Marriage Certificate" :
+  /divorce certificate|divorce registration|divorce\b|طلاق|طلاق سرٹیفکیٹ/i.test(question) ? "Divorce Certificate" : null;
+
+ const civilJurisdiction =
+  civilTargetJurisdiction ||
+  detectJurisdiction(question) ||
+  null;
+
+ if(civilService && !civilJurisdiction){
+  const answer=language==="Urdu"
+   ? "نئے برتھ/ڈیتھ/میریج یا ڈائیورس سرٹیفکیٹ کے تقاضے صوبے اور علاقے کے مطابق مختلف ہوتے ہیں۔ براہِ کرم اپنا صوبہ یا علاقہ بتائیں، مثلاً پنجاب، خیبر پختونخوا، سندھ، بلوچستان، اسلام آباد (ICT)، آزاد کشمیر یا گلگت بلتستان، تاکہ میں متعلقہ سرکاری ذرائع سے درست طریقہ کار، دستاویزات اور فیس بتا سکوں۔"
+   : "The requirements for a new birth, death, marriage or divorce certificate vary by province or territory. Please tell me your province/area — Punjab, Khyber Pakhtunkhwa, Sindh, Balochistan, Islamabad (ICT), AJK, or Gilgit-Baltistan — so I can give you the relevant government-verified procedure, documents and fees.";
+  return directWorkflowResponse({answer,source:null,department:requested,question,language,jurisdiction:selected.jurisdiction||null,evidenceAvailable:false});
+ }
+
+ if(civilService && civilJurisdiction){
+  const civilSources:Record<string,{title:string,url:string,scope:string}> = {
+   "Punjab":{
+    title:"Punjab Local Government & Community Development — Birth, Death, Marriage & Divorce Registration",
+    url:"https://lgcd.punjab.gov.pk/faq",
+    scope:"Punjab's official Local Government FAQ covers registration of birth, death, marriage and divorce through the relevant Union Council / Municipal Committee. It publishes specific requirements for birth and marriage and identifies the relevant authority for death and divorce."
+   },
+   "Khyber Pakhtunkhwa":{
+    title:"Government of Khyber Pakhtunkhwa — Registration of Birth, Death, Marriage & Divorce",
+    url:"https://www.lgkp.gov.pk/page/registration-bdmd",
+    scope:"The official KP Local Government service page confirms that Village/Neighbourhood Councils are responsible for registering births, deaths, marriages and divorces and lists the responsible Secretary Union Council and service time for birth and death."
+   },
+   "Sindh":{
+    title:"Government of Sindh — Civil Registration Management System (CRMS)",
+    url:"https://cm.sindh.gov.pk/news/sn-crms-mobael-ayp-jo-afttah-pydaesh-fotgy-rjsryshn-hay-jyl",
+    scope:"The Government of Sindh states that its CRMS mobile application provides digital registration services for birth, death, marriage and divorce through the provincial civil-registration system."
+   },
+   "Balochistan":{
+    title:"Balochistan Local Government & Rural Development Department — CRMS",
+    url:"https://lgrd.gob.pk/launching-ceremony-birth-death-marriage-divorce-registration/",
+    scope:"The official Balochistan Local Government & Rural Development Department states that the Pak-ID mobile application provides online issuance of Birth, Death, Marriage and Divorce Certificates through CRMS."
+   },
+   "Islamabad Capital Territory":{
+    title:"ICT Administration — Citizen Services",
+    url:"https://ictadministration.gov.pk/services/",
+    scope:"ICT Administration officially lists Birth Registration, Death Registration, Marriage Registration and Divorce Registration among its citizen services."
+   },
+   "Azad Jammu and Kashmir":{
+    title:"AJK Government — Local Government / E-Facilitation Services",
+    url:"https://efc.ajk.gov.pk/service",
+    scope:"The official AJK E-Facilitation Center provides Birth and Death Certificate services. The AJK Local Government Act places registration of births, deaths and marriages within the local-council framework."
+   },
+   "Gilgit-Baltistan":{
+    title:"Government of Gilgit-Baltistan — Official Portal",
+    url:"https://gilgitbaltistan.gov.pk/",
+    scope:"The public official GB portal is the authoritative government entry point. A detailed, service-specific civil-registration checklist was not available in the official material I could verify, so the app will not invent one."
+   }
+  };
+
+  const src=civilSources[civilJurisdiction];
+  if(src){
+   const civilAction =
+    /\bcancel(?:ation|led|ling)?\b|\bvoid\b|\bwithdraw\b|\bannul\b|\bterminate\b|\bdelete\b|\bremove\b|\binvalid(?:ate|ation)?\b|\bخاتمہ\b|\bمنسوخ\b|\bختم\b/i.test(question) ? "cancellation" :
+    /\bchange\b|\bcorrect\b|\bcorrection\b|\bmodify\b|\bmodified\b|\brectif\w*\b|\bamend\w*\b|\bupdate\b|\bedit\b|\bmistake\b|\berror\b|\bwrong\b|\bincorrect\b|\bdate of birth\b|\bdob\b|\bbirth date\b|\bdate of death\b|\bdeath date\b|\bage\b|\bname change\b|\bدرست\b|\bتبدیل\b|\bترمیم\b|\bتبدیلی\b|\bغلط\b|\bغلطی\b|\bتصحیح\b|\bتاریخ پیدائش\b|\bتاریخ وفات\b/i.test(question) ? "correction" :
+    "registration";
+   let detail="";
+   if(civilJurisdiction==="Punjab"){
+    if(civilAction==="correction" && (civilService==="Birth Certificate" || civilService==="Death Certificate")) detail="Punjab's Birth and Death Rules 2025 distinguish clerical correction from other changes. For a clerical error, the person (or relative) may apply on plain paper to the concerned registration office for a birth certificate; for a death certificate, a relative may apply. The registration office forwards the application to the Assistant Director of the concerned tehsil for inquiry, with a public notice inviting objections. If there is no objection and the Assistant Director is satisfied, the correction and amended certificate may be ordered. For a change other than a clerical error, the rules require a court decree.";
+    else if(civilAction==="correction" && civilService==="Marriage Certificate") detail="Punjab official Local Government material verifies the normal computerized marriage-registration process through the concerned Union Council or Municipal Committee, but the current official material verified here does not publish a complete marriage-certificate correction procedure. Therefore, I will not substitute normal registration requirements for a correction request or invent unverified documents, fees or approval steps.";
+    else if(civilAction==="cancellation" && (civilService==="Birth Certificate" || civilService==="Death Certificate")) detail="Punjab's rules provide a specific cancellation process for a bogus or fake birth or death registration. The concerned local-government authority can initiate notice/inquiry; where the entry is found bogus or fake, the prescribed committee directs cancellation, with an appeal process. This is not the same as an ordinary correction.";
+    else if(civilService==="Birth Certificate") detail="For birth registration, Punjab's official FAQ states that the relevant Union Council should be contacted within 60 days; it lists parents' CNIC copies, the hospital/traditional birth attendant birth certificate, and the completed Union Council form. Registration is free, while PKR 100 is charged for the NADRA computerized birth-registration certificate. It also gives separate timelines for normal and late registration.";
+    else if(civilService==="Death Certificate") detail="Punjab's official FAQ states that the relevant Union Council or Municipal Committee issues the computerized death registration certificate. Form-D is used, and documentary evidence including the graveyard certificate/parchi may be required.";
+    else if(civilService==="Marriage Certificate") detail="Punjab's official FAQ states that the concerned Union Council or Municipal Committee issues the computerized marriage registration certificate. It lists the registered Nikah Nama and CNICs of husband and wife and their parents; the stated certificate fee is PKR 300 and the normal process is about 3 working days.";
+    else detail="Punjab's official FAQ states that the concerned Union Council or Municipal Committee handles divorce registration where the marriage/Nikah Nama was registered. The applicant provides written statements and documentary evidence, including the applicable divorce order.";
+   } else if(civilJurisdiction==="Khyber Pakhtunkhwa"){
+    if(civilAction==="correction"){
+     if(civilService==="Birth Certificate" || civilService==="Death Certificate"){
+      detail="KP's CRVS Rules 2021 provide a specific correction process for birth/death registration entries. The applicant submits a written application on Form-G, supported by an affidavit, to the Chairman of the concerned Village/Neighbourhood Council within three years of registration. The Chairman conducts an inquiry and decides the application within 15 days. If approved, the Secretary/official makes the correction or change in the register on the basis of the written order. If the correction application is made after three years, approval is subject to an attested copy of the Court's order. The rules also require information about the change/correction to be provided to NADRA. For the certificate itself, the rules require a formal correction application on Form-H with supporting documents; the corrected certificate is normally issued within 15 working days, while an urgent certificate may be obtained within a maximum of 7 working days on payment of the applicable extra fee. The published schedule lists a PKR 200 correction fee and a PKR 300 urgent fee for birth/death certificates.";
+     } else {
+      detail="KP's CRVS Rules 2021 provide a formal certificate-correction process. The applicant must apply for correction on Form-H and attach supporting documents. The rules provide for recording the amendment, approval/rejection and final VC/NC orders. A certificate is normally issued within 15 working days; where an urgent certificate is required, the rules allow a maximum of 7 working days on payment of the applicable extra fee. The published schedule lists a PKR 200 correction fee for vital-event certificates.";
+     }
+    }
+    else if(civilAction==="cancellation") detail="KP's Civil Registration Vital Statistics Rules provide a dedicated cancellation process for a certificate of a vital event. Form-V is the Application for Cancellation of the Certificate of Vital Event. It records the certificate reference, issuing authority, the applicant's connection with the certificate, and the reason for cancellation. The cancellation is therefore handled as a separate formal process, not as a normal death-registration application.";
+    else if(civilService==="Birth Certificate") detail="KP's official CRVS information lists Form-A, the parent's or guardian's attested CNIC/passport/residence permit as applicable, and a birth certificate, immunization card or school certificate if available. Birth registration is handled by the concerned Village/Neighbourhood Council and the official service page lists a 2-day time limit.";
+    else if(civilService==="Death Certificate") detail="KP's official Local Government service page confirms registration and certification of death through the concerned council and lists a 2-day service time. The CRVS information also describes documentary evidence such as a graveyard certificate/parchi where applicable.";
+    else if(civilService==="Marriage Certificate") detail="KP's official CRVS rules require the prescribed marriage application, a registered Nikah Nama or applicable marriage certificate, and CNIC copies of the husband and wife and their parents, with the concerned council responsible for registration.";
+    else detail="KP's official Local Government/CRVS framework places divorce registration with the concerned council and requires the prescribed application and supporting divorce documentation.";
+   } else if(civilJurisdiction==="Sindh"){
+    if(civilAction==="correction"){
+      detail="For a Sindh ${civilService} correction, the question concerns an existing ${civilService.replace(" Certificate","")} record whose information is wrong or needs amendment. The current official Sindh CRMS material confirms digital civil registration, but the official material verified here does not publish a complete current procedure specifically for correcting this certificate, including the correction form, approving authority, supporting documents, timeline or fee. I therefore will not substitute new-registration requirements for a correction request or invent missing requirements.";
+    } else if(civilAction==="cancellation"){
+      detail="For cancellation of a Sindh ${civilService}, the current official Sindh CRMS material confirms digital registration of vital events but does not publish a complete current cancellation procedure for an existing certificate of this type. I therefore will not substitute the normal registration process or invent a cancellation form, authority, documents, timeline or fee.";
+    } else {
+      detail="Sindh's official CRMS information states that birth, death, marriage and divorce registration are provided through an integrated digital civil-registration platform. The service is implemented through local councils and the province has introduced online/mobile registration through CRMS.";
+    }
+      } else if(civilJurisdiction==="Balochistan"){
+    if(civilAction==="correction"){
+      detail="For a Balochistan ${civilService} correction, the question concerns an existing ${civilService.replace(" Certificate","")} record whose information is wrong or needs amendment. The current official Balochistan Local Government & Rural Development Department material confirms CRMS-based civil-certificate services, but the official material verified here does not publish a complete current procedure specifically for correcting this certificate, including the correction form, approving authority, supporting documents, timeline or fee. I therefore will not substitute new-registration requirements for a correction request or invent missing requirements.";
+    } else if(civilAction==="cancellation"){
+      detail="For cancellation of a Balochistan ${civilService}, the current official Balochistan material confirms CRMS-based birth/death/marriage/divorce services but does not publish a complete current cancellation procedure for an existing certificate of this type. I therefore will not substitute the normal registration process or invent a cancellation form, authority, documents, timeline or fee.";
+    } else {
+      detail="Balochistan's official Local Government & Rural Development Department states that the Pak-ID mobile application provides online issuance of Birth, Death, Marriage and Divorce Certificates through CRMS.";
+    }
+      } else if(civilJurisdiction==="Islamabad Capital Territory"){
+    detail="ICT Administration officially lists this civil-registration service among its citizen services. Where the dedicated ICT service page publishes detailed requirements, the application should use those requirements; otherwise it should not invent missing documents or fees.";
+   } else if(civilJurisdiction==="Azad Jammu and Kashmir"){
+    detail="AJK's official E-Facilitation Center lists Birth and Death Certificate services, while the AJK Local Government Act places registration of births, deaths and marriages within the local-council framework. The available public official material does not provide a complete current checklist for every civil certificate, so missing requirements should not be invented.";
+   } else {
+    detail="The Government of Gilgit-Baltistan official portal is the authoritative government entry point, but a detailed service-specific checklist for this civil certificate was not available in the official material I could verify. The app therefore will not invent documents, fees or office details.";
+   }
+
+   const serviceName = civilService.replace(" Certificate","").replace(" Registration","");
+   const answer=language==="Urdu"
+    ? "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+detail+"\\n\\n**اہم:** اس جواب میں صرف **"+serviceName+"** سروس سے متعلق معلومات شامل ہیں۔ جہاں سرکاری ذریعہ مکمل دستاویزات یا فیس واضح طور پر شائع نہیں کرتا، وہاں غیرمصدقہ معلومات شامل نہیں کی جا رہی۔\\n\\n**سرکاری ذریعہ:** "+src.url
+    : "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+detail+"\\n\\n**Important:** This answer is limited to **"+serviceName+"** service. Where the official source does not publish a complete current document or fee checklist, I will not invent unverified requirements.\\n\\n**Official source:** "+src.url;
+
+   return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:src.title,url:src.url,lastVerified:"",province:civilJurisdiction},department:"Union Council / Local Government",question,language,jurisdiction:civilJurisdiction,evidenceAvailable:true,verifyClaims:true,verificationEvidence:`${src.scope}\n\n${detail}`});
+  }
+ }
+
+
  // EARLY NADRA SERVICE ROUTER:
  // NADRA policy questions must be resolved before generic service mismatch/routing.
  // This prevents CRC/B-Form, NICOP, POC, FRC and identity-change questions from
@@ -1127,18 +1249,6 @@ export async function POST(request:NextRequest){try{
   }
  }
 
- // EARLY BALOCHISTAN BIRTH-CERTIFICATE ROUTE: use the current official
- // Local Government & Rural Development Department / NADRA birth-registration
- // service instead of falling through to generic evidence search.
- if(/balochistan|بلوچستان/i.test(question) &&
-    /birth|birth certificate|birth registration|پیدائش|پیدائش سرٹیفکیٹ|رجسٹریشنِ پیدائش/i.test(question) &&
-    !/\bcancel(?:ation|led|ling)?\b|\bvoid\b|\bwithdraw\b|\bannul\b|\bterminate\b|\bdelete\b|\bchange\b|\bcorrect\b|\bcorrection\b|\bmodify\b|\bmodified\b|\brectif\\w*\b|\bdate of birth\b|\bdob\b|\bbirth date\b|\bage\b|\bname change\b|\bدرست\b|\bتبدیل\b|\bترمیم\b|\bتاریخ پیدائش\b|\bمنسوخ/i.test(question)){
-  const answer=language==="Urdu"
-   ?"## بلوچستان — نیا برتھ سرٹیفکیٹ / پیدائش کی رجسٹریشن\n\nبلوچستان حکومت کے Local Government & Rural Development Department اور NADRA نے Union Council کی سطح پر **Unified Registration One Window Counter / Birth Registration Center** قائم کیے ہیں۔ سرکاری معلومات کے مطابق یہ مراکز پیدائش کی رجسٹریشن، برتھ سرٹیفکیٹ کے اجراء اور سول رجسٹریشن ڈیٹا کو مرکزی نظام سے منسلک کرنے کے لیے قائم کیے گئے ہیں۔\n\n**عمل:**\n1. متعلقہ Union Council کے Birth Registration Center / One Window Counter سے پیدائش کی رجسٹریشن شروع کریں۔\n2. پیدائش کا اندراج CRMS میں کیا جاتا ہے اور سرٹیفکیٹ جاری کیا جاتا ہے۔\n3. دستیاب علاقوں میں NADRA کے **Pak-ID mobile app** کے ذریعے بھی پیدائش کی رجسٹریشن کی سہولت موجود ہے؛ NADRA کے مطابق بلوچستان میں یہ سہولت فی الحال **Quetta district** میں دستیاب ہے، جبکہ دیگر علاقوں میں توسیع جاری ہے۔\n\n**اہم:** دستیاب موجودہ سرکاری Balochistan source میں نئے برتھ سرٹیفکیٹ کے لیے مکمل دستاویزات کی checklist واضح طور پر شائع نہیں کی گئی، اس لیے میں غیرمصدقہ کاغذات کی فہرست شامل نہیں کر رہا۔\n\n**سرکاری ذرائع:**\n- Balochistan Local Government & Rural Development Department: https://lgrd.gob.pk/local-government-department-and-nadra-open-one-window-birth-registration-center/\n- NADRA Pak-ID birth-registration announcement: https://www.youtube.com/watch?v=dzCeleaWOUA"
-   :"## Balochistan — New Birth Certificate / Birth Registration\n\nThe Government of Balochistan’s Local Government & Rural Development Department and NADRA have established **Unified Registration One Window Counters / Birth Registration Centers at Union Council level**. The official provincial announcement states that these centers provide birth registration, birth-certificate issuance, and integration of civil-registration data into the central system.\n\n**Process:**\n1. Start the birth registration at the relevant Union Council Birth Registration Center / One Window Counter.\n2. The birth is registered through the CRMS and the birth certificate is issued.\n3. Where available, NADRA’s **Pak-ID mobile app** can also be used for birth registration; NADRA currently lists this facility for **Quetta district in Balochistan**, with expansion to other areas underway.\n\n**Important:** The current official Balochistan source does not clearly publish a complete document checklist for a new birth certificate, so I am not adding an unverified list of documents.\n\n**Official sources:**\n- Balochistan Local Government & Rural Development Department: https://lgrd.gob.pk/local-government-department-and-nadra-open-one-window-birth-registration-center/\n- NADRA Pak-ID birth-registration announcement: https://www.youtube.com/watch?v=dzCeleaWOUA";
-  return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:"Balochistan Local Government & Rural Development Department — Birth Registration Center",url:"https://lgrd.gob.pk/local-government-department-and-nadra-open-one-window-birth-registration-center/",lastVerified:"",province:"Balochistan"},department:"Union Council / Local Government",question,language,jurisdiction:"Balochistan",evidenceAvailable:true});
- }
-
  // EARLY GENERIC DOMICILE ROUTE: handle a domicile document query when no province/territory is named.
  if(requested==="Domicile" && !workingTargetJurisdiction && !workingJurisdiction){
   const answer=language==="Urdu"
@@ -1288,16 +1398,6 @@ According to the official KP e-Domicile system, citizens can apply online to obt
    ?"## اسلام آباد — ڈومیسائل سرٹیفکیٹ\n\nICT Administration کے سرکاری صفحے کے مطابق ڈومیسائل سرٹیفکیٹ کے لیے **Citizen Facilitation Center, G-11/4, Islamabad** میں درخواست جمع کی جاتی ہے۔ طریقہ کار یہ ہے:\n1. عمر کے مطابق مطلوبہ دستاویزات مکمل کریں۔\n2. Citizen Facilitation Center, G-11/4 جائیں اور درخواست اور دستاویزات جمع کریں۔\n3. ٹوکن حاصل کریں اور اپنی باری کا انتظار کریں۔\n4. ڈیٹا انٹری کے بعد ضروری فیس ادا کریں اور e-receipt حاصل کریں۔\n5. ڈومیسائل درخواست پر کارروائی کی جاتی ہے۔\n6. e-receipt پر دی گئی تاریخ کو ڈومیسائل سرٹیفکیٹ وصول کریں۔\n\n**21 سال یا اس سے زیادہ عمر کے درخواست گزار کے لیے سرکاری فہرست:** درخواست گزار کے CNIC کی کاپی (CNIC کم از کم 1 سال پرانا)، والد/شوہر کے CNIC کی کاپی، اسلام آباد میں رہائش کا ثبوت (Allotment Letter یا Lease Agreement)، اصل Utility Bill (بجلی یا گیس)، اور اگر بچے ہوں تو Form-B کی کاپی۔ اگر کسی دوسرے ضلع کا ڈومیسائل منسوخ کیا گیا ہو تو اس کی بھی کم از کم 1 سال پرانی دستاویز درکار ہے۔ درخواست گزار کو اصل دستاویزات کے ساتھ خود حاضر ہونا ہے۔\n\nاگر CNIC پر دوہرا پتہ ہو تو متعلقہ دوسرے ضلع سے NOC درکار ہے۔\n\n**فیس:** سرکاری صفحہ ضروری فیس ادا کرنے کا ذکر کرتا ہے، لیکن اس صفحے کے معلوماتی خانے میں مخصوص رقم درج نہیں کرتا؛ اس لیے میں رقم فرض نہیں کر رہا۔\n\n**پروسیسنگ ٹائم:** 7 دن۔\n**مقام:** Citizen Facilitation Center, G-11/4, Islamabad۔\n**اوقات:** پیر تا جمعہ 09:00 AM–06:00 PM؛ جمعہ وقفہ 12:30 PM–02:30 PM۔\n**رابطہ:** 051-8899611۔\n\n**سرکاری ماخذ:** https://ictadministration.gov.pk/domicile-certificate/"
    :"## Islamabad Capital Territory — Domicile Certificate\n\nAccording to the official ICT Administration domicile page, applications are submitted at the **Citizen Facilitation Center, G-11/4, Islamabad**. The official process is:\n1. Complete the required documents according to the applicant's age.\n2. Visit the Citizen Facilitation Center, G-11/4 and submit the application with the documents.\n3. Get a token and wait for your turn.\n4. Complete data entry and pay the necessary fee to receive an e-receipt.\n5. ICT Administration processes the domicile application.\n6. Collect the Domicile Certificate on the date stated on the e-receipt.\n\n**For applicants aged 21 or above, the official document list includes:** a copy of the applicant's CNIC (the CNIC must be 1 year old), a copy of the father/husband's CNIC, proof of residence in Islamabad (Allotment Letter or Lease Agreement), one original utility bill (electricity or gas), and a copy of Form-B if the applicant has children. If a domicile from another district has been cancelled, the official page states that the cancellation document should also be 1 year old. The applicant must appear in person with the original documents.\n\nIf the CNIC has dual addresses, an NOC from the other district is required.\n\n**Fee:** The official page says the necessary fee is paid and an e-receipt is issued, but it does not state a specific amount in the information box. I am therefore not inventing a fee amount.\n\n**Processing time:** 7 days.\n**Location:** Citizen Facilitation Center, G-11/4, Islamabad.\n**Hours:** Monday–Friday, 09:00 AM–06:00 PM; Friday break 12:30 PM–02:30 PM.\n**Contact:** 051-8899611.\n\n**Official source:** https://ictadministration.gov.pk/domicile-certificate/";
   return directWorkflowResponse({answer,source:{department:"Domicile",title:"ICT Administration — Domicile Certificate",url:"https://ictadministration.gov.pk/domicile-certificate/",lastVerified:"",province:"Islamabad Capital Territory"},department:"Domicile",question,language,jurisdiction:"Islamabad Capital Territory",evidenceAvailable:true});
- }
-
-// EARLY SINDH BIRTH-CERTIFICATE ROUTE: use official Sindh CRMS evidence directly.
- if(/sindh|سندھ/i.test(question) &&
-    /birth|birth certificate|birth registration|پیدائش|پیدائش سرٹیفکیٹ|رجسٹریشنِ پیدائش/i.test(question) &&
-    !/\bcancel(?:ation|led|ling)?\b|\bvoid\b|\bwithdraw\b|\bannul\b|\bterminate\b|\bdelete\b|\bchange\b|\bcorrect\b|\bcorrection\b|\bmodify\b|\bmodified\b|\brectif\\w*\b|\bdate of birth\b|\bdob\b|\bbirth date\b|\bage\b|\bname change\b|\bدرست\b|\bتبدیل\b|\bترمیم\b|\bتاریخ پیدائش\b|\bمنسوخ/i.test(question)){
-  const answer=language==="Urdu"
-   ?"## سندھ — نیا برتھ سرٹیفکیٹ / پیدائش کی رجسٹریشن\n\nحکومتِ سندھ نے NADRA کے تعاون سے Civil Registration Management System (CRMS) کو ڈیجیٹل کیا ہے۔ سرکاری معلومات کے مطابق پیدائش کی رجسٹریشن کے لیے CRMS موبائل ایپ متعارف کرائی گئی ہے اور یونین کونسل کی سطح پر اس نظام کا نفاذ اہم حصہ ہے۔\n\n**طریقۂ کار:**\n1. پیدائش کی رجسٹریشن CRMS کے ذریعے شروع کی جاتی ہے۔\n2. یونین کونسل / متعلقہ مقامی کونسل سطح پر سول رجسٹریشن کا عمل مکمل کیا جاتا ہے۔\n3. سندھ حکومت کے مطابق CRMS موبائل ایپ کے ذریعے شہری پیدائش کی رجسٹریشن کی سہولت حاصل کر سکتے ہیں۔\n4. سندھ حکومت نے پیدائش کی رجسٹریشن کے لیے NADRA کی فیس صوبائی حکومت کی طرف سے ادا کرنے کا اعلان بھی کیا ہے۔\n\n**اہم:** دستیاب موجودہ سرکاری ذرائع میں نئے برتھ سرٹیفکیٹ کے لیے مکمل دستاویزات کی checklist واضح طور پر شائع نہیں کی گئی، اس لیے میں غیرمصدقہ کاغذات شامل نہیں کر رہا۔\n\n**سرکاری ذرائع:**\n- Government of Sindh — CRMS Mobile App / Birth & Death Registration: https://cm.sindh.gov.pk/news/sn-crms-mobael-ayp-jo-afttah-pydaesh-fotgy-rjsryshn-hay-jyl\n- Government of Sindh — Online Birth, Death, Marriage & Divorce Registration: https://cm.sindh.gov.pk/news/snd-k-aaoam-kli-antthar-aor-ktar-ki-zhmt-khtm-pidaesh-amoat-nkah-aor-tlak-ki-rjsrishn-an-laen-ogei"
-   :"## Sindh — New Birth Certificate / Birth Registration\n\nThe Government of Sindh has digitized the Civil Registration Management System (CRMS) with NADRA. Official Sindh information states that the CRMS mobile application provides digital birth registration, with implementation at Union Council level.\n\n**Process:**\n1. Start the birth registration through CRMS.\n2. Complete the civil-registration process at the Union Council / relevant local-council level.\n3. The Government of Sindh states that citizens can use the CRMS mobile application for birth registration.\n4. Sindh has announced that the provincial government will bear NADRA service charges for birth registration.\n\n**Important:** The current official Sindh sources do not clearly publish a complete document checklist for a new birth certificate, so I am not adding unverified document requirements.\n\n**Official sources:**\n- Government of Sindh — CRMS Mobile App / Birth & Death Registration: https://cm.sindh.gov.pk/news/sn-crms-mobael-ayp-jo-afttah-pydaesh-fotgy-rjsryshn-hay-jyl\n- Government of Sindh — Online Birth, Death, Marriage & Divorce Registration: https://cm.sindh.gov.pk/news/snd-k-aaoam-kli-antthar-aor-ktar-ki-zhmt-khtm-pidaesh-amoat-nkah-aor-tlak-ki-rjsrishn-an-laen-ogei";
-  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Union Council / Local Government",title:"Government of Sindh — Civil Registration Management System (CRMS)",url:"https://cm.sindh.gov.pk/news/sn-crms-mobael-ayp-jo-afttah-pydaesh-fotgy-rjsryshn-hay-jyl",lastVerified:"",province:"Sindh"},agent:true,goalFocused:true,webSearch:false});
  }
 
 // EARLY SINDH DOMICILE ROUTE: use only directly verified Sindh government evidence.
@@ -1779,122 +1879,6 @@ const departmentDomains:Record<string,string[]>={
 };
 
 
- // Local Government civil-registration review: correction routing is handled below.\n // UNIVERSAL CIVIL-REGISTRATION ROUTER:
- // One resolver covers Birth, Death, Marriage and Divorce across all seven
- // jurisdictions. Existing jurisdiction-specific routes above remain first.
- const civilService =
-  /birth certificate|birth registration|birth\b|پیدائش|پیدائش سرٹیفکیٹ/i.test(question) ? "Birth Certificate" :
-  /death certificate|death registration|death\b|وفات|ڈیتھ سرٹیفکیٹ/i.test(question) ? "Death Certificate" :
-  /marriage certificate|marriage registration|marriage\b|نکاح|شادی|میریج سرٹیفکیٹ/i.test(question) ? "Marriage Certificate" :
-  /divorce certificate|divorce registration|divorce\b|طلاق|طلاق سرٹیفکیٹ/i.test(question) ? "Divorce Certificate" : null;
-
- const civilJurisdiction =
-  civilTargetJurisdiction ||
-  detectJurisdiction(question) ||
-  null;
-
- if(civilService && !civilJurisdiction){
-  const answer=language==="Urdu"
-   ? "نئے برتھ/ڈیتھ/میریج یا ڈائیورس سرٹیفکیٹ کے تقاضے صوبے اور علاقے کے مطابق مختلف ہوتے ہیں۔ براہِ کرم اپنا صوبہ یا علاقہ بتائیں، مثلاً پنجاب، خیبر پختونخوا، سندھ، بلوچستان، اسلام آباد (ICT)، آزاد کشمیر یا گلگت بلتستان، تاکہ میں متعلقہ سرکاری ذرائع سے درست طریقہ کار، دستاویزات اور فیس بتا سکوں۔"
-   : "The requirements for a new birth, death, marriage or divorce certificate vary by province or territory. Please tell me your province/area — Punjab, Khyber Pakhtunkhwa, Sindh, Balochistan, Islamabad (ICT), AJK, or Gilgit-Baltistan — so I can give you the relevant government-verified procedure, documents and fees.";
-  return directWorkflowResponse({answer,source:null,department:requested,question,language,jurisdiction:selected.jurisdiction||null,evidenceAvailable:false});
- }
-
- if(civilService && civilJurisdiction){
-  const civilSources:Record<string,{title:string,url:string,scope:string}> = {
-   "Punjab":{
-    title:"Punjab Local Government & Community Development — Birth, Death, Marriage & Divorce Registration",
-    url:"https://lgcd.punjab.gov.pk/faq",
-    scope:"Punjab's official Local Government FAQ covers registration of birth, death, marriage and divorce through the relevant Union Council / Municipal Committee. It publishes specific requirements for birth and marriage and identifies the relevant authority for death and divorce."
-   },
-   "Khyber Pakhtunkhwa":{
-    title:"Government of Khyber Pakhtunkhwa — Registration of Birth, Death, Marriage & Divorce",
-    url:"https://www.lgkp.gov.pk/page/registration-bdmd",
-    scope:"The official KP Local Government service page confirms that Village/Neighbourhood Councils are responsible for registering births, deaths, marriages and divorces and lists the responsible Secretary Union Council and service time for birth and death."
-   },
-   "Sindh":{
-    title:"Government of Sindh — Civil Registration Management System (CRMS)",
-    url:"https://cm.sindh.gov.pk/news/sn-crms-mobael-ayp-jo-afttah-pydaesh-fotgy-rjsryshn-hay-jyl",
-    scope:"The Government of Sindh states that its CRMS mobile application provides digital registration services for birth, death, marriage and divorce through the provincial civil-registration system."
-   },
-   "Balochistan":{
-    title:"Balochistan Local Government & Rural Development Department — CRMS",
-    url:"https://lgrd.gob.pk/launching-ceremony-birth-death-marriage-divorce-registration/",
-    scope:"The official Balochistan Local Government & Rural Development Department states that the Pak-ID mobile application provides online issuance of Birth, Death, Marriage and Divorce Certificates through CRMS."
-   },
-   "Islamabad Capital Territory":{
-    title:"ICT Administration — Citizen Services",
-    url:"https://ictadministration.gov.pk/services/",
-    scope:"ICT Administration officially lists Birth Registration, Death Registration, Marriage Registration and Divorce Registration among its citizen services."
-   },
-   "Azad Jammu and Kashmir":{
-    title:"AJK Government — Local Government / E-Facilitation Services",
-    url:"https://efc.ajk.gov.pk/service",
-    scope:"The official AJK E-Facilitation Center provides Birth and Death Certificate services. The AJK Local Government Act places registration of births, deaths and marriages within the local-council framework."
-   },
-   "Gilgit-Baltistan":{
-    title:"Government of Gilgit-Baltistan — Official Portal",
-    url:"https://gilgitbaltistan.gov.pk/",
-    scope:"The public official GB portal is the authoritative government entry point. A detailed, service-specific civil-registration checklist was not available in the official material I could verify, so the app will not invent one."
-   }
-  };
-
-  const src=civilSources[civilJurisdiction];
-  if(src){
-   const civilAction =
-    /\bcancel(?:ation|led|ling)?\b|\bvoid\b|\bwithdraw\b|\bannul\b|\bterminate\b|\bdelete\b|\bخاتمہ\b|\bمنسوخ/i.test(question) ? "cancellation" :
-    /\bchange\b|\bcorrect\b|\bcorrection\b|\bmodify\b|\bmodified\b|\brectif\w*\b|\bdate of birth\b|\bdob\b|\bbirth date\b|\bdate of death\b|\bdeath date\b|\bage\b|\bname change\b|\bدرست\b|\bتبدیل\b|\bترمیم\b|\bتاریخ پیدائش\b|\bتاریخ وفات\b/i.test(question) ? "correction" :
-    "registration";
-   let detail="";
-   if(civilJurisdiction==="Punjab"){
-    if(civilAction==="correction" && (civilService==="Birth Certificate" || civilService==="Death Certificate")) detail="Punjab's Birth and Death Rules 2025 distinguish clerical correction from other changes. For a clerical error, the person (or relative) may apply on plain paper to the concerned registration office for a birth certificate; for a death certificate, a relative may apply. The registration office forwards the application to the Assistant Director of the concerned tehsil for inquiry, with a public notice inviting objections. If there is no objection and the Assistant Director is satisfied, the correction and amended certificate may be ordered. For a change other than a clerical error, the rules require a court decree.";
-    else if(civilAction==="correction" && civilService==="Marriage Certificate") detail="Punjab official Local Government material verifies the normal computerized marriage-registration process through the concerned Union Council or Municipal Committee, but the current official material verified here does not publish a complete marriage-certificate correction procedure. Therefore, I will not substitute normal registration requirements for a correction request or invent unverified documents, fees or approval steps.";
-    else if(civilAction==="cancellation" && (civilService==="Birth Certificate" || civilService==="Death Certificate")) detail="Punjab's rules provide a specific cancellation process for a bogus or fake birth or death registration. The concerned local-government authority can initiate notice/inquiry; where the entry is found bogus or fake, the prescribed committee directs cancellation, with an appeal process. This is not the same as an ordinary correction.";
-    else if(civilService==="Birth Certificate") detail="For birth registration, Punjab's official FAQ states that the relevant Union Council should be contacted within 60 days; it lists parents' CNIC copies, the hospital/traditional birth attendant birth certificate, and the completed Union Council form. Registration is free, while PKR 100 is charged for the NADRA computerized birth-registration certificate. It also gives separate timelines for normal and late registration.";
-    else if(civilService==="Death Certificate") detail="Punjab's official FAQ states that the relevant Union Council or Municipal Committee issues the computerized death registration certificate. Form-D is used, and documentary evidence including the graveyard certificate/parchi may be required.";
-    else if(civilService==="Marriage Certificate") detail="Punjab's official FAQ states that the concerned Union Council or Municipal Committee issues the computerized marriage registration certificate. It lists the registered Nikah Nama and CNICs of husband and wife and their parents; the stated certificate fee is PKR 300 and the normal process is about 3 working days.";
-    else detail="Punjab's official FAQ states that the concerned Union Council or Municipal Committee handles divorce registration where the marriage/Nikah Nama was registered. The applicant provides written statements and documentary evidence, including the applicable divorce order.";
-   } else if(civilJurisdiction==="Khyber Pakhtunkhwa"){
-    if(civilAction==="correction"){
-     if(civilService==="Birth Certificate" || civilService==="Death Certificate"){
-      detail="KP's CRVS Rules 2021 provide a specific correction process for birth/death registration entries. The applicant submits a written application on Form-G, supported by an affidavit, to the Chairman of the concerned Village/Neighbourhood Council within three years of registration. The Chairman conducts an inquiry and decides the application within 15 days. If approved, the Secretary/official makes the correction or change in the register on the basis of the written order. If the correction application is made after three years, approval is subject to an attested copy of the Court's order. The rules also require information about the change/correction to be provided to NADRA. For the certificate itself, the rules require a formal correction application on Form-H with supporting documents; the corrected certificate is normally issued within 15 working days, while an urgent certificate may be obtained within a maximum of 7 working days on payment of the applicable extra fee. The published schedule lists a PKR 200 correction fee and a PKR 300 urgent fee for birth/death certificates.";
-     } else {
-      detail="KP's CRVS Rules 2021 provide a formal certificate-correction process. The applicant must apply for correction on Form-H and attach supporting documents. The rules provide for recording the amendment, approval/rejection and final VC/NC orders. A certificate is normally issued within 15 working days; where an urgent certificate is required, the rules allow a maximum of 7 working days on payment of the applicable extra fee. The published schedule lists a PKR 200 correction fee for vital-event certificates.";
-     }
-    }
-    else if(civilAction==="cancellation") detail="KP's Civil Registration Vital Statistics Rules provide a dedicated cancellation process for a certificate of a vital event. Form-V is the Application for Cancellation of the Certificate of Vital Event. It records the certificate reference, issuing authority, the applicant's connection with the certificate, and the reason for cancellation. The cancellation is therefore handled as a separate formal process, not as a normal death-registration application.";
-    else if(civilService==="Birth Certificate") detail="KP's official CRVS information lists Form-A, the parent's or guardian's attested CNIC/passport/residence permit as applicable, and a birth certificate, immunization card or school certificate if available. Birth registration is handled by the concerned Village/Neighbourhood Council and the official service page lists a 2-day time limit.";
-    else if(civilService==="Death Certificate") detail="KP's official Local Government service page confirms registration and certification of death through the concerned council and lists a 2-day service time. The CRVS information also describes documentary evidence such as a graveyard certificate/parchi where applicable.";
-    else if(civilService==="Marriage Certificate") detail="KP's official CRVS rules require the prescribed marriage application, a registered Nikah Nama or applicable marriage certificate, and CNIC copies of the husband and wife and their parents, with the concerned council responsible for registration.";
-    else detail="KP's official Local Government/CRVS framework places divorce registration with the concerned council and requires the prescribed application and supporting divorce documentation.";
-   } else if(civilJurisdiction==="Sindh"){
-    if(civilAction==="correction" || civilAction==="cancellation"){
-      detail="The current official Sindh CRMS material verified here confirms digital registration of birth, death, marriage and divorce, but it does not publish a complete current procedure for correcting or cancelling the requested certificate. Therefore, I will not substitute the normal registration process for a correction/cancellation request or invent unverified documents, fees, forms or approval steps.";
-    } else {
-      detail="Sindh's official CRMS information states that birth, death, marriage and divorce registration are being provided through an integrated digital civil-registration platform. The service is being implemented across local councils and the province has announced online/mobile registration through CRMS.";
-    }
-   } else if(civilJurisdiction==="Balochistan"){
-    if(civilAction==="correction" || civilAction==="cancellation"){
-      detail="The current official Balochistan Local Government & Rural Development Department material verified here confirms online issuance/registration of birth, death, marriage and divorce certificates through CRMS, but it does not publish a complete current procedure for correcting or cancelling the requested certificate. Therefore, I will not substitute the normal registration process for a correction/cancellation request or invent unverified documents, fees, forms or approval steps.";
-    } else {
-      detail="Balochistan's official Local Government & Rural Development Department states that the Pak-ID mobile application provides online issuance of Birth, Death, Marriage and Divorce Certificates through CRMS, allowing citizens to obtain these certificates without visiting local council offices.";
-    }
-   } else if(civilJurisdiction==="Islamabad Capital Territory"){
-    detail="ICT Administration officially lists this civil-registration service among its citizen services. Where the dedicated ICT service page publishes detailed requirements, the application should use those requirements; otherwise it should not invent missing documents or fees.";
-   } else if(civilJurisdiction==="Azad Jammu and Kashmir"){
-    detail="AJK's official E-Facilitation Center lists Birth and Death Certificate services, while the AJK Local Government Act places registration of births, deaths and marriages within the local-council framework. The available public official material does not provide a complete current checklist for every civil certificate, so missing requirements should not be invented.";
-   } else {
-    detail="The Government of Gilgit-Baltistan official portal is the authoritative government entry point, but a detailed service-specific checklist for this civil certificate was not available in the official material I could verify. The app therefore will not invent documents, fees or office details.";
-   }
-
-   const serviceName = civilService.replace(" Certificate","").replace(" Registration","");
-   const answer=language==="Urdu"
-    ? "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+detail+"\\n\\n**اہم:** اس جواب میں صرف **"+serviceName+"** سروس سے متعلق معلومات شامل ہیں۔ جہاں سرکاری ذریعہ مکمل دستاویزات یا فیس واضح طور پر شائع نہیں کرتا، وہاں غیرمصدقہ معلومات شامل نہیں کی جا رہی۔\\n\\n**سرکاری ذریعہ:** "+src.url
-    : "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+detail+"\\n\\n**Important:** This answer is limited to **"+serviceName+"** service. Where the official source does not publish a complete current document or fee checklist, I will not invent unverified requirements.\\n\\n**Official source:** "+src.url;
-
-   return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:src.title,url:src.url,lastVerified:"",province:civilJurisdiction},department:"Union Council / Local Government",question,language,jurisdiction:civilJurisdiction,evidenceAvailable:true,verifyClaims:true,verificationEvidence:`${src.scope}\n\n${detail}`});
-  }
- }
 
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
 if (requested === "NADRA Services") {

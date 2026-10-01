@@ -42,9 +42,9 @@ function normalizeVerdict(value: unknown): ClaimCheck["verdict"] {
 function extractJson(text: string): unknown {
   const cleaned = text
     .trim()
-    .replace(/^\\`\\`\\`json\\s*/i, "")
-    .replace(/^\\`\\`\\`\\s*/i, "")
-    .replace(/\\s*\\`\\`\\`$/i, "")
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
     .trim();
 
   const candidates = [cleaned];

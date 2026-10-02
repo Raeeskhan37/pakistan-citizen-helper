@@ -392,7 +392,7 @@ return (
                 <div>
                   <span className="source-label">{isUrdu ? "سرکاری ذریعہ" : "OFFICIAL SOURCE"}</span>
                   <strong>{answer.source.title || "Official government source"}</strong>
-                  <small>{answer.source.department || department.name}{answer.source.lastVerified ? ` · Verified ${answer.source.lastVerified}` : ""}</small>
+                  <small>{answer.source.department || department.name}</small>
                 </div>
               </div>
               {answer.source.url && <a href={answer.source.url} target="_blank" rel="noreferrer">{isUrdu ? "سرکاری ویب سائٹ کھولیں" : "Visit official source"} ↗</a>}

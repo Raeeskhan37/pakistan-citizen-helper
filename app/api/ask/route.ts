@@ -2078,9 +2078,19 @@ IMPORTANT: The official source text and official-domain search results above are
    if(retry.ok){const rd=await retry.json();answer=cleanAnswer(rd?.choices?.[0]?.message?.content||"")||answer;}
  }
  const verificationEvidence=[dbContext,officialText,ragEvidence].filter(Boolean).join("\n\n");
- const claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
+ let claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
  const verificationAvailable=claimVerification.available;
- const verificationPassed=verificationAvailable && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
+ let verificationPassed=verificationAvailable && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
+
+ // Vaccination safety guard: never present an unsupported generic vaccine/certificate list as verified government information.
+ // This is intentionally isolated to the Vaccination for Travelling Abroad department.
+ if(isVaccination && !verificationPassed){
+   answer = language==="Urdu"
+     ? "معذرت، اس سوال کے لیے دستیاب سرکاری شواہد سے مخصوص ویکسین یا ویکسینیشن سرٹیفکیٹ کی مکمل اور قابلِ تصدیق فہرست ثابت نہیں ہو سکی۔ کسی مخصوص ویکسین کو لازمی قرار دینے سے پہلے منزلِ سفر اور موجودہ سرکاری صحت/سفری تقاضوں کی تصدیق ضروری ہے۔"
+     : "I’m sorry, but the available official evidence does not establish a complete, claim-verified list of vaccinations or vaccination certificates for this question. I will not provide a generic vaccine list as a verified government requirement. Specific requirements depend on the destination and applicable current official health/travel rules.";
+   claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
+   verificationPassed=claimVerification.available && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
+ }
  const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"normal",tools:["NADRA RAG","Supabase verified knowledge","Official web research","Jurisdiction detection","Source verification","Claim-level evidence verification"],answer,evidenceAvailable:(selected.records.length>0||officialText.length>200||ragEvidence.length>200) && verificationPassed});
  workflow.verification = {
    ...workflow.verification,

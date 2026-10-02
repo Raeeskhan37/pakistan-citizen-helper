@@ -298,7 +298,7 @@ function armsLicenceEvidence(question:string,jurisdiction:WorkingJurisdiction|nu
 function exciseEvidence(question:string,jurisdiction:string,language:"English"|"Urdu"):string{
  const q=normalize(question);
  const isToken=q.includes("token")||q.includes("motor vehicle tax")||q.includes("vehicle tax")||q.includes("ٹوکن");
- const isRegistration=q.includes("new registration")||q.includes("vehicle registration")||q.includes("register a vehicle")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
+ const isRegistration=q.includes("new registration")||q.includes("vehicle registration")||q.includes("register a vehicle")||q.includes("register a new vehicle")||q.includes("new vehicle registration")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
  const isTransfer=q.includes("transfer")||q.includes("ownership")||q.includes("ملکیت")||q.includes("منتقلی");
  const isPayment=q.includes("pay")||q.includes("payment")||q.includes("online payment")||q.includes("ادائیگی");
  const isVerification=q.includes("verify")||q.includes("verification")||q.includes("registration status")||q.includes("basic details")||q.includes("number plate")||q.includes("vehicle details");
@@ -1994,7 +1994,7 @@ if(requested==="Excise & Taxation"){
    answer.split(/\s+/).filter((item)=>item.startsWith("http://")||item.startsWith("https://")).map((item)=>item.replace(/[.,]+$/,""))
   ));
   const q=normalize(question);
-  const isRegistration=q.includes("new registration")||q.includes("vehicle registration")||q.includes("register a vehicle")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
+  const isRegistration=q.includes("new registration")||q.includes("vehicle registration")||q.includes("register a vehicle")||q.includes("register a new vehicle")||q.includes("new vehicle registration")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
   const isTransfer=q.includes("transfer")||q.includes("ownership")||q.includes("ملکیت")||q.includes("منتقلی");
   const isToken=q.includes("token")||q.includes("motor vehicle tax")||q.includes("vehicle tax")||q.includes("ٹوکن");
   const isPayment=q.includes("pay")||q.includes("payment")||q.includes("online payment")||q.includes("ادائیگی");

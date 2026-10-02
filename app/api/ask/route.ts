@@ -1151,8 +1151,7 @@ export async function POST(request:NextRequest){try{
      let m:RegExpExecArray|null;
      while((m=rx.exec(compact)) && items.length<8){
        const title=m[1]
-         .replace(/^(?:Show\s+(?:5|10|20|50|100)\s*)+/i,"")
-         .replace(/^(Search|List|Tile)\\s+/i,"")
+         .replace(/^(?:\d+\s+)?(?:Show\s+\d+\s*)+(?:Search\s*|List\s*|Tile\s*)+/i,"")
          .trim();
        if(title && !/^(Show|Search|List|Tile|View Details|Login to Apply)$/i.test(title)){
          const item=title+" — "+m[2].trim();

@@ -933,26 +933,27 @@ function sanitizeNadraCitizenAnswer(answer:string, language:"English"|"Urdu") {
 
   let cleaned = answer;
 
-  // Citizen-facing NADRA answers may use the internal RAG as evidence, but
-  // must never expose the internal policy/SOP identifier, release date,
-  // effective date, page/section/chunk metadata, or internal evidence labels.
+  // Internal NADRA RAG evidence is never a citizen-facing source.
+  // Strip policy identifiers, internal evidence labels and document metadata.
   cleaned = cleaned
-    .replace(/\*\*(?:Reference|حوالہ)\*\*\s*[—-]?\s*NADRA Registration Policy[^\n]*/gi, "")
+    .replace(/\*\*(?:Reference|حوالہ)\*\*\s*[—-]?\s*[^\n]*/gi, "")
     .replace(/(?:Reference|حوالہ)\s*[—-]?\s*NADRA Registration Policy[^\n]*/gi, "")
-    .replace(/\*\*(?:Policy|پالیسی)\*\*\s*:\s*NADRA Registration Policy[^\n]*/gi, "")
-    .replace(/NADRA Registration Policy\s*(?:RP-)?6\.0\.2/gi,
-      language==="Urdu" ? "NADRA کی موجودہ ضروریات" : "NADRA's current requirements")
-    .replace(/\bRP-6\.0\.2\b/gi, "")
-    .replace(/\bNADRA-Reg-Policy-6\.0\.2\b/gi, "")
-    .replace(/\b(?:ISSUE DATE|EFFECTIVE DATE|TOTAL PAGES|RETRIEVAL SCORE)\s*:\s*[^\n]+/gi, "")
-    .replace(/\b(?:CHUNK|PAGE|SECTION|VERSION|IDENTIFIER)\s*:\s*[^\n]+/gi, "")
+    .replace(/\*\*(?:Policy|پالیسی)\*\*\s*:\s*[^\n]*/gi, "")
+    .replace(/^\s*[*#-]*\s*(?:Policy|پالیسی|Reference|حوالہ|Evidence|ثبوت)\s*:?.*$/gim, "")
+    .replace(/^.*\bNADRA Registration Policy\s*(?:RP-)?6\.0\.2.*$/gim, "")
+    .replace(/^.*\bRP-6\.0\.2\b.*$/gim, "")
+    .replace(/^.*\bNADRA-Reg-Policy-6\.0\.2\b.*$/gim, "")
+    .replace(/\[NADRA POLICY (?:RAG )?EVIDENCE[^\]]*\]/gi, "")
+    .replace(/\bNADRA POLICY (?:RAG )?EVIDENCE\b\s*:?[ \t]*/gi, "")
+    .replace(/^.*\b(?:ISSUE DATE|EFFECTIVE DATE|TOTAL PAGES|RETRIEVAL SCORE)\s*:\s*.*$/gim, "")
+    .replace(/^.*\b(?:CHUNK|PAGE|SECTION|VERSION|IDENTIFIER)\s*:\s*.*$/gim, "")
     .replace(/\b(?:pages?|sections?)\s*\d+(?:\s*[-–]\s*\d+)?/gi, "")
     .replace(/\b(?:effective|issued)\s+(?:on\s+)?\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}/gi, "")
     .replace(/\b(?:مؤثر|جاری)\s+\d{1,2}\s+(?:جنوری|فروری|مارچ|اپریل|مئی|جون|جولائی|اگست|ستمبر|اکتوبر|نومبر|دسمبر)\s+\d{4}/gi, "")
-    .replace(/\*\*(?:Evidence|ثبوت)\*\*\s*:\s*[^\n]+/gi, "")
-    .replace(/\*\*(?:Policy|پالیسی)\*\*\s*:\s*[^\n]+/gi, "")
-    .replace(/\b(?:NADRA Registration Policy|Registration Policy)\b/gi,
-      language==="Urdu" ? "NADRA کی موجودہ ضروریات" : "NADRA's current requirements")
+    .replace(/\b(?:Rule|Regulation|Section|Clause)\s+\d+(?:\s*\([^)]*\))?/gi, "")
+    .replace(/\b(?:Rule|Regulation|Section|Clause)\s+[A-Za-z][A-Za-z0-9 _/-]*/gi, "")
+    .replace(/\bunder\s+\.?/gi, "")
+    .replace(/\bکے\s+تحت\s+\.?/gi, "")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\n[ \t]*\n[ \t]*(?:[—-]\s*)?\n/g, "\n\n")
     .replace(/\n{3,}/g, "\n\n")
@@ -2308,7 +2309,7 @@ IMPORTANT: The official source text and official-domain search results above are
    console.error("Primary Groq model failed:",await ai.text());
    ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody(GROQ_FALLBACK_MODEL))});
  }
- if(!ai.ok){const providerStatus=ai.status;const providerBody=(await ai.text()).slice(0,500);console.error("Groq request failed",providerStatus,providerBody);const fallbackEvidence=cleanAnswer(ragEvidence||officialText||dbContext);if(fallbackEvidence&&fallbackEvidence.length>40){const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"degraded",tools:["Local verified evidence","Jurisdiction detection","Source verification"],answer:fallbackEvidence,evidenceAvailable:fallbackEvidence.length>40});return NextResponse.json({answer:`${language==="Urdu"?"🟡 ڈی گریڈڈ موڈ فعال ہے۔ لائیو AI سروس دستیاب نہیں، اس لیے ذیل کی معلومات دستیاب مقامی/مصدقہ شواہد سے فراہم کی جا رہی ہیں۔":"🟡 Degraded Mode is active. The live AI service is unavailable, so the information below is provided from available local verified evidence."}\n\n${fallbackEvidence}`,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||""},agent:true,goalFocused:true,webSearch:false,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]}}});}return NextResponse.json({error:`AI provider request failed (HTTP ${providerStatus}).`,errorType:"ai_service_error",providerStatus},{status:502});}const data=await ai.json();let answer=cleanAnswer(data?.choices?.[0]?.message?.content||"")||noInfo(language);
+ if(!ai.ok){const providerStatus=ai.status;const providerBody=(await ai.text()).slice(0,500);console.error("Groq request failed",providerStatus,providerBody);const fallbackEvidence=cleanAnswer(ragEvidence||officialText||dbContext);if(fallbackEvidence&&fallbackEvidence.length>40){const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"degraded",tools:["Local verified evidence","Jurisdiction detection","Source verification"],answer:fallbackEvidence,evidenceAvailable:fallbackEvidence.length>40});const citizenFallback=isNadra ? sanitizeNadraCitizenAnswer(`${language==="Urdu"?"🟡 ڈی گریڈڈ موڈ فعال ہے۔ لائیو AI سروس دستیاب نہیں، اس لیے ذیل کی معلومات دستیاب مقامی/مصدقہ شواہد سے فراہم کی جا رہی ہیں۔":"🟡 Degraded Mode is active. The live AI service is unavailable, so the information below is provided from available local verified evidence."}\n\n${fallbackEvidence}`, language) : `${language==="Urdu"?"🟡 ڈی گریڈڈ موڈ فعال ہے۔ لائیو AI سروس دستیاب نہیں، اس لیے ذیل کی معلومات دستیاب مقامی/مصدقہ شواہد سے فراہم کی جا رہی ہیں۔":"🟡 Degraded Mode is active. The live AI service is unavailable, so the information below is provided from available local verified evidence."}\n\n${fallbackEvidence}`;return NextResponse.json({answer:citizenFallback,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||""},agent:true,goalFocused:true,webSearch:false,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]}}});}return NextResponse.json({error:`AI provider request failed (HTTP ${providerStatus}).`,errorType:"ai_service_error",providerStatus},{status:502});}const data=await ai.json();let answer=cleanAnswer(data?.choices?.[0]?.message?.content||"")||noInfo(language);
  const referralOnly=/(search|look for|find|check|use the search|visit (the|this) (website|portal)|go to (the|this) (website|portal)|website.*to find|portal.*to find|تلاش کریں|ویب سائٹ.*تلاش|پورٹل.*تلاش)/i.test(answer);
  const evidenceAvailable=selected.records.length>0||officialText.length>200||ragEvidence.length>200;
  if(referralOnly&&evidenceAvailable){
@@ -2359,5 +2360,6 @@ IMPORTANT: The official source text and official-domain search results above are
  workflow.summary = verificationPassed
    ? "Four-agent workflow completed with claim-level evidence verification."
    : "Four-agent workflow completed with a verification warning; the answer was not fully claim-verified.";
- return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]},claimVerification}});
+ const citizenAnswer=isNadra ? sanitizeNadraCitizenAnswer(answer, language) : answer;
+ return NextResponse.json({answer:citizenAnswer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]},claimVerification}});
  }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

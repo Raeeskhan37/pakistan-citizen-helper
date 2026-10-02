@@ -931,17 +931,30 @@ Current medical and health-screening requirements should be checked against curr
 function sanitizeNadraCitizenAnswer(answer:string, language:"English"|"Urdu") {
   if (!answer) return answer;
 
-  let cleaned = answer
-    // Do not expose the internal policy identifier, issue/effective dates,
-    // page numbers, section/chunk metadata, or internal evidence labels.
-    .replace(/NADRA Registration Policy RP-6\.0\.2/gi, language==="Urdu" ? "NADRA کی موجودہ رجسٹریشن ضروریات" : "NADRA's current registration requirements")
-    .replace(/NADRA Registration Policy 6\.0\.2/gi, language==="Urdu" ? "NADRA کی موجودہ رجسٹریشن ضروریات" : "NADRA's current registration requirements")
+  let cleaned = answer;
+
+  // Citizen-facing NADRA answers may use the internal RAG as evidence, but
+  // must never expose the internal policy/SOP identifier, release date,
+  // effective date, page/section/chunk metadata, or internal evidence labels.
+  cleaned = cleaned
+    .replace(/\*\*(?:Reference|حوالہ)\*\*\s*[—-]?\s*NADRA Registration Policy[^\n]*/gi, "")
+    .replace(/(?:Reference|حوالہ)\s*[—-]?\s*NADRA Registration Policy[^\n]*/gi, "")
+    .replace(/\*\*(?:Policy|پالیسی)\*\*\s*:\s*NADRA Registration Policy[^\n]*/gi, "")
+    .replace(/NADRA Registration Policy\s*(?:RP-)?6\.0\.2/gi,
+      language==="Urdu" ? "NADRA کی موجودہ ضروریات" : "NADRA's current requirements")
     .replace(/\bRP-6\.0\.2\b/gi, "")
     .replace(/\bNADRA-Reg-Policy-6\.0\.2\b/gi, "")
-    .replace(/\b(CHUNK|PAGE|SECTION|VERSION|IDENTIFIER|ISSUE DATE|EFFECTIVE DATE|TOTAL PAGES|RETRIEVAL SCORE)\s*:\s*[^\n]+/gi, "")
-    .replace(/\*\*(Policy|پالیسی)\*\*:\s*[^\n]+/gi, "")
-    .replace(/\*\*(Evidence|ثبوت)\*\*:\s*[^\n]+/gi, "")
+    .replace(/\b(?:ISSUE DATE|EFFECTIVE DATE|TOTAL PAGES|RETRIEVAL SCORE)\s*:\s*[^\n]+/gi, "")
+    .replace(/\b(?:CHUNK|PAGE|SECTION|VERSION|IDENTIFIER)\s*:\s*[^\n]+/gi, "")
+    .replace(/\b(?:pages?|sections?)\s*\d+(?:\s*[-–]\s*\d+)?/gi, "")
+    .replace(/\b(?:effective|issued)\s+(?:on\s+)?\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}/gi, "")
+    .replace(/\b(?:مؤثر|جاری)\s+\d{1,2}\s+(?:جنوری|فروری|مارچ|اپریل|مئی|جون|جولائی|اگست|ستمبر|اکتوبر|نومبر|دسمبر)\s+\d{4}/gi, "")
+    .replace(/\*\*(?:Evidence|ثبوت)\*\*\s*:\s*[^\n]+/gi, "")
+    .replace(/\*\*(?:Policy|پالیسی)\*\*\s*:\s*[^\n]+/gi, "")
+    .replace(/\b(?:NADRA Registration Policy|Registration Policy)\b/gi,
+      language==="Urdu" ? "NADRA کی موجودہ ضروریات" : "NADRA's current requirements")
     .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n[ \t]*\n[ \t]*(?:[—-]\s*)?\n/g, "\n\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
@@ -953,7 +966,6 @@ function sanitizeNadraCitizenAnswer(answer:string, language:"English"|"Urdu") {
     ? cleaned
     : cleaned + "\n\n" + source;
 }
-
 async function directWorkflowResponse(args:{answer:string;source:any;department:string;question:string;language:"English"|"Urdu";jurisdiction?:string|null;tools?:string[];evidenceAvailable?:boolean;verifyClaims?:boolean;verificationEvidence?:string}) {
  let workflow=runFourAgentWorkflow({
   department:args.department, question:args.question, jurisdiction:args.jurisdiction||null, mode:"normal",

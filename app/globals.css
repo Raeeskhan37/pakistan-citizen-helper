@@ -277,6 +277,8 @@ footer{margin-top:auto;padding:23px 18px;background:#0d273d;color:#b9cbd5;text-a
   min-width:0;
   max-width:none;
 }
+  position:relative;
+  top:-1px;
 
 .answer-area > .end-user-feedback:not(.suggestion-only) .feedback-card {
   width:100%;

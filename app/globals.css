@@ -272,30 +272,14 @@ footer{margin-top:auto;padding:23px 18px;background:#0d273d;color:#b9cbd5;text-a
 @media(max-width:600px){.end-user-feedback{margin-top:12px}.feedback-card,.suggestion-card{padding:15px;border-radius:14px}.feedback-heading,.suggestion-heading{display:block}.feedback-heading strong,.suggestion-heading strong{font-size:11px}.feedback-heading small,.suggestion-heading small{font-size:8px}.feedback-rating{grid-template-columns:1fr 1fr}.feedback-choice{padding:9px 7px;font-size:9px}.feedback-card textarea,.suggestion-card textarea,.suggestion-card select{font-size:9px}.feedback-card .secondary,.suggestion-card .secondary{padding:10px}}
 
 
-/* Feedback & suggestion card alignment */
-.feedback-card,
-.suggestion-card{
-  width:100%;
-  min-height:220px;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-start;
+/* Feedback card: match the existing suggestion card dimensions exactly */
+.feedback-card {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 0;
 }
-.feedback-card .feedback-heading,
-.suggestion-card .suggestion-heading{
-  flex-shrink:0;
+
+.feedback-card textarea {
+  box-sizing: border-box;
 }
-.feedback-card .feedback-rating,
-.suggestion-card select,
-.feedback-card textarea,
-.suggestion-card textarea,
-.feedback-card .secondary,
-.suggestion-card .secondary{
-  flex-shrink:0;
-}
-@media(max-width:600px){
-  .feedback-card,
-  .suggestion-card{
-    min-height:205px;
-  }
-}
+

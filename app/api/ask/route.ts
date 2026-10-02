@@ -689,9 +689,9 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  if(language==="Urdu"){
   if(isPunjab){
    if(isMutation)return "## پنجاب — انتقال (Mutation / Intiqal)\n\nPLRA کے مطابق انتقال زمین کی ملکیت میں تبدیلی کو سرکاری لینڈ ریکارڈ میں درج کرنے کا عمل ہے۔ متعلقہ Arazi Record Centre (ARC) پر CNIC کی بایومیٹرک تصدیق کے بعد ٹوکن لیا جاتا ہے، مطلوبہ دستاویزات اور جائیداد کی تفصیلات جمع کی جاتی ہیں، مقررہ فیس/ٹیکس ادا کیے جاتے ہیں، اور متعلقہ Revenue Officer کے سامنے بیان/تصدیق کے بعد انتقال منظور کیا جاتا ہے۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
-   if(isCorrection)return "## پنجاب — لینڈ ریکارڈ کی تصحیح\\n\\nPLRA کی الگ Correction of Land Records سروس ریکارڈ میں غلطیوں یا عدم مطابقت کی تصحیح کے لیے ہے۔ متعلقہ ARC یا Dahi Markaz Mall میں درخواست، دستاویزات کی جانچ، verification/inspection، مجاز Land Records authority کی منظوری اور پھر ریکارڈ update شامل ہیں۔\\n\\n**سرکاری ذریعہ:**\\nhttps://www.punjab-zameen.gov.pk/correctionRecordsInfo";
-   if(isPurchaseTransfer)return "## پنجاب — زمین کی ملکیت کی منتقلی\\n\\nزمین خریدنے کے بعد ملکیت کی تبدیلی کو PLRA کے مطابق mutation/انتقال کے ذریعے سرکاری land record میں درج کیا جاتا ہے۔\\n\\n1. متعلقہ Arazi Record Centre (ARC) پر CNIC/biometric verification مکمل کریں۔\\n2. متعلقہ property/ownership documents جمع کرائیں۔\\n3. applicable fees/taxes ادا کریں۔\\n4. متعلقہ فریقین/گواہ required verification اور statements مکمل کریں۔\\n5. مجاز Revenue Officer/ADLR کی منظوری کے بعد land record نئے مالک کے نام update ہوتا ہے۔\\n\\n**سرکاری ذرائع:**\\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
-   if(isInheritance)return "## پنجاب — وراثتی زمین کی منتقلی\\n\\nوراثت کی وجہ سے ملکیت میں تبدیلی بھی PLRA کے مطابق mutation/انتقال کے ذریعے سرکاری land record میں درج کی جاتی ہے تاکہ ریکارڈ قانونی وارثوں کے مطابق update ہو۔ متعلقہ documents، identity/biometric verification، applicable fees/taxes اور Revenue Officer/ADLR کی verification/attestation اس عمل کا حصہ ہیں۔\\n\\nمخصوص legal-heir documents کیس کی نوعیت پر منحصر ہو سکتے ہیں؛ جو تقاضے موجودہ PLRA evidence سے ثابت نہیں، وہ یہاں شامل نہیں کیے گئے۔\\n\\n**سرکاری ذرائع:**\\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
+   if(isCorrection)return "## پنجاب — لینڈ ریکارڈ کی تصحیح\n\nPLRA کی الگ Correction of Land Records سروس ریکارڈ میں غلطیوں یا عدم مطابقت کی تصحیح کے لیے ہے۔ متعلقہ ARC یا Dahi Markaz Mall میں درخواست، دستاویزات کی جانچ، verification/inspection، مجاز Land Records authority کی منظوری اور پھر ریکارڈ update شامل ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://www.punjab-zameen.gov.pk/correctionRecordsInfo";
+   if(isPurchaseTransfer)return "## پنجاب — زمین کی ملکیت کی منتقلی\n\nزمین خریدنے کے بعد ملکیت کی تبدیلی کو PLRA کے مطابق mutation/انتقال کے ذریعے سرکاری land record میں درج کیا جاتا ہے۔\n\n1. متعلقہ Arazi Record Centre (ARC) پر CNIC/biometric verification مکمل کریں۔\n2. متعلقہ property/ownership documents جمع کرائیں۔\n3. applicable fees/taxes ادا کریں۔\n4. متعلقہ فریقین/گواہ required verification اور statements مکمل کریں۔\n5. مجاز Revenue Officer/ADLR کی منظوری کے بعد land record نئے مالک کے نام update ہوتا ہے۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
+   if(isInheritance)return "## پنجاب — وراثتی زمین کی منتقلی\n\nوراثت کی وجہ سے ملکیت میں تبدیلی بھی PLRA کے مطابق mutation/انتقال کے ذریعے سرکاری land record میں درج کی جاتی ہے تاکہ ریکارڈ قانونی وارثوں کے مطابق update ہو۔ متعلقہ documents، identity/biometric verification، applicable fees/taxes اور Revenue Officer/ADLR کی verification/attestation اس عمل کا حصہ ہیں۔\n\nمخصوص legal-heir documents کیس کی نوعیت پر منحصر ہو سکتے ہیں؛ جو تقاضے موجودہ PLRA evidence سے ثابت نہیں، وہ یہاں شامل نہیں کیے گئے۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
    if(isRegistry)return "## پنجاب — جائیداد کی رجسٹری\n\nPLRA کے مطابق نئی جائیداد کی رجسٹری کے لیے e-Stamp challan اور متعلقہ فیس/ٹیکس کی ادائیگی، e-Registration نظام تک رسائی، اور مطلوبہ معلومات/دستاویزات جمع کرانے کے مراحل شامل ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://www.punjab-zameen.gov.pk/registryInfo";
    if(isFard||isOwnership)return "## پنجاب — فرد اور لینڈ ریکارڈ\n\nPLRA کے مطابق فرد زمین کے رقبے، مقام اور ملکیت کی تفصیلات فراہم کرتی ہے۔ فرد متعلقہ Arazi Record Centre (ARC)، مجاز Arazi Moawin، یا سرکاری Online Fard سروس سے حاصل کی جا سکتی ہے۔ عام طور پر اصل CNIC اور جائیداد کی تفصیلات جیسے Khewat، Khasra یا Registry درکار ہوتی ہیں۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/fardInfo\nhttps://onlinefard.punjab-zameen.gov.pk/";
    return "## پنجاب — لینڈ ریکارڈ خدمات\n\nPLRA کی موجودہ سرکاری ویب سائٹ پر Fard، land transfer/mutation، ownership verification، registry، e-Stamp، partition اور متعلقہ land-record services دستیاب ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://www.punjab-zameen.gov.pk/";
@@ -707,9 +707,9 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  }
  if(isPunjab){
   if(isMutation)return "## Punjab — Mutation (Intiqal)\n\nThe Punjab Land Records Authority (PLRA) states that mutation records a change in land ownership in the official land record. The Punjab process includes CNIC biometric verification and a token at the concerned Arazi Record Centre, submission of required documents and property details, payment of applicable fees/taxes, and appearance before the authorized Revenue Officer with the relevant parties/witnesses. The Revenue Officer records statements and attests the mutation before the land record is updated.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
-  if(isCorrection)return "## Punjab — Correction of Land Records\\n\\nPLRA provides a separate Correction of Land Records service for errors or inconsistencies in land ownership data. The published process includes submitting the correction request at the concerned Arazi Record Centre (ARC) or Dahi Markaz Mall, document review, required verification/inspection, approval by the competent Land Records authority, and official record update.\\n\\n**Official source:**\\nhttps://www.punjab-zameen.gov.pk/correctionRecordsInfo";
-  if(isPurchaseTransfer)return "## Punjab — Transfer of Land Ownership\\n\\nFor a land purchase, the ownership change is recorded through the applicable mutation/land-transfer process. PLRA states that mutation records a change of ownership after a sale.\\n\\n1. Complete CNIC/biometric verification at the concerned Arazi Record Centre (ARC).\\n2. Submit the relevant property and ownership documents.\\n3. Pay applicable fees/taxes.\\n4. Complete the required verification/statements with the relevant parties and witnesses.\\n5. After approval by the authorized Revenue Officer/ADLR, the land record is updated to the new owner.\\n\\n**Official sources:**\\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
-  if(isInheritance)return "## Punjab — Inheritance & Transfer to Legal Heirs\\n\\nWhen land ownership changes because of inheritance, PLRA treats the change as a mutation in the official land record so the record can reflect the legal heirs. The applicable process includes relevant property/ownership documents, identity/biometric verification, applicable fees/taxes, and verification/attestation before the authorized Revenue Officer/ADLR.\\n\\nSpecific legal-heir documents can depend on the case; requirements not established by the current PLRA evidence are not invented here.\\n\\n**Official sources:**\\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
+  if(isCorrection)return "## Punjab — Correction of Land Records\n\nPLRA provides a separate Correction of Land Records service for errors or inconsistencies in land ownership data. The published process includes submitting the correction request at the concerned Arazi Record Centre (ARC) or Dahi Markaz Mall, document review, required verification/inspection, approval by the competent Land Records authority, and official record update.\n\n**Official source:**\nhttps://www.punjab-zameen.gov.pk/correctionRecordsInfo";
+  if(isPurchaseTransfer)return "## Punjab — Transfer of Land Ownership\n\nFor a land purchase, the ownership change is recorded through the applicable mutation/land-transfer process. PLRA states that mutation records a change of ownership after a sale.\n\n1. Complete CNIC/biometric verification at the concerned Arazi Record Centre (ARC).\n2. Submit the relevant property and ownership documents.\n3. Pay applicable fees/taxes.\n4. Complete the required verification/statements with the relevant parties and witnesses.\n5. After approval by the authorized Revenue Officer/ADLR, the land record is updated to the new owner.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
+  if(isInheritance)return "## Punjab — Inheritance & Transfer to Legal Heirs\n\nWhen land ownership changes because of inheritance, PLRA treats the change as a mutation in the official land record so the record can reflect the legal heirs. The applicable process includes relevant property/ownership documents, identity/biometric verification, applicable fees/taxes, and verification/attestation before the authorized Revenue Officer/ADLR.\n\nSpecific legal-heir documents can depend on the case; requirements not established by the current PLRA evidence are not invented here.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
   if(isRegistry)return "## Punjab — Property Registry\n\nPLRA current official guidance describes property registration through e-Stamping and the e-Registration system. The published process includes generating the e-Stamp challan, paying applicable stamp duty/taxes/registration and related fees, accessing the e-Registration portal, and submitting the required transaction information and documents.\n\n**Official source:**\nhttps://www.punjab-zameen.gov.pk/registryInfo";
   if(isFard||isOwnership)return "## Punjab — Fard & Land Record\n\nAccording to PLRA, a Fard provides land area, location and ownership details. It can be obtained from an Arazi Record Centre, an authorized Arazi Moawin, or the official Online Fard service. PLRA states that the original CNIC and property details such as Khewat, Khasra or Registry are used for the Fard request.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/fardInfo\nhttps://onlinefard.punjab-zameen.gov.pk/";
   return "## Punjab — Land & Revenue Services\n\nPLRA current official website lists Fard, land transfer/mutation, ownership verification, property registry, e-Stamp, partition and other land-record services.\n\n**Official source:**\nhttps://www.punjab-zameen.gov.pk/";
@@ -1017,8 +1017,8 @@ export async function POST(request:NextRequest){try{
 
    const serviceName = civilService.replace(" Certificate","").replace(" Registration","");
    const answer=language==="Urdu"
-    ? "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+detail+"\\n\\n**اہم:** اس جواب میں صرف **"+serviceName+"** سروس سے متعلق معلومات شامل ہیں۔ جہاں سرکاری ذریعہ مکمل دستاویزات یا فیس واضح طور پر شائع نہیں کرتا، وہاں غیرمصدقہ معلومات شامل نہیں کی جا رہی۔\\n\\n**سرکاری ذریعہ:** "+src.url
-    : "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+detail+"\\n\\n**Important:** This answer is limited to **"+serviceName+"** service. Where the official source does not publish a complete current document or fee checklist, I will not invent unverified requirements.\\n\\n**Official source:** "+src.url;
+    ? "## "+civilJurisdiction+" — "+civilService+"\n\n"+detail+"\n\n**اہم:** اس جواب میں صرف **"+serviceName+"** سروس سے متعلق معلومات شامل ہیں۔ جہاں سرکاری ذریعہ مکمل دستاویزات یا فیس واضح طور پر شائع نہیں کرتا، وہاں غیرمصدقہ معلومات شامل نہیں کی جا رہی۔\n\n**سرکاری ذریعہ:** "+src.url
+    : "## "+civilJurisdiction+" — "+civilService+"\n\n"+detail+"\n\n**Important:** This answer is limited to **"+serviceName+"** service. Where the official source does not publish a complete current document or fee checklist, I will not invent unverified requirements.\n\n**Official source:** "+src.url;
 
    return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:src.title,url:src.url,lastVerified:"",province:civilJurisdiction},department:"Union Council / Local Government",question,language,jurisdiction:civilJurisdiction,evidenceAvailable:true,verifyClaims:true,verificationEvidence:`${src.scope}\n\n${detail}`});
   }
@@ -1045,7 +1045,7 @@ export async function POST(request:NextRequest){try{
      if(!ragLikelyRelevant){
        const searchText=await fetchOfficialSearch(question,["nadra.gov.pk"]);
        if(searchText){
-         nadraOfficialText="\\n\\nOFFICIAL NADRA WEB SEARCH EVIDENCE:\\n"+searchText;
+         nadraOfficialText="\n\nOFFICIAL NADRA WEB SEARCH EVIDENCE:\n"+searchText;
          usedWebSearch=true;
        }
      }
@@ -1062,7 +1062,7 @@ export async function POST(request:NextRequest){try{
          nadraSpecificVerificationEvidence=[
            "OFFICIAL NADRA POC SOURCE: https://www.nadra.gov.pk/identityDocument/poc",
            relevant
-         ].filter(Boolean).join("\\n\\n");
+         ].filter(Boolean).join("\n\n");
        }
      }
      if(/shajrah|shajra|shajra.?e.?nasab|family composition|family tree|شجرہ|خاندانی فہرست/.test(qnDirect) &&
@@ -1073,7 +1073,7 @@ export async function POST(request:NextRequest){try{
          "OFFICIAL NADRA FRC SOURCE: https://www.nadra.gov.pk/identityDocument/frc",
          "NADRA defines FRC as Family Registration Certificate and states that it reflects, verifies and records registered family-composition data. NADRA lists FRC categories including By Birth, By Marriage, By Adoption and By All.",
          "OFFICIAL GOVERNMENT REVENUE EVIDENCE: Shajra-e-Nasab is used in government revenue records as a pedigree/family-tree record; it is distinct from an NADRA Family Registration Certificate."
-       ].join("\\n\\n");
+       ].join("\n\n");
      }
      // Use narrowly scoped RP-6.0.2 chunks for NADRA claim verification.
      // General RAG retrieval remains available for research, but unrelated
@@ -1084,7 +1084,7 @@ export async function POST(request:NextRequest){try{
        nadraSpecificVerificationEvidence,
        focusedNadraEvidence ? "" : nadraRag,
        focusedNadraEvidence ? "" : nadraOfficialText
-     ].filter(Boolean).join("\\n\\n");
+     ].filter(Boolean).join("\n\n");
      const claimVerification=await verifyAnswerClaims({
        answer:cleanAnswer(directNadraAnswer),
        evidence:verificationEvidence,
@@ -1177,8 +1177,8 @@ export async function POST(request:NextRequest){try{
      evidenceAvailable:true,
      verifyClaims:true,
      verificationEvidence:(passportRelevant
-       ? "OFFICIAL SOURCE EVIDENCE: "+passportOfficialUrl+"\\n"+passportRelevant
-       : "OFFICIAL CURATED EVIDENCE:\\n"+answer).trim()
+       ? "OFFICIAL SOURCE EVIDENCE: "+passportOfficialUrl+"\n"+passportRelevant
+       : "OFFICIAL CURATED EVIDENCE:\n"+answer).trim()
    });
  }
 
@@ -1203,10 +1203,10 @@ export async function POST(request:NextRequest){try{
   const passportTerms=["Change of Particulars","CNIC","NICOP","father","date of birth","name","Directorate General Immigration & Passports","Regional Passport Office"];
   const passportRelevant=extractRelevantOfficialEvidence(passportPage,passportTerms);
   if(passportRelevant){
-   passportVerificationEvidence="OFFICIAL SOURCE EVIDENCE: "+passportOfficialUrl+"\\n"+passportRelevant;
+   passportVerificationEvidence="OFFICIAL SOURCE EVIDENCE: "+passportOfficialUrl+"\n"+passportRelevant;
   }
   if(!passportVerificationEvidence.trim()){
-   passportVerificationEvidence="OFFICIAL CURATED EVIDENCE:\\n"+answer;
+   passportVerificationEvidence="OFFICIAL CURATED EVIDENCE:\n"+answer;
   }
   return directWorkflowResponse({
    answer,
@@ -1248,7 +1248,7 @@ export async function POST(request:NextRequest){try{
     "OFFICIAL KP DOMICILE EVIDENCE:",
     "The KP Citizen Facilitation Portal lists Domicile Certificate with Checklist and Apply Online options.",
     "OFFICIAL SOURCE: https://cfc.kp.gov.pk/",
-  ].join("\\n");
+  ].join("\n");
   return directWorkflowResponse({
    answer,
    source:{department:"Domicile",title:"Official Government Domicile Services — Punjab, ICT and KP",url:"https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/domicile-certificate",lastVerified:"",province:""},
@@ -1303,7 +1303,7 @@ According to the official KP e-Domicile system, citizens can apply online to obt
   let verificationEvidence="";
   for(const u of kpDomicileUrls){
    const t=await fetchOfficialPage(u);
-   if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+   if(t) verificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
   }
   verificationEvidence += [
     "",
@@ -1405,7 +1405,7 @@ if(requested==="Education & Scholarships"){
  const answer=educationEvidence(question,ej,language);
   const verificationUrls=Array.from(new Set((answer.match(/https?:\/\/[^\s)]+/g)||[]).map((u)=>u.replace(/[.,]+$/,""))));
  let verificationEvidence="";
- for(const u of verificationUrls){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t; }
+ for(const u of verificationUrls){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t; }
  return directWorkflowResponse({answer,source:{department:"Education & Scholarships",title:"Official education/scholarship source",url:verificationUrls[0]||"",lastVerified:"",province:ej||""},department:"Education & Scholarships",question,language,jurisdiction:ej,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
 if(requested==="Government Jobs"){
@@ -1460,7 +1460,7 @@ You can check your **Active Taxpayer Status** through FBR's **IRIS 2.0 / Online 
   let atlVerificationEvidence="";
   for(const u of atlUrls){
    const t=await fetchOfficialPage(u);
-   if(t) atlVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+   if(t) atlVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
   }
   // Keep a small deterministic evidence summary so verification remains available
   // even if the live FBR page is temporarily unreachable.
@@ -1471,7 +1471,7 @@ You can check your **Active Taxpayer Status** through FBR's **IRIS 2.0 / Online 
    "The IRIS Active Taxpayer List verification form allows an identifier such as NTN, CNIC, Passport No. or Registration/Inc. No. to be selected and then verified.",
    "FBR's Active Taxpayer List page states that the Active Taxpayer Status can also be checked through the online portal.",
    "FBR's published ATL guidance states that an individual's status can also be checked by sending ATL followed by a space and the 13-digit CNIC number to 9966. For a company or AOP, ATL followed by a space and the 7-digit NTN can be sent to 9966."
-  ].join("\\n");
+  ].join("\n");
   return directWorkflowResponse({
    answer:fbrATLAnswer,
    source:{department:"FBR / Taxation",title:"FBR IRIS 2.0 — Active Taxpayer List Verification",url:atlUrls[0],lastVerified:"",province:""},
@@ -1737,9 +1737,9 @@ if(requested==="Arms Licence"){
  const aj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  const result=armsLicenceEvidence(question,aj,language);
  let verificationEvidence="";
- for(const u of Array.from(new Set(result.sources.filter(Boolean)))){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t; }
+ for(const u of Array.from(new Set(result.sources.filter(Boolean)))){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t; }
  if(!verificationEvidence.trim() && result.answer){
-  verificationEvidence="OFFICIAL SOURCE-BASED CURATED EVIDENCE:\\n"+result.answer;
+  verificationEvidence="OFFICIAL SOURCE-BASED CURATED EVIDENCE:\n"+result.answer;
  }
  return directWorkflowResponse({answer:result.answer,source:{department:"Arms Licence",title:"Official government arms-licensing information",url:result.sources[0]||"",lastVerified:"",province:aj||""},department:"Arms Licence",question,language,jurisdiction:aj,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
@@ -1760,7 +1760,7 @@ if(requested==="Land & Revenue"){
  let landVerificationEvidence="";
  for(const u of landUrls){
   const t=await fetchOfficialPage(u);
-  if(t) landVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+  if(t) landVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
  }
  // Some official land-record pages may be unreachable or return non-HTML content.
  // Keep the already-curated official-source answer as a source-faithful fallback
@@ -1865,7 +1865,7 @@ if (requested === "NADRA Services") {
     for (const url of officialUrls) {
       const page = await fetchOfficialPage(url);
       if (page) {
-        officialEvidence += "\\n\\nOFFICIAL NADRA SOURCE: " + url + "\\n" + page;
+        officialEvidence += "\n\nOFFICIAL NADRA SOURCE: " + url + "\n" + page;
       }
     }
 
@@ -1876,7 +1876,7 @@ if (requested === "NADRA Services") {
       // If no focused policy evidence exists, retain the normal policy
       // retrieval so the verifier still has a chance to support the answer.
       focusedEvidence ? "" : ragEvidence
-    ].filter(Boolean).join("\\n\\n");
+    ].filter(Boolean).join("\n\n");
 
     const sourceUrl = isFrc
       ? officialUrls[0]

@@ -399,6 +399,15 @@ NADRA describes the FRC as a certificate that reflects, verifies and records a r
     // as an FRC application or parent-information correction.
     // ------------------------------------------------------------
     if (/\bfrc\b|family registration certificate|family registration|family information|family record|خاندانی رجسٹریشن|خاندانی معلومات|فیملی رجسٹریشن/.test(q)) {
+      // Definition questions should explain FRC itself, not expose application requirements.
+      const isDefinition = /what is|what does .* mean|define|meaning|explain|کیا ہے|مطلب|تعریف|سمجھائیں/.test(q)
+        && !isApply && !isDocs;
+      if (isDefinition) {
+        const body = language === "Urdu"
+          ? "FRC سے مراد **Family Registration Certificate** ہے۔ یہ NADRA کا سرکاری certificate ہے جو NADRA کے ریکارڈ میں موجود خاندان کی composition کو ظاہر کرتا ہے۔ FRC کی عام categories **By Birth، By Marriage، By Adoption، اور By All** ہیں۔\\n\\nاگر آپ چاہیں تو میں اگلا بتا سکتا ہوں کہ FRC **کیسے حاصل کرنا ہے** یا **FRC کی verification کیسے ہوتی ہے**۔"
+          : "FRC stands for **Family Registration Certificate**. It is an official NADRA certificate that reflects the family-composition information recorded with NADRA. Common FRC categories are **By Birth, By Marriage, By Adoption, and By All**.\\n\\nIf you want, I can also explain **how to obtain an FRC** or **how FRC verification works**.";
+        return out(language === "Urdu" ? "NADRA — فیملی رجسٹریشن سرٹیفکیٹ (FRC)" : "NADRA — Family Registration Certificate (FRC)", body);
+      }
       if (/correct|correction|change|wrong|incorrect|update|درست|تصحیح|تبدیل|غلط|ترمیم/.test(q) && !/\bfrc\b|family registration certificate/.test(q)) {
         return out(
           language === "Urdu" ? "NADRA — Family Information Correction" : "NADRA — Family Information Correction",

@@ -941,7 +941,7 @@ function sanitizeNadraCitizenAnswer(answer:string, language:"English"|"Urdu") {
     .replace(/\b(CHUNK|PAGE|SECTION|VERSION|IDENTIFIER|ISSUE DATE|EFFECTIVE DATE|TOTAL PAGES|RETRIEVAL SCORE)\s*:\s*[^\n]+/gi, "")
     .replace(/\*\*(Policy|پالیسی)\*\*:\s*[^\n]+/gi, "")
     .replace(/\*\*(Evidence|ثبوت)\*\*:\s*[^\n]+/gi, "")
-    .replace(/\s{2,}/g, " ")
+    .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 

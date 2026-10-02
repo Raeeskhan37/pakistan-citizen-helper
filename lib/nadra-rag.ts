@@ -729,7 +729,8 @@ For non-resident citizens, the policy lists the applicable passport/residence/wo
     // question, not a Union Council birth-certificate request.
     if (hasCnic && isModify && nadraQ(question, [/place of birth|birthplace|مقام پیدائش/])) {
       const body = language === "Urdu"
-      return out(language === "Urdu" ? "CNIC — جائے پیدائش کی تبدیلی / درستگی" : "CNIC — Change / Correction of Place of Birth", body);
+        ? "### CNIC — جائے پیدائش کی تبدیلی / درستگی\n\n1. جائے پیدائش کی تبدیلی **Change / Correction in Card / Certificate** کے تحت آتی ہے۔\n2. متعلقہ Birth Certificate یا قابلِ قبول documentary evidence درکار ہوگا۔\n3. اگر Birth Certificate NADRA/CRMS میں موجود ہے تو پہلے اسی Birth Certificate میں correction ضروری ہے۔\n4. اصل document دیکھا اور scan کیا جائے گا۔"
+        : "### CNIC — Change / Correction of Place of Birth\n\n1. Changing the place of birth is handled under **Change / Correction in Card / Certificate**.\n2. The relevant Birth Certificate or acceptable documentary evidence is required.\n3. If the Birth Certificate already exists in NADRA/CRMS, it must be corrected first.\n4. The original document must be seen and scanned.";
     }
 
     // CNIC DATE-OF-BIRTH / AGE CORRECTION.

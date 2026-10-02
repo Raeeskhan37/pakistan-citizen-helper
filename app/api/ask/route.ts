@@ -1027,7 +1027,7 @@ export async function POST(request:NextRequest){try{
   detectJurisdiction(question) ||
   null;
 
- if(civilService && !civilJurisdiction){
+ if(civilService && !civilJurisdiction && !(requested==="NADRA Services" && /cnic|smart cnic|smart nic|snic|identity card|شناختی کارڈ|نادرا/i.test(question))){
   const answer=language==="Urdu"
    ? "نئے برتھ/ڈیتھ/میریج یا ڈائیورس سرٹیفکیٹ کے تقاضے صوبے اور علاقے کے مطابق مختلف ہوتے ہیں۔ براہِ کرم اپنا صوبہ یا علاقہ بتائیں، مثلاً پنجاب، خیبر پختونخوا، سندھ، بلوچستان، اسلام آباد (ICT)، آزاد کشمیر یا گلگت بلتستان، تاکہ میں متعلقہ سرکاری ذرائع سے درست طریقہ کار، دستاویزات اور فیس بتا سکوں۔"
    : "The requirements for a new birth, death, marriage or divorce certificate vary by province or territory. Please tell me your province/area — Punjab, Khyber Pakhtunkhwa, Sindh, Balochistan, Islamabad (ICT), AJK, or Gilgit-Baltistan — so I can give you the relevant government-verified procedure, documents and fees.";

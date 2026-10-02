@@ -360,7 +360,7 @@ return (
               {agentActivity.claimVerification && <div className="agent-summary"><strong>Claim verification</strong><small>{agentActivity.claimVerification.available ? `${agentActivity.claimVerification.supportedCount ?? agentActivity.claimVerification.supportedClaims ?? 0}/${agentActivity.claimVerification.totalClaims ?? 0} claims supported${typeof agentActivity.claimVerification.score === "number" ? " · " + agentActivity.claimVerification.score + "%" : ""}` : (agentActivity.claimVerification.reason || "Verification unavailable.")}</small></div>}
             </div>
           )}
-          {!answer && <><div className="question-card"><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "آپ اس محکمے کی کسی بھی سروس کے بارے میں سوال پوچھ سکتے ہیں۔" : "Ask anything about this department. You do not need to select a specific service."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? `مثلاً: ${department?.name} سے متعلق کوئی سوال پوچھیں` : `For example: What is the fee? What documents are required?`} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
+          {!answer && <><div className="question-card"><div className="sensitive-data-warning"><span className="sensitive-data-icon">!</span><span>{isUrdu ? "حساس ذاتی معلومات، CNIC نمبر، پاس ورڈ یا OTP درج نہ کریں۔" : "Do not enter sensitive personal information, CNIC numbers, passwords or OTPs."}</span></div><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "آپ اس محکمے کی کسی بھی سروس کے بارے میں سوال پوچھ سکتے ہیں۔" : "Ask anything about this department. You do not need to select a specific service."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? `مثلاً: ${department?.name} سے متعلق کوئی سوال پوچھیں` : `For example: What is the fee? What documents are required?`} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
           
           {answer && <div className="answer-area">
             <div className={`answer-card ${answer.error ? "is-warning" : ""}`}>
@@ -465,12 +465,12 @@ return (
 
   <div className="footer-note">
     {isUrdu
-      ? "یہ ایک آزاد شہری معلوماتی منصوبہ ہے، سرکاری ویب سائٹ نہیں۔ معلومات سرکاری ذرائع سے مرتب کی گئی ہیں۔ حساس ذاتی معلومات، CNIC نمبر، پاس ورڈ یا OTP درج نہ کریں۔"
-      : "This is an independent citizen information project, not an official government website. Information is compiled from official government sources. Do not enter sensitive personal information, CNIC numbers, passwords or OTPs."}
+      ? "یہ ایک آزاد شہری معلوماتی منصوبہ ہے، سرکاری ویب سائٹ نہیں۔ معلومات سرکاری ذرائع سے مرتب کی گئی ہیں۔"
+      : "This is an independent citizen information project, not an official government website. Information is compiled from official government sources."}
   </div>
 
   <p>
-    Developed by <strong>Raees Khan</strong> · Assistant Director, NADRA
+    Developed by <strong>Raees Khan &amp; Team</strong>
   </p>
 </footer>
 </main>

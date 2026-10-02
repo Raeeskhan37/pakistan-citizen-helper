@@ -1236,9 +1236,8 @@ export async function POST(request:NextRequest){try{
    // Never expose internal NADRA policy identifiers, page/section references,
    // retrieval metadata, or raw policy text in a citizen-facing response.
    // Handle explicit disclosure requests before the RAG answer is generated.
-   const nadraInternalDisclosureRequest = /\\b(?:policy document|policy|document|reference|version|page|pages|section|sections|chunk|evidence|exact policy|exact text|raw text|source text|retrieval|identifier)\\b.*\\b(?:used|reference|referenced|answer|answered|query|question|evidence|text|version|page|section|document)\\b|\\b(?:which|what|give|show|tell|provide|list)\\b.*\\b(?:policy document|policy|version|page|section|chunk|evidence|exact policy|exact text|raw policy)\\b/i.test(question)
-     || /\\b(?:policy document|policy|version|page|section|chunk|evidence|exact policy|exact text|raw policy|document reference)\\b/i.test(question) && /\\b(?:nadra|RP[-‑–—]?6\\.0\\.2|registration policy)\\b/i.test(question);
-   if(nadraInternalDisclosureRequest){
+   const nadraInternalDisclosureRequest = /\b(?:policy document|policy|document|reference|version|page|pages|section|sections|chunk|evidence|exact policy|exact text|raw text|source text|retrieval|identifier)\b.*\b(?:used|reference|referenced|answer|answered|query|question|evidence|text|version|page|section|document)\b|\b(?:which|what|give|show|tell|provide|list)\b.*\b(?:policy document|policy|version|page|section|chunk|evidence|exact policy|exact text|raw policy)\b/i.test(question)
+     || /\b(?:policy document|policy|version|page|section|chunk|evidence|exact policy|exact text|raw policy|document reference)\b/i.test(question) && /\b(?:nadra|RP[-‑–—]?6\.0\.2|registration policy)\b/i.test(question);   if(nadraInternalDisclosureRequest){
      const safeAnswer=language==="Urdu"
        ? "میں اندرونی NADRA پالیسی حوالہ، دستاویز نمبر/ورژن، صفحہ یا سیکشن نمبر، retrieval/chunk/evidence metadata یا پالیسی کا اصل متن فراہم نہیں کر سکتا۔ میں شہری کو متعلقہ NADRA سروس کی قابلِ استعمال، تصدیق شدہ معلومات فراہم کر سکتا ہوں۔"
        : "I can provide the relevant verified NADRA service information, but I do not provide internal policy references, document/version identifiers, page or section numbers, retrieval/chunk/evidence metadata, or raw policy text.";

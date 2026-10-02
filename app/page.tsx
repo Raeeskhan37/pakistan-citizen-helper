@@ -452,7 +452,7 @@ return (
             </div>
           </div>}
         </section>}
-
+      </section>
 
 <footer>
   <div>

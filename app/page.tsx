@@ -150,6 +150,19 @@ export default function Home() {
   const suggestions = useMemo(() => department ? (department.id === "nadra" ? ["What are the current CNIC and Smart CNIC fees?", "What documents are required for CNIC?", "What are the CRC photo and biometric requirements by age?", "How can I apply through PakID?"] : ["What services and requirements are available?", "What documents are required?", "What is the fee?", "How can I apply?"]) : [], [department]);
   const goHome = () => { setDepartment(null); setAnswer(null); setQuestion(""); setSearch(""); setCopied(false); setAgentActivity(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const goDepartment = () => { setAnswer(null); setQuestion(""); };
+
+  const askAnotherQuestion = () => {
+    setAnswer(null);
+    setQuestion("");
+    setCopied(false);
+    setFeedbackRating(null);
+    setFeedbackComment("");
+    setFeedbackSubmitted(false);
+    setSuggestionType("");
+    setSuggestionText("");
+    setSuggestionSubmitted(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const ask = async () => {
     if (!question.trim() || !department) return;
     const q = question.trim();
@@ -448,6 +461,11 @@ return (
                 </div>
               </div>
             </div>
+
+            <button type="button" className="ask-another-button" onClick={askAnotherQuestion}>
+              <span>{isUrdu ? "ایک اور سوال پوچھیں" : "Ask Another Question"}</span>
+              <span>↻</span>
+            </button>
           </div>}
         </section>}
       </section>

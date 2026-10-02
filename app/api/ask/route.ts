@@ -1150,8 +1150,14 @@ export async function POST(request:NextRequest){try{
      const rx=/([A-Z][A-Za-z0-9()&–—'./ -]{2,90}?)\s+by\s+([A-Z][A-Za-z0-9()&–—'./ -]{2,100}?)\s+(?:Contract|Regular|Permanent)\b/g;
      let m:RegExpExecArray|null;
      while((m=rx.exec(compact)) && items.length<8){
-       const item=m[1].trim()+" — "+m[2].trim();
-       if(items.indexOf(item)<0)items.push(item);
+       const title=m[1]
+         .replace(/^(Show\\s+(?:5|10|20|50|100)\\s+){1,5}/i,"")
+         .replace(/^(Search|List|Tile)\\s+/i,"")
+         .trim();
+       if(title && !/^(Show|Search|List|Tile|View Details|Login to Apply)$/i.test(title)){
+         const item=title+" — "+m[2].trim();
+         if(items.indexOf(item)<0)items.push(item);
+       }
      }
      const lines=items.length?items.map((x,i)=>(i+1)+". "+x).join("\n"):"The official live page is available, but a reliable vacancy list could not be extracted.";
      if(isPunjab){

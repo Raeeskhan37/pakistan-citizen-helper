@@ -677,7 +677,7 @@ Changing the place of birth on a CRC/B-Form is handled under **Change / Correcti
 1. A **Birth Certificate or other relevant documentary evidence** is required.
 2. If the Birth Certificate already exists in NADRA or CRMS records, the Birth Certificate must first be corrected/changed by the **same Union Council (UC)** before the NADRA record is changed.
 3. **No attestation is required** in a change case.
-4. The original document must be seen and scanned.
+4. The original document must be seen and scanned.`
 
         return out(language === "Urdu" ? "CRC / B-Form — جائے پیدائش کی تبدیلی / درستگی" : "CRC / B-Form — Change / Correction of Place of Birth", body);
       }
@@ -703,7 +703,7 @@ Changing the address on a CRC/B-Form is handled under **Change / Correction in C
 
 **Permanent address:** The policy lists a spouse's identity document with the same address; computerized utility bill; residential property document of applicant/parent/spouse; verified Local/Domicile/PRC; Society/Government allotment letter (allotted at least 3 years earlier); or an affidavit with the house owner's ID card and original property document.
 
-For non-resident citizens, the policy lists the applicable passport/residence/work/travel document or Undertaking A. **No document is required for a change of foreign address.**
+For non-resident citizens, the policy lists the applicable passport/residence/work/travel document or Undertaking A. **No document is required for a change of foreign address.**`
 
         return out(language === "Urdu" ? "CRC / B-Form — پتے کی تبدیلی" : "CRC / B-Form — Change / Correction of Address", body);
       }

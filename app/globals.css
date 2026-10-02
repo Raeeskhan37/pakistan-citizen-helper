@@ -107,7 +107,13 @@ footer{margin-top:auto;padding:23px 18px;background:#0d273d;color:#b9cbd5;text-a
 
 
 /* Feedback & suggestion cards */
-.feedback-suggestion-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px auto 10px;max-width:900px;align-items:start}
+.content > .end-user-feedback{display:none}
+.answer-area{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:10px;row-gap:8px;align-items:start}
+.answer-area > .answer-card{grid-row:1;grid-column:1 / -1}
+.answer-area > .source-card{grid-row:2;grid-column:1 / -1}
+.answer-area > .end-user-feedback:not(.suggestion-only){grid-row:3;grid-column:1}
+.answer-area > .suggestion-only{grid-row:3;grid-column:2;margin:0}
+.answer-area > button.secondary{grid-row:4;grid-column:1 / -1}
 .end-user-feedback{display:block;margin:0;max-width:none}
 .feedback-card,.suggestion-card{position:relative;overflow:hidden;padding:8px 10px;border:1px solid #dbe7eb;border-radius:10px;background:#fff;box-shadow:0 3px 10px rgba(16,45,67,.035)}
 .feedback-card:before,.suggestion-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--green)}
@@ -115,7 +121,7 @@ footer{margin-top:auto;padding:23px 18px;background:#0d273d;color:#b9cbd5;text-a
 .feedback-heading strong,.suggestion-heading strong{display:block;color:var(--navy);font-size:9px;font-weight:900}
 .feedback-heading small,.suggestion-heading small{display:block;margin-top:1px;color:#718293;font-size:7px;line-height:1.25}
 .feedback-rating{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px}
-.feedback-choice{border:1px solid #d5e0e6;border-radius:7px;background:#fff;color:#40566a;padding:5px 5px;font-size:8px;font-weight:850;cursor:pointer}
+.feedback-choice{border:1px solid #d5e0e6;border-radius:7px;background:#fff;color:#40566a;padding:5px;font-size:8px;font-weight:850;cursor:pointer}
 .feedback-choice:hover{border-color:#9bcdbd;background:#f7fcfa}
 .feedback-choice.selected{border-color:#8fc9b5;background:var(--green-soft);color:var(--green)}
 .feedback-card textarea,.suggestion-card textarea,.suggestion-card select{width:100%;box-sizing:border-box;border:1px solid #ccd9e0;border-radius:7px;background:#fff;color:#263c50;outline:none;padding:5px 6px;font:inherit;font-size:8px;line-height:1.25}
@@ -125,8 +131,18 @@ footer{margin-top:auto;padding:23px 18px;background:#0d273d;color:#b9cbd5;text-a
 .suggestion-card select{margin-bottom:4px;appearance:auto}
 .feedback-card .secondary,.suggestion-card .secondary{margin-top:4px;padding:5px 7px;font-size:8px}
 .feedback-success,.suggestion-success{display:flex;align-items:center;gap:6px;min-height:26px;padding:6px 7px;border:1px solid #cde6dc;border-radius:7px;background:#f2faf6;color:var(--green);font-size:8px;font-weight:850}
-.suggestion-only{margin:0}
-@media(max-width:600px){.feedback-suggestion-row{grid-template-columns:1fr;gap:6px;margin-top:6px}.feedback-card,.suggestion-card{padding:8px 9px;border-radius:9px}.feedback-heading,.suggestion-heading{display:block;margin-bottom:5px}.feedback-heading strong,.suggestion-heading strong{font-size:9px}.feedback-heading small,.suggestion-heading small{font-size:7px}.feedback-choice{padding:5px;font-size:8px}.feedback-card textarea,.suggestion-card textarea,.suggestion-card select{font-size:8px}.feedback-card .secondary,.suggestion-card .secondary{padding:6px;font-size:8px}}
+@media(max-width:600px){
+  .answer-area{display:block}
+  .answer-area > .end-user-feedback:not(.suggestion-only),.answer-area > .suggestion-only{margin-top:6px}
+  .answer-area > button.secondary{margin-top:8px}
+  .feedback-card,.suggestion-card{padding:8px 9px;border-radius:9px}
+  .feedback-heading,.suggestion-heading{display:block;margin-bottom:5px}
+  .feedback-heading strong,.suggestion-heading strong{font-size:9px}
+  .feedback-heading small,.suggestion-heading small{font-size:7px}
+  .feedback-choice{padding:5px;font-size:8px}
+  .feedback-card textarea,.suggestion-card textarea,.suggestion-card select{font-size:8px}
+  .feedback-card .secondary,.suggestion-card .secondary{padding:6px;font-size:8px}
+}
 
 @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 

@@ -2106,8 +2106,8 @@ if (requested === "NADRA Services") {
       source: {
         department: "NADRA",
         title: "NADRA official information",
-        url: "https://www.nadra.gov.pk/",
-        lastVerified: "21 September 2026",
+        url: "https://www.nadra.gov.pk/identityDocument/cnic",
+        lastVerified: "",
         province: ""
       },
       department: "NADRA Services",

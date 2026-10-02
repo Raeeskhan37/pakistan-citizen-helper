@@ -668,7 +668,7 @@ CRC/B-Form میں جائے پیدائش کی تبدیلی **Change / Correction 
 1. **Birth Certificate یا کوئی دوسرا متعلقہ documentary evidence** درکار ہوگا۔
 2. اگر Birth Certificate پہلے سے NADRA یا CRMS میں موجود ہے تو پہلے **اسی UC سے جاری Birth Certificate** میں تبدیلی/درستگی کرانی ہوگی، پھر NADRA record میں correction کیا جائے گا۔
 3. Change case میں **attestation required نہیں ہے**۔
-4. اصل document دیکھا اور scan کیا جائے گا۔
+4. اصل document دیکھا اور scan کیا جائے گا۔`
 
           : `### CRC / B-Form — Change / Correction of Place of Birth
 
@@ -693,7 +693,7 @@ CRC/B-Form میں پتے کی تبدیلی **Change / Correction in Card / Certi
 
 **مستقل پتہ:** spouse کا identity document with same address؛ computerized utility bill؛ applicant/parent/spouse کی residential property document؛ verified Local/Domicile/PRC؛ Society/Government allotment letter (کم از کم 3 سال پہلے allotted)؛ یا house owner کا ID card اور original property document کے ساتھ affidavit۔
 
-Non-resident applicants کے لیے متعلقہ passport/residence/work/travel document یا Undertaking A کی شرط policy میں دی گئی ہے۔ **Foreign address change کے لیے کوئی document required نہیں ہے۔**
+Non-resident applicants کے لیے متعلقہ passport/residence/work/travel document یا Undertaking A کی شرط policy میں دی گئی ہے۔ **Foreign address change کے لیے کوئی document required نہیں ہے۔**`
 
           : `### CRC / B-Form — Change / Correction of Address
 

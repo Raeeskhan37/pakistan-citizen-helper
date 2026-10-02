@@ -1987,7 +1987,7 @@ if (requested === "NADRA Services") {
 
 
 if(requested==="Excise & Taxation"){
- const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+ const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question)||detectJurisdiction(question);
  if(ej){
   const answer=exciseEvidence(question,ej,language);
   const exciseUrls=Array.from(new Set(

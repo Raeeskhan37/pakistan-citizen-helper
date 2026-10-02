@@ -1146,10 +1146,10 @@ export async function POST(request:NextRequest){try{
        if(t){page=t;answerSource=u;}
      }
      const compact=cleanAnswer(page||"");
-     const countMatch=compact.match(/(\\d+)\\s+(?:Positions|Jobs)\\s+(?:Available|Found)/i);
+     const countMatch=compact.match(/(\d+)\s+(?:Positions|Jobs)\s+(?:Available|Found)/i);
      const count=countMatch?countMatch[1]:"";
      const items:string[]=[];
-     const rx=/([A-Z][A-Za-z0-9()&–—'./ -]{2,90}?)\\s+by\\s+([A-Z][A-Za-z0-9()&–—'./ -]{2,100}?)\\s+(?:Contract|Regular|Permanent)\\b/g;
+     const rx=/([A-Z][A-Za-z0-9()&–—'./ -]{2,90}?)\s+by\s+([A-Z][A-Za-z0-9()&–—'./ -]{2,100}?)\s+(?:Contract|Regular|Permanent)\b/g;
      let m:RegExpExecArray|null;
      while((m=rx.exec(compact)) && items.length<8){
        const item=m[1].trim()+" — "+m[2].trim();

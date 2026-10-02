@@ -2033,6 +2033,18 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - If the retrieved Urdu evidence does not clearly support a requested item, omit it.
 - Never describe generic guidance as verified government information unless supported by evidence.
 
+CITIZEN-FRIENDLY ANSWER PRESENTATION STANDARD:
+- Present the direct plain-language answer first. The citizen should understand the main point before seeing detailed references or qualifications.
+- When the evidence describes a procedure or sequence, use a short numbered list of verified steps. Do not manufacture a sequence when the evidence does not establish one.
+- When the evidence contains multiple fees, document categories, timelines, eligibility categories, or other naturally comparable items, use a clean Markdown table when it genuinely improves readability. Do not force information into a table when a numbered list is clearer or when the evidence does not support aligned columns.
+- Keep important legal, policy, eligibility, exception, age, jurisdiction, date, and category qualifications next to the rule they qualify. Do not hide or remove a qualification merely to make the answer shorter.
+- Put useful legal/reference detail after the practical explanation, using a heading such as "Important qualification", "Policy/reference", or equivalent only when such detail exists in the evidence.
+- Keep the official source clearly identifiable at the end of the answer when source information is available. Do not replace the actual answer with a referral to the source.
+- Use concise headings, short paragraphs, numbered steps, bullets, and tables as appropriate. Avoid unnecessary repetition.
+- Do not simplify a government rule to the point that its meaning changes. Accuracy and evidence take priority over brevity or visual polish.
+- Do not add a "Summary", "Key points", or other repeated section merely for presentation if it duplicates the answer.
+- Preserve official names, acronyms, amounts, dates, conditions, exceptions, and jurisdiction-specific terminology exactly where they are material to the rule.
+
 Selected department/service: ${requested||"not specified"}
 Requested language: ${language}
 `;

@@ -755,33 +755,35 @@ export async function getDirectAdultFreshCnicAnswer(
   if (!isAdultFreshCnicQuestion(question)) return null;
 
   try {
+    // Retrieve the targeted internal RAG chunks to ensure this specialized
+    // answer is only used when the current NADRA evidence supports the topic.
+    // The internal policy itself is never exposed in the citizen-facing text.
     if (language === "English") {
       const chunks = await getEnglishChunks();
       const targeted = getTargetedEnglishAdultCnicChunks(chunks);
-      const main = targeted[0]?.text || "";
-      if (!main) return null;
+      if (!targeted[0]?.text) return null;
 
       return [
         "## New CNIC / Smart CNIC — Fresh Registration (Age 18+)",
         "",
-        "According to NADRA Registration Policy RP-6.0.2, the requirements differ depending on whether the resident citizen has a blood relative.",
+        "For a first-time CNIC or Smart CNIC, the requirements depend mainly on whether you have a blood relative whose identity can be verified.",
         "",
-        "### Resident citizen — having a blood relative",
-        "1. Application by the applicant.",
-        "2. Identity card number of the parent(s) or blood relative(s).",
-        "3. A verified computerized birth certificate issued by the Union Council, Municipal Committee or Cantonment, **or** the applicable foreign detailed birth certificate / S1 form issued by a Pakistan Embassy or Mission, **or** a Citizenship / Naturalization Certificate.",
-        "4. Biometric verification by a parent or sibling (above 18), **or** attestation of the CNICF in accordance with NADRA Regulation 9 (a–h).",
+        "### If you have a blood relative",
+        "1. Your application.",
+        "2. CNIC/identity-card number of a parent or blood relative.",
+        "3. A verified computerized Birth Certificate, or the applicable citizenship/naturalization document.",
+        "4. Biometric verification by a parent or sibling aged 18+, **or** the applicable CNICF attestation.",
         "",
-        "### Resident citizen — having no blood relative",
-        "1. Application by the applicant.",
-        "2. A verified computerized birth certificate issued by the Union Council, Municipal Committee or Cantonment, **or** a Citizenship / Naturalization Certificate.",
-        "3. Biometric witness by two ID holders above 18, together with Affidavit “B” (as per the prescribed format).",
-        "4. Attestation of the CNICF in accordance with NADRA Regulation 9 (a–h).",
-        "5. Any other document, if applicable.",
+        "### If you do not have a blood relative",
+        "1. Your application.",
+        "2. A verified computerized Birth Certificate or applicable citizenship/naturalization document.",
+        "3. Biometric witnesses from two ID holders aged 18+, with the required Affidavit “B”.",
+        "4. The applicable CNICF attestation.",
+        "5. NADRA may ask for additional documents or verification.",
         "",
-        "**Important:** The no-blood-relative case may require additional verification/scrutiny and more processing time. The policy also specifies a priority order for witnesses.",
+        "**Simple summary:** If a blood relative is available, their identity/biometric verification can support the application. If no blood relative is available, the case requires two adult ID-holder witnesses and additional verification.",
         "",
-        "**Source:** NADRA official website — https://www.nadra.gov.pk/identityDocument/cnic"
+        "**Official source:** NADRA — https://www.nadra.gov.pk/identityDocument/cnic"
       ].join("\n");
     }
 
@@ -789,36 +791,34 @@ export async function getDirectAdultFreshCnicAnswer(
     if (!targeted) return null;
 
     return [
-      "## نیا شناختی کارڈ / اسمارٹ شناختی کارڈ — 18 سال یا اس سے زائد عمر",
+      "## نیا CNIC / Smart CNIC — پہلی مرتبہ رجسٹریشن (عمر 18 سال یا اس سے زیادہ)",
       "",
-      "نادرا رجسٹریشن پالیسی RP-6.0.2 کے مطابق اندرونِ ملک مقیم شہری کے لیے تقاضے اس بات کے مطابق مختلف ہیں کہ خون کا رشتہ دار موجود ہے یا نہیں۔",
+      "پہلی مرتبہ CNIC یا Smart CNIC بنوانے کے تقاضے اس بات پر منحصر ہیں کہ آپ کا کوئی خون کا رشتہ دار موجود ہے یا نہیں جس کی شناخت کی تصدیق کی جا سکے۔",
       "",
-      "### خون کے رشتے دار کے ساتھ",
-      "1. درخواست گزار کی جانب سے درخواست۔",
-      "2. والدین یا خون کے رشتے دار کا شناختی کارڈ نمبر۔",
-      "3. یونین کونسل، میونسپل کمیٹی یا کنٹونمنٹ بورڈ سے جاری کردہ تصدیق شدہ کمپیوٹرائزڈ پیدائشی سرٹیفکیٹ، **یا** قابلِ اطلاق غیر ملکی تفصیلی پیدائشی سرٹیفکیٹ / پاکستان سفارت خانہ یا مشن سے جاری کردہ S1 فارم، **یا** شہریت / Naturalization Certificate۔",
-      "4. والدین یا 18 سال سے زائد عمر کے بہن/بھائی کی جانب سے بایومیٹرک تصدیق، **یا** نادرا ریگولیشن 9 (A-H) کے مطابق تصدیق کنندہ سے درخواست فارم کی تصدیق۔",
+      "### اگر خون کا رشتہ دار موجود ہو",
+      "1. درخواست گزار کی درخواست۔",
+      "2. والدین یا کسی خون کے رشتہ دار کا شناختی کارڈ نمبر۔",
+      "3. تصدیق شدہ کمپیوٹرائزڈ Birth Certificate، یا قابلِ اطلاق شہریت / Naturalization Certificate۔",
+      "4. 18 سال یا اس سے زیادہ عمر کے والدین یا بہن/بھائی کی بائیومیٹرک تصدیق، یا قابلِ اطلاق CNICF تصدیق۔",
       "",
-      "### خون کے رشتے دار کے بغیر",
-      "1. درخواست گزار کی جانب سے درخواست۔",
-      "2. یونین کونسل، میونسپل کمیٹی یا کنٹونمنٹ بورڈ سے جاری کردہ تصدیق شدہ کمپیوٹرائزڈ پیدائشی سرٹیفکیٹ، **یا** شہریت / Naturalization Certificate۔",
-      "3. دو 18 سال سے زائد عمر کے شناختی کارڈ ہولڈرز کی بایومیٹرک گواہی، حلف “B” (نادرا کے وضع کردہ مقررہ فارمیٹ) کے ساتھ۔",
-      "4. نادرا ریگولیشن 9 (A-H) کے مطابق درخواست فارم کی تصدیق۔",
-      "5. کوئی اور دستاویز، اگر ہو۔",
+      "### اگر خون کا رشتہ دار موجود نہ ہو",
+      "1. درخواست گزار کی درخواست۔",
+      "2. تصدیق شدہ کمپیوٹرائزڈ Birth Certificate یا قابلِ اطلاق شہریت / Naturalization Certificate۔",
+      "3. 18 سال یا اس سے زیادہ عمر کے دو شناختی کارڈ رکھنے والے افراد بطور گواہ، مطلوبہ Affidavit “B” کے ساتھ۔",
+      "4. قابلِ اطلاق CNICF تصدیق۔",
+      "5. NADRA مزید دستاویزات یا اضافی تصدیق طلب کر سکتا ہے۔",
       "",
-      "**اہم نوٹ:** خون کے رشتے دار کے بغیر درخواست میں اضافی تصدیق/جانچ پڑتال اور زیادہ وقت درکار ہو سکتا ہے۔ پالیسی گواہوں کی ترجیح بھی بیان کرتی ہے۔",
+      "**آسان خلاصہ:** اگر خون کا رشتہ دار موجود ہو تو اس کی شناخت اور بائیومیٹرک تصدیق درخواست میں مدد دیتی ہے۔ اگر خون کا رشتہ دار موجود نہ ہو تو دو بالغ شناختی کارڈ رکھنے والے گواہوں اور اضافی تصدیق کی ضرورت پڑ سکتی ہے۔",
       "",
-      "**ماخذ:** سرکاری NADRA ویب سائٹ — https://www.nadra.gov.pk/identityDocument/cnic"
+      "**سرکاری ماخذ:** NADRA — https://www.nadra.gov.pk/identityDocument/cnic"
     ].join("\n");
   } catch (error) {
-    console.error("Direct NADRA adult CNIC answer failed:", error);
-    return null;
+    console.error("Direct adult fresh CNIC resolver failed:", error);
   }
+
+  return null;
 }
 
-// Returns narrowly scoped policy evidence for the claim verifier.
-// Keeping this separate from general retrieval prevents unrelated chunks
-// from overwhelming the verifier and causing weak/invalid verification.
 export async function getDirectNadraVerificationEvidence(question: string): Promise<string> {
   try {
     const chunks = await getEnglishChunks();

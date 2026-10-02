@@ -1127,23 +1127,21 @@ export async function POST(request:NextRequest){try{
    let answerSource=jobsUrl;
    let page=livePage;
 
-   if(isApply){
-     answer=language==="Urdu"
-       ?"## National Jobs Portal — درخواست دینے کا طریقہ\n\nNJP پر سرکاری ملازمت کے لیے:\n1. **Live Jobs** میں مطلوبہ vacancy کھولیں۔\n2. Job details میں **Apply** منتخب کریں۔\n3. Candidate profile/CV مکمل کریں اور vacancy کی مطلوبہ معلومات فراہم کریں۔\n4. Application steps مکمل کرکے closing date سے پہلے submit کریں۔\n\n**سرکاری ذریعہ:** "+helpUrl
-       :"## National Jobs Portal — How to Apply\n\nTo apply for a government job through NJP:\n1. Open **Live Jobs** and select the vacancy.\n2. Open the job details and choose **Apply**.\n3. Complete your candidate profile/CV and provide the information required for that vacancy.\n4. Complete the application steps and submit before the closing date.\n\n**Official source:** "+helpUrl;
-   } else if(isDocs){
+   if(isDocs){
      answer=language==="Urdu"
        ?"## National Jobs Portal — مطلوبہ معلومات اور دستاویزات\n\nNJP پر required information اور documents **ہر vacancy کے job details** کے مطابق مختلف ہو سکتے ہیں۔ ایک universal document list تمام سرکاری jobs پر لاگو نہیں کی جا سکتی۔\n\nCandidate profile/CV مکمل کرنا ضروری ہے، جبکہ اضافی documents، qualification، experience اور دیگر requirements متعلقہ vacancy کی official details میں دی جاتی ہیں۔\n\n**سرکاری ذریعہ:** "+helpUrl
        :"## National Jobs Portal — Required Information and Documents\n\nThe information and documents required on NJP **vary by vacancy and its job details**. There is no single universal document list for every government job.\n\nComplete your candidate profile/CV information; additional documents, qualifications, experience and other requirements are specified in the official details of the particular vacancy.\n\n**Official source:** "+helpUrl;
+   } else if(isApply){
+     answer=language==="Urdu"
+       ?"## National Jobs Portal — درخواست دینے کا طریقہ\n\nNJP پر سرکاری ملازمت کے لیے:\n1. **Live Jobs** میں مطلوبہ vacancy کھولیں۔\n2. Job details میں **Apply** منتخب کریں۔\n3. Candidate profile/CV مکمل کریں اور vacancy کی مطلوبہ معلومات فراہم کریں۔\n4. Application steps مکمل کرکے closing date سے پہلے submit کریں۔\n\n**سرکاری ذریعہ:** "+helpUrl
+       :"## National Jobs Portal — How to Apply\n\nTo apply for a government job through NJP:\n1. Open **Live Jobs** and select the vacancy.\n2. Open the job details and choose **Apply**.\n3. Complete your candidate profile/CV and provide the information required for that vacancy.\n4. Complete the application steps and submit before the closing date.\n\n**Official source:** "+helpUrl;
    } else if(isGraduate){
      answer=language==="Urdu"
        ?"## Government Jobs — Bachelor's/Graduate Applicants\n\nNJP پر ہر vacancy کی qualification اور experience criteria الگ ہیں۔ صرف graduate یا bachelor's degree رکھنے سے تمام government jobs کے لیے eligibility ثابت نہیں ہوتی۔\n\nموجودہ vacancy کی **Qualification** اور **Experience** requirements کے مطابق eligibility چیک کی جاتی ہے۔ میں بغیر vacancy-specific qualification match کے کسی universal list کو graduate jobs نہیں کہوں گا۔\n\n**سرکاری ذریعہ:** "+jobsUrl
        :"## Government Jobs — Bachelor's/Graduate Applicants\n\nNJP vacancies have job-specific qualification and experience criteria. Holding a bachelor's degree does not by itself make an applicant eligible for every government job.\n\nEligibility should be determined from the **Qualification** and **Experience** requirements of each current vacancy. I will not label a universal list as graduate jobs without a vacancy-specific qualification match.\n\n**Official source:** "+jobsUrl;
    } else {
      if(isPunjab){
-       const u="https://www.njp.gov.pk/jobs/search?location=Punjab&q=All%20Jobs";
-       const t=await fetchOfficialPage(u);
-       if(t){page=t;answerSource=u;}
+       answerSource=jobsUrl;
      }
      const compact=cleanAnswer(page||"");
      const countMatch=compact.match(/(\d+)\s+(?:Positions|Jobs)\s+(?:Available|Found)/i);
@@ -1156,9 +1154,15 @@ export async function POST(request:NextRequest){try{
        if(items.indexOf(item)<0)items.push(item);
      }
      const lines=items.length?items.map((x,i)=>(i+1)+". "+x).join("\n"):"The official live page is available, but a reliable vacancy list could not be extracted.";
-     answer=language==="Urdu"
-       ?"## Government Jobs — National Jobs Portal\n\nNJP کی current listings "+(count?"میں اس وقت **"+count+" positions** درج ہیں۔ ":"")+"چند موجودہ listings:\n\n"+lines+"\n\nQualification، experience اور closing date ہر vacancy کے مطابق مختلف ہیں۔\n\n**سرکاری ذریعہ:** "+answerSource
-       :"## Government Jobs — National Jobs Portal\n\nThe NJP current listings "+(count?"currently show **"+count+" positions**. ":"")+"include these examples:\n\n"+lines+"\n\nQualification, experience and closing date are vacancy-specific.\n\n**Official source:** "+answerSource;
+     if(isPunjab){
+       answer=language==="Urdu"
+         ?"## Government Jobs — Punjab\n\nNJP کے official live-jobs evidence سے اس وقت Punjab کے لیے الگ verified vacancy count/list reliably extract نہیں ہو سکی۔ اس لیے میں 0 jobs یا غیرمصدقہ Punjab vacancies ظاہر نہیں کر رہا۔\n\nPunjab کی current government vacancies کے لیے NJP کے official Live Jobs page میں location filter استعمال کریں اور ہر vacancy کی domicile/eligibility details دیکھیں۔\n\n**سرکاری ذریعہ:** "+jobsUrl
+         :"## Government Jobs — Punjab\n\nThe official NJP live-jobs evidence currently available to this service does not provide a reliable Punjab-specific vacancy count/list. I therefore will not report 0 jobs or invent Punjab vacancies.\n\nFor current Punjab government vacancies, use the location filter on NJP's official Live Jobs page and check the domicile/eligibility details of each vacancy.\n\n**Official source:** "+jobsUrl;
+     } else {
+       answer=language==="Urdu"
+         ?"## Government Jobs — National Jobs Portal\n\nNJP کی current listings "+(count?"میں اس وقت **"+count+" positions** درج ہیں۔ ":"")+"چند موجودہ listings:\n\n"+lines+"\n\nQualification، experience اور closing date ہر vacancy کے مطابق مختلف ہیں۔\n\n**سرکاری ذریعہ:** "+answerSource
+         :"## Government Jobs — National Jobs Portal\n\nThe NJP current listings "+(count?"currently show **"+count+" positions**. ":"")+"include these examples:\n\n"+lines+"\n\nQualification, experience and closing date are vacancy-specific.\n\n**Official source:** "+answerSource;
+     }
      if(isFederal){
        answer += language==="Urdu" ? "\n\nیہ NJP کی current federal/government listings ہیں؛ ہر vacancy کی employing organization اور eligibility الگ ہو سکتی ہے۔" : "\n\nThese are current NJP government listings; the employing organization and eligibility are vacancy-specific.";
      }

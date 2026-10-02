@@ -581,7 +581,7 @@ NADRA describes the FRC as a certificate that reflects, verifies and records a r
 - NADRA policy میں minor کے لیے CRC یا Juvenile Card کا الگ process ہے؛ adult CNIC پہلے بنوانا ضروری نہیں۔
 - Juvenile Card کے لیے minor primary applicant ہوتا ہے اور parent/guardian کی identity information اور applicable biometric verification درکار ہوتی ہے۔
 
-**اہم:** 18+ fresh registration میں blood-relative اور no-blood-relative cases کے تقاضے مختلف ہیں۔ درست case کے مطابق documents اور verification requirements لاگو ہوں گی۔
+**اہم:** 18+ fresh registration میں blood-relative اور no-blood-relative cases کے تقاضے مختلف ہیں۔ درست case کے مطابق documents اور verification requirements لاگو ہوں گی۔`
 
         : `### New CNIC / Smart CNIC — Fresh Registration
 
@@ -594,7 +594,7 @@ NADRA describes the FRC as a certificate that reflects, verifies and records a r
 - NADRA provides a separate CRC/Juvenile Card process for minors; an adult CNIC does not have to be obtained first.
 - For a Juvenile Card, the minor is the primary applicant and parent/guardian identity information and applicable biometric verification are required.
 
-**Important:** The requirements differ between 18+ fresh registration with a blood relative and a no-blood-relative case. The applicable documents and verification requirements depend on the applicant's circumstances.
+**Important:** The requirements differ between 18+ fresh registration with a blood relative and a no-blood-relative case. The applicable documents and verification requirements depend on the applicant's circumstances.`
 
 
       return out(language === "Urdu" ? "NADRA — نیا شناختی کارڈ" : "NADRA — New CNIC / Smart CNIC", body);

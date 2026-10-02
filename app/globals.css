@@ -297,3 +297,7 @@ footer{margin-top:auto;padding:23px 18px;background:#0d273d;color:#b9cbd5;text-a
     max-height:none;
   }
 }
+
+
+/* Sensitive-data warning inside the question card */
+.sensitive-data-warning{display:flex;align-items:center;gap:9px;margin:-4px 0 14px;padding:9px 11px;border:1px solid #eadbb8;border-radius:10px;background:#fffaf0;color:#745a1d;font-size:9px;font-weight:700;line-height:1.45}.sensitive-data-icon{width:20px;height:20px;display:grid;place-items:center;flex:none;border-radius:50%;background:#f3d99a;color:#6f5110;font-size:11px;font-weight:900}.sensitive-data-warning span:last-child{min-width:0}@media(max-width:600px){.sensitive-data-warning{font-size:8px;padding:8px 9px;gap:7px}.sensitive-data-icon{width:18px;height:18px;font-size:10px}}

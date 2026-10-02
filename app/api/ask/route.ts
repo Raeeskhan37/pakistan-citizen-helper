@@ -1457,7 +1457,7 @@ According to the official KP e-Domicile system, citizens can apply online to obt
  if(!directDepartmentMatch)return NextResponse.json({answer:language==="Urdu"?"یہ سوال منتخب شعبے سے متعلق نہیں لگتا۔ براہ کرم اسی شعبے سے متعلق سوال پوچھیں۔":"This question does not appear to belong to the selected government department. Please ask a question related to the selected department.",source:null});
 }
 if(requested==="Education & Scholarships"){
- const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+ const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question)||detectJurisdiction(question);
  const answer=educationEvidence(question,ej,language);
   const verificationUrls=Array.from(new Set((answer.match(/https?:\/\/[^\s)]+/g)||[]).map((u)=>u.replace(/[.,]+$/,""))));
  let verificationEvidence="";
@@ -2036,6 +2036,23 @@ if(requested==="Excise & Taxation"){
  }
  const q=normalize(question);
  const isGenericRegistration=q.includes("register a new vehicle")||q.includes("new vehicle registration")||q.includes("vehicle registration")||q.includes("new registration")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
+ const isGenericVerification=q.includes("verify")||q.includes("verification")||q.includes("registration status")||q.includes("basic details")||q.includes("number plate")||q.includes("vehicle details");
+ if(isGenericVerification){
+  const answer=language==="Urdu"
+   ? "## ایکسائز اینڈ ٹیکسیشن — گاڑی کی آن لائن تصدیق\n\nگاڑی کی رجسٹریشن اور بنیادی معلومات کی آن لائن تصدیق صوبہ/علاقہ کے مطابق مختلف ہے۔ دستیاب سرکاری خدمات کے مطابق:\n\n- **پنجاب:** Punjab Excise کے computerized vehicle-registration records اور vehicle services موجود ہیں۔\n- **سندھ:** registration number کے ذریعے vehicle/number-plate verification اور Quick Pay میں current tax/arrears دیکھنے کی سہولت موجود ہے۔\n- **خیبر پختونخوا:** KP Excise کی Online Vehicle Info سروس دستیاب ہے۔\n- **بلوچستان:** Online Vehicle Verification اور number-plate status services دستیاب ہیں۔\n- **اسلام آباد (ICT):** ICT Administration کی official Excise vehicle-registration services دستیاب ہیں؛ مخصوص vehicle-status lookup کے لیے متعلقہ ICT service استعمال ہوتی ہے۔\n- **آزاد کشمیر:** E-Facilitation Center میں Vehicle Verification اور ETO Biometric Verification services موجود ہیں۔\n- **گلگت بلتستان:** GB Excise portal registration details، chassis/engine information اور token-tax validity دکھاتا ہے۔\n\nمخصوص گاڑی کی verification کے لیے متعلقہ صوبہ/علاقہ اور registration number درکار ہو سکتا ہے۔\n\n**اہم:** میں کسی صوبے کی verification سہولت کو دوسرے صوبے پر لاگو نہیں کر رہا۔"
+   : "## Excise & Taxation — Vehicle Verification\n\nOnline vehicle-registration and basic-information verification varies by province/territory. The current official services include:\n\n- **Punjab:** Punjab Excise maintains computerized vehicle-registration records and vehicle services.\n- **Sindh:** The official Excise portal provides vehicle/number-plate verification by registration number, and Quick Pay can show current tax and arrears.\n- **Khyber Pakhtunkhwa:** KP Excise provides an Online Vehicle Info service.\n- **Balochistan:** Balochistan Excise provides Online Vehicle Verification and number-plate status services.\n- **Islamabad (ICT):** ICT Administration provides official vehicle-registration/Excise services; specific vehicle-status lookup is handled through the relevant ICT service.\n- **AJK:** The E-Facilitation Center lists Vehicle Verification and ETO Biometric Verification services.\n- **Gilgit-Baltistan:** The GB Excise portal can show registration details, chassis/engine information and token-tax validity.\n\nFor a specific vehicle lookup, the relevant province/territory and registration number may be required.\n\n**Important:** The app keeps each province/territory's verification service separate and does not transfer one province's procedure to another.";
+  return directWorkflowResponse({
+   answer,
+   source:null,
+   department:"Excise & Taxation",
+   question,
+   language,
+   jurisdiction:null,
+   evidenceAvailable:true,
+   verifyClaims:false,
+   verificationEvidence:answer
+  });
+ }
  if(isGenericRegistration){
   const answer=language==="Urdu"
    ? "## نئی گاڑی کی رجسٹریشن — صوبہ/علاقہ کے مطابق\n\nپاکستان میں نئی گاڑی کی رجسٹریشن کے بنیادی تقاضے صوبہ/علاقہ، گاڑی کی قسم اور مقامی یا درآمد شدہ حیثیت کے مطابق مختلف ہوتے ہیں۔\n\n| صوبہ/علاقہ | بنیادی طور پر تصدیق شدہ معلومات |\n|---|---|\n| پنجاب | پنجاب Excise کی vehicle-registration service دستیاب ہے؛ exact documents اور applicable fees transaction کے مطابق دیکھے جاتے ہیں۔ |\n| سندھ | computerized registration system اور vehicle-category کے مطابق registration charges/calculator دستیاب ہیں۔ |\n| خیبر پختونخوا | Form F؛ مقامی گاڑی کے لیے authorized manufacturer/dealer کی sale authority letter اور invoice؛ imported vehicle کے لیے import permit، bill of lading اور customs-duty documents۔ |\n| اسلام آباد (ICT) | registration fee، advance tax، token tax اور income tax؛ imported vehicle کے لیے Bill of Entry/Bill of Lading اور قابلِ قبول residence proof۔ |\n| بلوچستان | سرکاری FAQ میں Form-F، Form-I، Computer Form، اصل Sale Certificate/Invoice، physical verification، CNIC اور registration fee درج ہیں۔ |\n| آزاد کشمیر (AJK) | سرکاری E-Facilitation Center میں Vehicle Verification اور ETO Biometric Verification خدمات موجود ہیں؛ مکمل current new-registration checklist عوامی طور پر verify نہیں ہو سکی۔ |\n| گلگت بلتستان (GB) | GB Excise کے مطابق Motor Vehicle Registration تمام اضلاع میں functional ہے؛ مکمل current public checklist دستیاب نہیں۔ |\n\n**اہم:** exact fee، tax اور documents گاڑی اور jurisdiction کے مطابق بدل سکتے ہیں۔"

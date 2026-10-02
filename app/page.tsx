@@ -398,8 +398,9 @@ return (
               {answer.source.url && <a href={answer.source.url} target="_blank" rel="noreferrer">{isUrdu ? "سرکاری ویب سائٹ کھولیں" : "Visit official source"} ↗</a>}
             </div>}
 
-            <div className="end-user-feedback">
-              <div className="feedback-card">
+            <div className="feedback-suggestion-row">
+              <div className="end-user-feedback">
+                <div className="feedback-card">
                 {feedbackSubmitted ? (
                   <div className="feedback-success">✓ {isUrdu ? "آپ کے تاثرات کا شکریہ!" : "Thank you for your feedback!"}</div>
                 ) : (
@@ -418,15 +419,11 @@ return (
                     </button>
                   </>
                 )}
+                </div>
               </div>
-            </div>
 
-            <button className="secondary" onClick={() => { setAnswer(null); setQuestion(""); }}>
-              ↻ {isUrdu ? "دوسرا سوال پوچھیں" : "Ask another question"}
-            </button>
-
-            <div className="end-user-feedback suggestion-only">
-              <div className="suggestion-card">
+              <div className="end-user-feedback suggestion-only">
+                <div className="suggestion-card">
                 {suggestionSubmitted ? (
                   <div className="suggestion-success">✓ {isUrdu ? "آپ کی تجویز کا شکریہ!" : "Thank you for your suggestion!"}</div>
                 ) : (
@@ -448,6 +445,7 @@ return (
                     </button>
                   </>
                 )}
+                </div>
               </div>
             </div>
           </div>}

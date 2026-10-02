@@ -1323,12 +1323,12 @@ export async function POST(request:NextRequest){try{
        :"Four-agent workflow completed with a verification warning; the answer was not fully claim-verified.";
 
      return NextResponse.json({
-       answer:cleanAnswer(directNadraAnswer),
+       answer:sanitizeNadraCitizenAnswer(cleanAnswer(directNadraAnswer), language),
        source:{
          department:"NADRA",
-         title:"NADRA Registration Policy RP-6.0.2",
-         url:"https://www.nadra.gov.pk/",
-         lastVerified:"21 September 2026",
+         title:"NADRA official information",
+         url:"https://www.nadra.gov.pk/identityDocument/cnic",
+         lastVerified:"",
          province:""
        },
        agent:true,

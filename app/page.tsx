@@ -362,19 +362,95 @@ return (
           )}
           {!answer && <><div className="question-card"><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "آپ اس محکمے کی کسی بھی سروس کے بارے میں سوال پوچھ سکتے ہیں۔" : "Ask anything about this department. You do not need to select a specific service."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? `مثلاً: ${department?.name} سے متعلق کوئی سوال پوچھیں` : `For example: What is the fee? What documents are required?`} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
           
-          {answer && <div className="answer-area"><div className={`answer-card ${answer.error ? "is-warning" : ""}`}>{answer.error ? <><div className="status-icon warning">!</div><div className="verified-label">{isUrdu ? "معلومات دستیاب نہیں" : "INFORMATION UNAVAILABLE"}</div><h2>{isUrdu ? "مصدقہ معلومات نہیں مل سکیں" : "Verified information is unavailable"}</h2><p>{answer.error}</p></> : <><div className="answer-top"><div className="status-icon">{answer.agentActivity?.claimVerification?.available && answer.agentActivity.claimVerification.passed === true ? "✓" : "i"}</div><div><div className="verified-label">{answer.agentActivity?.claimVerification?.available && answer.agentActivity.claimVerification.passed === true ? (isUrdu ? "سرکاری ذرائع سے حاصل کردہ معلومات" : "INFORMATION FROM OFFICIAL GOVERNMENT SOURCES") : (isUrdu ? "سرکاری ذرائع سے حاصل کردہ معلومات" : "INFORMATION FROM OFFICIAL GOVERNMENT SOURCES")}</div><small>{answer.agentActivity?.claimVerification?.available ? (isUrdu ? "دعویٰ کی تصدیق دستیاب شواہد کے خلاف کی گئی" : "Claims checked against the available evidence") : (isUrdu ? "دستیاب سرکاری ذرائع کی بنیاد پر؛ دعویٰ کی تصدیق دستیاب نہیں" : "Based on available official sources; claim verification unavailable")}</small></div></div><div className="answer-text">{answer.answer}</div><button className="copy-button" onClick={copyAnswer}>{copied ? "✓ Copied" : "⧉ Copy answer"}</button></>}</div>{answer.source && <div className="source-card"><div className="source-main"><span className="source-icon">↗</span><div><span className="source-label">{isUrdu ? "سرکاری ذریعہ" : "OFFICIAL SOURCE"}</span><strong>{answer.source.title || "Official government source"}</strong><small>{answer.source.department || department.name}{answer.source.lastVerified ? ` · Verified ${answer.source.lastVerified}` : ""}</small></div></div>{answer.source.url && <a href={answer.source.url} target="_blank" rel="noreferrer">{isUrdu ? "سرکاری ویب سائٹ کھولیں" : "Visit official source"} ↗</a>}</div>}
+          {answer && <div className="answer-area">
+            <div className={`answer-card ${answer.error ? "is-warning" : ""}`}>
+              {answer.error ? (
+                <>
+                  <div className="status-icon warning">!</div>
+                  <div className="verified-label">{isUrdu ? "معلومات دستیاب نہیں" : "INFORMATION UNAVAILABLE"}</div>
+                  <h2>{isUrdu ? "مصدقہ معلومات نہیں مل سکیں" : "Verified information is unavailable"}</h2>
+                  <p>{answer.error}</p>
+                </>
+              ) : (
+                <>
+                  <div className="answer-top">
+                    <div className="status-icon">{answer.agentActivity?.claimVerification?.available && answer.agentActivity.claimVerification.passed === true ? "✓" : "i"}</div>
+                    <div>
+                      <div className="verified-label">{isUrdu ? "سرکاری ذرائع سے حاصل کردہ معلومات" : "INFORMATION FROM OFFICIAL GOVERNMENT SOURCES"}</div>
+                      <small>{answer.agentActivity?.claimVerification?.available ? (isUrdu ? "دعویٰ کی تصدیق دستیاب شواہد کے خلاف کی گئی" : "Claims checked against the available evidence") : (isUrdu ? "دستیاب سرکاری ذرائع کی بنیاد پر؛ دعویٰ کی تصدیق دستیاب نہیں" : "Based on available official sources; claim verification unavailable")}</small>
+                    </div>
+                  </div>
+                  <div className="answer-text">{answer.answer}</div>
+                  <button className="copy-button" onClick={copyAnswer}>{copied ? "✓ Copied" : "⧉ Copy answer"}</button>
+                </>
+              )}
+            </div>
 
+            {answer.source && <div className="source-card">
+              <div className="source-main">
+                <span className="source-icon">↗</span>
+                <div>
+                  <span className="source-label">{isUrdu ? "سرکاری ذریعہ" : "OFFICIAL SOURCE"}</span>
+                  <strong>{answer.source.title || "Official government source"}</strong>
+                  <small>{answer.source.department || department.name}{answer.source.lastVerified ? ` · Verified ${answer.source.lastVerified}` : ""}</small>
+                </div>
+              </div>
+              {answer.source.url && <a href={answer.source.url} target="_blank" rel="noreferrer">{isUrdu ? "سرکاری ویب سائٹ کھولیں" : "Visit official source"} ↗</a>}
+            </div>}
 
+            <div className="end-user-feedback">
+              <div className="feedback-card">
+                {feedbackSubmitted ? (
+                  <div className="feedback-success">✓ {isUrdu ? "آپ کے تاثرات کا شکریہ!" : "Thank you for your feedback!"}</div>
+                ) : (
+                  <>
+                    <div className="feedback-heading">
+                      <strong>{isUrdu ? "کیا یہ جواب مددگار تھا؟" : "Was this answer helpful?"}</strong>
+                      <small>{isUrdu ? "اپنی رائے ہمارے ساتھ شیئر کریں۔" : "Help us improve the service."}</small>
+                    </div>
+                    <div className="feedback-rating">
+                      <button type="button" className={feedbackRating === "positive" ? "feedback-choice selected" : "feedback-choice"} onClick={() => setFeedbackRating("positive")}>👍 {isUrdu ? "مددگار" : "Helpful"}</button>
+                      <button type="button" className={feedbackRating === "negative" ? "feedback-choice selected" : "feedback-choice"} onClick={() => setFeedbackRating("negative")}>👎 {isUrdu ? "مددگار نہیں" : "Not helpful"}</button>
+                    </div>
+                    <textarea value={feedbackComment} onChange={e => setFeedbackComment(e.target.value)} placeholder={isUrdu ? "اختیاری تبصرہ..." : "Tell us more (optional)..."} rows={2} maxLength={2000} />
+                    <button type="button" className="secondary" onClick={submitFeedback} disabled={!feedbackRating || feedbackSubmitting}>
+                      {feedbackSubmitting ? (isUrdu ? "جمع ہو رہا ہے…" : "Submitting…") : (isUrdu ? "رائے جمع کریں" : "Submit Feedback")}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
 
-<button
-  className="secondary"
-  onClick={() => {
-    setAnswer(null);
-    setQuestion("");
-  }}
->
-  ↻ {isUrdu ? "دوسرا سوال پوچھیں" : "Ask another question"}
-</button></div>}
+            <button className="secondary" onClick={() => { setAnswer(null); setQuestion(""); }}>
+              ↻ {isUrdu ? "دوسرا سوال پوچھیں" : "Ask another question"}
+            </button>
+
+            <div className="end-user-feedback suggestion-only">
+              <div className="suggestion-card">
+                {suggestionSubmitted ? (
+                  <div className="suggestion-success">✓ {isUrdu ? "آپ کی تجویز کا شکریہ!" : "Thank you for your suggestion!"}</div>
+                ) : (
+                  <>
+                    <div className="suggestion-heading">
+                      <strong>{isUrdu ? "ہمیں اپنی تجویز دیں" : "Have a suggestion?"}</strong>
+                      <small>{isUrdu ? "اپنی رائے سے پاکستان سٹیزن ہیلپر کو بہتر بنانے میں مدد کریں۔" : "Help us improve Pakistan Citizen Helper."}</small>
+                    </div>
+                    <select value={suggestionType} onChange={e => setSuggestionType(e.target.value)}>
+                      <option value="">{isUrdu ? "تجویز کی قسم منتخب کریں" : "Select suggestion type"}</option>
+                      <option value="Service Improvement">{isUrdu ? "سروس میں بہتری" : "Service Improvement"}</option>
+                      <option value="New Service">{isUrdu ? "نئی سروس" : "New Service"}</option>
+                      <option value="Content Improvement">{isUrdu ? "معلومات میں بہتری" : "Content Improvement"}</option>
+                      <option value="Other">{isUrdu ? "دیگر" : "Other"}</option>
+                    </select>
+                    <textarea value={suggestionText} onChange={e => setSuggestionText(e.target.value)} placeholder={isUrdu ? "اپنی تجویز یہاں لکھیں..." : "Write your suggestion here..."} rows={3} maxLength={2000} />
+                    <button type="button" className="secondary" onClick={submitSuggestion} disabled={!suggestionType || !suggestionText.trim() || suggestionSubmitting}>
+                      {suggestionSubmitting ? (isUrdu ? "جمع ہو رہا ہے…" : "Submitting…") : (isUrdu ? "تجویز جمع کریں" : "Submit Suggestion")}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>}
         </section>}
 
       <div className="end-user-feedback">

@@ -1393,7 +1393,8 @@ According to the official KP e-Domicile system, citizens can apply online to obt
  const qn=normalize(question);
  const explicitCrossDepartmentMismatch=
    (requested==="Arms Licence" && (qn.includes("driving licence")||qn.includes("driving license")||qn.includes("learner licence")||qn.includes("learner license")||qn.includes("dlims")||qn.includes("driving test")||qn.includes("ڈرائیونگ"))) ||
-   (requested==="Driving Licence" && (qn.includes("arm licence")||qn.includes("arm license")||qn.includes("arms licence")||qn.includes("arms license")||qn.includes("weapon licence")||qn.includes("weapon license")||qn.includes("gun licence")||qn.includes("gun license")||qn.includes("اسلحہ")||qn.includes("ہتھیار")));
+   (requested==="Driving Licence" && (qn.includes("arm licence")||qn.includes("arm license")||qn.includes("arms licence")||qn.includes("arms license")||qn.includes("weapon licence")||qn.includes("weapon license")||qn.includes("gun licence")||qn.includes("gun license")||qn.includes("اسلحہ")||qn.includes("ہتھیار"))) ||
+   (requested==="Police Services" && (qn.includes("passport")||qn.includes("پاسپورٹ")));
  if(explicitCrossDepartmentMismatch){
   return NextResponse.json({answer:language==="Urdu"?"یہ سوال منتخب شعبے سے متعلق نہیں لگتا۔ براہ کرم اسی شعبے سے متعلق سوال پوچھیں۔":"This question does not appear to belong to the selected government department. Please ask a question related to the selected department.",source:null});
  }

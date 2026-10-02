@@ -272,10 +272,13 @@ export async function getDirectNadraAnswer(question: string, language: "English"
   const isCancel = /cancel|cancellation|surrender|renounce|renunciation|death|وفات|منسوخ|منسوخی|سرنڈر|دستبردار|شہریت ترک|قومیت/.test(q);
   const isConversion = /convert|conversion|from crc|crc to|juvenile card|conversion.*juvenile|تبدیل.*جووینائل|تبدیلی.*جووینائل/.test(q);
 
+  // Internal policy metadata is evidence for the agent, not a public citation.
+  // Citizen-facing answers should not expose internal policy identifiers, dates,
+  // pages, chunks, or sections. The public NADRA website is the displayed source.
   const out = (title: string, body: string) =>
     language === "Urdu"
-      ? "## " + title + "\n\n" + body + "\n\n**پالیسی:** NADRA Registration Policy RP-6.0.2 — مؤثر 21 ستمبر 2026۔"
-      : "## " + title + "\n\n" + body + "\n\n**Policy:** NADRA Registration Policy RP-6.0.2 — effective 21 September 2026.";
+      ? "## " + title + "\n\n" + body
+      : "## " + title + "\n\n" + body;
 
   try {
     const chunks = await getEnglishChunks();
@@ -778,8 +781,7 @@ export async function getDirectAdultFreshCnicAnswer(
         "",
         "**Important:** The no-blood-relative case may require additional verification/scrutiny and more processing time. The policy also specifies a priority order for witnesses.",
         "",
-        "**Policy:** NADRA Registration Policy RP-6.0.2 — issued 18 September 2026; effective 21 September 2026.",
-        "**Evidence:** Fresh / New Registration of 18 years or above (CNIC or SMART CNIC), page 10, CHUNK-0015."
+        "**Source:** NADRA official website — https://www.nadra.gov.pk/identityDocument/cnic"
       ].join("\n");
     }
 
@@ -806,8 +808,7 @@ export async function getDirectAdultFreshCnicAnswer(
       "",
       "**اہم نوٹ:** خون کے رشتے دار کے بغیر درخواست میں اضافی تصدیق/جانچ پڑتال اور زیادہ وقت درکار ہو سکتا ہے۔ پالیسی گواہوں کی ترجیح بھی بیان کرتی ہے۔",
       "",
-      "**پالیسی:** NADRA Registration Policy RP-6.0.2 — اجرا 18 ستمبر 2026؛ مؤثر 21 ستمبر 2026۔",
-      "**ثبوت:** 18 سال یا اس سے زائد عمر کے شہریوں کا نیا اندراج، صفحہ 11، اردو پالیسی متن۔"
+      "**ماخذ:** سرکاری NADRA ویب سائٹ — https://www.nadra.gov.pk/identityDocument/cnic"
     ].join("\n");
   } catch (error) {
     console.error("Direct NADRA adult CNIC answer failed:", error);

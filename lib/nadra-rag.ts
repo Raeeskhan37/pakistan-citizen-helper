@@ -272,6 +272,16 @@ export async function getDirectNadraAnswer(question: string, language: "English"
   const isCancel = /cancel|cancellation|surrender|renounce|renunciation|death|وفات|منسوخ|منسوخی|سرنڈر|دستبردار|شہریت ترک|قومیت/.test(q);
   const isConversion = /convert|conversion|from crc|crc to|juvenile card|conversion.*juvenile|تبدیل.*جووینائل|تبدیلی.*جووینائل/.test(q);
 
+  // Definition questions must not fall into application/document branches.
+  // Keep this separate from the existing CRC application/correction logic.
+  if (hasCrc && /what is|what does .* mean|define|meaning|explain|کیا ہے|مطلب|تعریف|سمجھائیں/.test(q)
+      && !isApply && !isDocs && !isModify && !isDuplicate && !isCancel && !isConversion) {
+    const body = language === "Urdu"
+      ? "CRC سے مراد **Child Registration Certificate** ہے، جسے عام طور پر **B-Form** بھی کہا جاتا ہے۔ یہ NADRA کا بچوں کے لیے رجسٹریشن سرٹیفکیٹ ہے جس میں بچے کی شناخت اور والدین سے متعلق رجسٹریشن معلومات ریکارڈ ہوتی ہیں۔\\n\\nاگر آپ چاہیں تو میں اگلا بتا سکتا ہوں کہ CRC/B-Form **کیسے بنوانا ہے، کن documents کی ضرورت ہے، یا اس میں correction کیسے کرانی ہے**۔"
+      : "CRC stands for **Child Registration Certificate**, commonly known as **B-Form**. It is NADRA's registration certificate for children and records the child's identity and registration information linked to the parents.\\n\\nIf you want, I can also explain **how to obtain a CRC/B-Form, which documents are required, or how to correct it**.";
+    return out(language === "Urdu" ? "NADRA — چائلڈ رجسٹریشن سرٹیفکیٹ (CRC / B-Form)" : "NADRA — Child Registration Certificate (CRC / B-Form)", body);
+  }
+
   // Internal policy metadata is evidence for the agent, not a public citation.
   // Citizen-facing answers should not expose internal policy identifiers, dates,
   // pages, chunks, or sections. The public NADRA website is the displayed source.

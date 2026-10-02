@@ -1097,6 +1097,89 @@ export async function POST(request:NextRequest){try{
  }
 
 
+
+ // EARLY GOVERNMENT JOBS ROUTER:
+ // Current vacancies must come from the live official NJP evidence.
+ // Unrelated services must never fall through to the Government Jobs source.
+ if(requested==="Government Jobs"){
+   const gq=normalize(question);
+   const mismatch=/passport|پاسپورٹ|vehicle registration|register a vehicle|vehicle|گاڑی|electricity meter|electric meter|new meter|بجلی کا میٹر|driving licence|driving license|ڈرائیونگ لائسنس|fbr|income tax|ntn|tax return|excise|token tax|birth certificate|death certificate|marriage certificate|divorce certificate|union council|domicile certificate|vaccination|vaccine|police clearance|fir|arms licence|arms license/i.test(gq);
+   const jobIntent=/government jobs?|govt jobs?|job vacancies?|vacancies?|employment|careers?|recruitment|national jobs portal|\bnjp\b|نوکری|ملازمت|بھرتی|آسامیاں|روزگار/i.test(gq);
+
+   if(mismatch && !jobIntent){
+     return directWorkflowResponse({
+       answer:"This question does not appear to belong to the selected government department. Please ask a question related to the selected government department.",
+       source:null, department:"Government Jobs", question, language, jurisdiction:null, evidenceAvailable:false
+     });
+   }
+
+   const jobsUrl="https://www.njp.gov.pk/jobs/live";
+   const helpUrl="https://www.njp.gov.pk/help";
+   const livePage=await fetchOfficialPage(jobsUrl);
+   const helpPage=await fetchOfficialPage(helpUrl);
+   const isApply=/apply|application|how can i apply|how to apply|اپلائی|درخواست/i.test(gq);
+   const isDocs=/document|documents|information|required|requirements|papers|کاغذات|دستاویز|ضروریات/i.test(gq);
+   const isGraduate=/graduate|bachelor|bachelors|degree|undergraduate|بیچلر|گریجویٹ|ڈگری/i.test(gq);
+   const isPunjab=/\bpunjab\b|پنجاب/i.test(gq);
+   const isFederal=/federal|federal government|وفاقی|وفاقی حکومت/i.test(gq);
+
+   let answer="";
+   let answerSource=jobsUrl;
+   let page=livePage;
+
+   if(isApply){
+     answer=language==="Urdu"
+       ?"## National Jobs Portal — درخواست دینے کا طریقہ\n\nNJP پر سرکاری ملازمت کے لیے:\n1. **Live Jobs** میں مطلوبہ vacancy کھولیں۔\n2. Job details میں **Apply** منتخب کریں۔\n3. Candidate profile/CV مکمل کریں اور vacancy کی مطلوبہ معلومات فراہم کریں۔\n4. Application steps مکمل کرکے closing date سے پہلے submit کریں۔\n\n**سرکاری ذریعہ:** "+helpUrl
+       :"## National Jobs Portal — How to Apply\n\nTo apply for a government job through NJP:\n1. Open **Live Jobs** and select the vacancy.\n2. Open the job details and choose **Apply**.\n3. Complete your candidate profile/CV and provide the information required for that vacancy.\n4. Complete the application steps and submit before the closing date.\n\n**Official source:** "+helpUrl;
+   } else if(isDocs){
+     answer=language==="Urdu"
+       ?"## National Jobs Portal — مطلوبہ معلومات اور دستاویزات\n\nNJP پر required information اور documents **ہر vacancy کے job details** کے مطابق مختلف ہو سکتے ہیں۔ ایک universal document list تمام سرکاری jobs پر لاگو نہیں کی جا سکتی۔\n\nCandidate profile/CV مکمل کرنا ضروری ہے، جبکہ اضافی documents، qualification، experience اور دیگر requirements متعلقہ vacancy کی official details میں دی جاتی ہیں۔\n\n**سرکاری ذریعہ:** "+helpUrl
+       :"## National Jobs Portal — Required Information and Documents\n\nThe information and documents required on NJP **vary by vacancy and its job details**. There is no single universal document list for every government job.\n\nComplete your candidate profile/CV information; additional documents, qualifications, experience and other requirements are specified in the official details of the particular vacancy.\n\n**Official source:** "+helpUrl;
+   } else if(isGraduate){
+     answer=language==="Urdu"
+       ?"## Government Jobs — Bachelor's/Graduate Applicants\n\nNJP پر ہر vacancy کی qualification اور experience criteria الگ ہیں۔ صرف graduate یا bachelor's degree رکھنے سے تمام government jobs کے لیے eligibility ثابت نہیں ہوتی۔\n\nموجودہ vacancy کی **Qualification** اور **Experience** requirements کے مطابق eligibility چیک کی جاتی ہے۔ میں بغیر vacancy-specific qualification match کے کسی universal list کو graduate jobs نہیں کہوں گا۔\n\n**سرکاری ذریعہ:** "+jobsUrl
+       :"## Government Jobs — Bachelor's/Graduate Applicants\n\nNJP vacancies have job-specific qualification and experience criteria. Holding a bachelor's degree does not by itself make an applicant eligible for every government job.\n\nEligibility should be determined from the **Qualification** and **Experience** requirements of each current vacancy. I will not label a universal list as graduate jobs without a vacancy-specific qualification match.\n\n**Official source:** "+jobsUrl;
+   } else {
+     if(isPunjab){
+       const u="https://www.njp.gov.pk/jobs/search?location=Punjab&q=All%20Jobs";
+       const t=await fetchOfficialPage(u);
+       if(t){page=t;answerSource=u;}
+     }
+     const compact=cleanAnswer(page||"");
+     const countMatch=compact.match(/(\\d+)\\s+(?:Positions|Jobs)\\s+(?:Available|Found)/i);
+     const count=countMatch?countMatch[1]:"";
+     const items:string[]=[];
+     const rx=/([A-Z][A-Za-z0-9()&–—'./ -]{2,90}?)\\s+by\\s+([A-Z][A-Za-z0-9()&–—'./ -]{2,100}?)\\s+(?:Contract|Regular|Permanent)\\b/g;
+     let m:RegExpExecArray|null;
+     while((m=rx.exec(compact)) && items.length<8){
+       const item=m[1].trim()+" — "+m[2].trim();
+       if(items.indexOf(item)<0)items.push(item);
+     }
+     const lines=items.length?items.map((x,i)=>(i+1)+". "+x).join("\n"):"The official live page is available, but a reliable vacancy list could not be extracted.";
+     answer=language==="Urdu"
+       ?"## Government Jobs — National Jobs Portal\n\nNJP کی current listings "+(count?"میں اس وقت **"+count+" positions** درج ہیں۔ ":"")+"چند موجودہ listings:\n\n"+lines+"\n\nQualification، experience اور closing date ہر vacancy کے مطابق مختلف ہیں۔\n\n**سرکاری ذریعہ:** "+answerSource
+       :"## Government Jobs — National Jobs Portal\n\nThe NJP current listings "+(count?"currently show **"+count+" positions**. ":"")+"include these examples:\n\n"+lines+"\n\nQualification, experience and closing date are vacancy-specific.\n\n**Official source:** "+answerSource;
+     if(isFederal){
+       answer += language==="Urdu" ? "\n\nیہ NJP کی current federal/government listings ہیں؛ ہر vacancy کی employing organization اور eligibility الگ ہو سکتی ہے۔" : "\n\nThese are current NJP government listings; the employing organization and eligibility are vacancy-specific.";
+     }
+   }
+
+   const verificationEvidence=[
+     "OFFICIAL NJP LIVE SOURCE: "+jobsUrl,
+     livePage,
+     "OFFICIAL NJP HELP SOURCE: "+helpUrl,
+     helpPage,
+     page
+   ].filter(Boolean).join("\n\n");
+
+   return directWorkflowResponse({
+     answer,
+     source:{department:"National Jobs Portal",title:"National Jobs Portal — Government Jobs",url:(isApply||isDocs)?helpUrl:answerSource,lastVerified:"",province:isPunjab?"Punjab":""},
+     department:"Government Jobs", question, language, jurisdiction:isPunjab?"Punjab":null,
+     evidenceAvailable:true, verifyClaims:true, verificationEvidence:verificationEvidence.trim()
+   });
+ }
+
  // EARLY NADRA SERVICE ROUTER:
  // NADRA policy questions must be resolved before generic service mismatch/routing.
  // This prevents CRC/B-Form, NICOP, POC, FRC and identity-change questions from

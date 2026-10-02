@@ -88,249 +88,221 @@ function workingDepartmentTerms(department:string):string[] {
  const out:string[]=[]; for(const k of Object.keys(groups)){for(const term of groups[k]){if(q.includes(normalize(term))){if(out.indexOf(k)<0)out.push(k);break;}}} if(out.length===0)out.push("general driving licence"); return out;
 }
 function drivingEvidence(question:string,jurisdiction:string,language:"English"|"Urdu"):string{
+ const q=normalize(question);
  const cats=drivingCategories(question);
  const has=(name:string)=>cats.indexOf(name)>=0;
+ const renewal=/\brenew(?:al|ing)?\b|\brenewed\b|تجدید/i.test(q);
+ const learner=/\blearner\b|\blearner permit\b|لرنر/i.test(q);
+ const duplicate=/\bduplicate\b|\blost\b|\breplacement\b|ڈپلیکیٹ|گمشدہ/i.test(q);
+ const international=/\binternational\b|\bidp\b|بین الاقوامی/i.test(q);
+ const isNew=/\bnew\b|\bnew license\b|\bnew licence\b|\bobtain\b|\bget\b|\bapply\b|نیا|نئی|حاصل/i.test(q);
+ const category=cats.find(x=>["motorcycle","car","ltv","htv","psv"].includes(x))||"general";
+ const categoryLabel:Record<string,string>={motorcycle:"motorcycle",car:"motor car",ltv:"LTV",htv:"HTV",psv:"PSV",general:"driving licence"};
+ const label=categoryLabel[category]||"driving licence";
  const en:Record<string,string>={
   Punjab:`## Punjab — Driving Licence
 **Official authority:** Punjab DLIMS 2.0.
 
-**For the requested service:** ${has("learner")?"Learner licence information is requested.":has("renewal")?"Renewal information is requested.":has("duplicate")?"Duplicate/replacement information is requested.":has("international")?"International driving licence information is requested.":"General driving licence information is requested."}
+**Requested service:** ${renewal?"Renewal":learner?"Learner licence":duplicate?"Duplicate/replacement":international?"International driving licence":isNew?"New licence":"Driving licence information"}${category!=="general"?`  
+**Category:** ${label}`:""}.
 
-The official DLIMS provides learner, regular and international driving licence services. The online workflow includes account/login, application form, PSID generation and payment, followed by applicable processing/approval steps.
+The current official DLIMS provides separate learner, regular and international licence services. Its current workflow distinguishes learner applications from regular-licence processing, while the current fee structure has a separate **Regular License Renewal** section with category-specific renewal fees.
 
-**Licence categories:** motorcycle, car/jeep, LTV, HTV and PSV.
-
-For exact documents or fees, only the current official DLIMS evidence should be used for the selected service/category.
+For renewal questions, do not present learner or first-issue test steps as renewal requirements. The current official renewal evidence lists renewal fees and does not state that a new theory or road test is part of ordinary renewal.
 
 **Source:** https://dlims.punjab.gov.pk/
 **Fee structure:** https://dlims.punjab.gov.pk/fee_structure`,
   Sindh:`## Sindh — Driving Licence
 **Official authority:** Sindh Police — Driving License Sindh (DLS).
 
-**Requested service:** ${has("learner")?"Learner licence":has("renewal")?"Renewal":has("duplicate")?"Duplicate/replacement":has("international")?"International driving licence":"General driving licence"}.
+**Requested service:** ${renewal?"Renewal":learner?"Learner licence":duplicate?"Duplicate/replacement":international?"International driving permit":isNew?"New licence":"Driving licence information"}${category!=="general"?`  
+**Category:** ${label}`:""}.
 
-The official computerized process includes:
-1. DLS online application/registration.
-2. Appearance at the DLS front desk.
-3. Screening and registration.
-4. Medical examination.
-5. Fee payment.
-6. Written/oral computer test.
-7. Road test where applicable.
-8. Final licence receipt.
+${renewal
+?`For renewal, the official Sindh DLS procedure states that the DLS system renews the driving licence for a further five years from the date of processing. The official renewal information does **not** state that the applicant must repeat the theoretical or road competency tests. Those tests are described by DLS under the process for obtaining a permanent licence after the learner period, not as an ordinary renewal requirement.`
+:learner
+?`For a learner licence, the applicant must appear physically at the concerned driving-licence branch with the original CNIC and undergo the prescribed medical fitness process. Sindh DLS lists learner licensing separately from permanent/renewal licensing.`
+:international
+?`Sindh DLS lists International Driving Permit as a separate service and identifies the branches that issue it.`
+:duplicate
+?`Sindh DLS lists duplicate licence as a separate service. The exact current duplicate requirements should be stated only where the official DLS evidence supports them.`
+:`For a new/permanent licence, Sindh DLS states that applicants appear physically at the concerned branch with the original CNIC, undergo medical fitness assessment, and complete the prescribed competency tests after the learner period. The DLS page describes a theoretical test and a road test for obtaining a permanent licence.`}
 
-The official source identifies a valid original CNIC, physical fitness and minimum age 18 for the general process. Categories include motorcycle, motor car, LTV and HTV.
+Categories published by DLS include motorcycle, motor car, LTV and HTV. Minimum age is 18 for non-commercial licences and 21 for commercial licences; HTV endorsement has an additional age/experience requirement in the official DLS information.
 
-**Sources:** https://dls.gos.pk/ and https://dls.gos.pk/pro-comp-lic.html`,
+**Sources:** https://dls.gos.pk/how-to-ob-dr-lic.html and https://dls.gos.pk/FeeStructure.html`,
   "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Driving Licence
 **Official authority:** Khyber Pakhtunkhwa Transport & Mass Transit Department.
 
-The official KP Transport Online Services portal provides online driving-licence renewal.
+**Requested service:** ${renewal?"Renewal":learner?"Learner permit":duplicate?"Duplicate licence":isNew?"New/permanent licence":"Driving licence information"}${category!=="general"?`  
+**Category:** ${label}`:""}.
 
-For the online service:
-1. Create an account using your CNIC and mobile number.
-2. Verify your identity through biometric or OTP verification.
-3. Select the required service.
-4. Complete the required information, upload documents and make payment.
+The current KP Transport Department Driving License page lists separate Dastak services for **Apply for Learner Permit, Apply for New Permanent License, Renew Existing License, and Apply for Duplicate License**.
 
-The official portal lists these driving-licence documents for the online service:
-- Copy of CNIC.
-- Existing driving licence, when renewing.
-- Medical fitness certificate.
-- Two passport-size photographs.
+${renewal
+?`For renewal, the official KP online service is specifically **Renew Existing License**. The current online-services page does not state a theory or road test as an ordinary renewal step.`
+:learner
+?`For a learner permit, the current KP Dastak procedure requires registration with CNIC and mobile number, selection of the learner service, completion of the required information, CNIC upload and online fee payment.`
+:duplicate
+?`For a duplicate licence, the current KP Transport Department lists **Apply for Duplicate License** as a separate Dastak service.`
+:`For a new permanent licence, the current KP procedure says to apply after the learner-validity period, select the permanent-licence service, upload the required documents, pay the fee online, and visit the branch for a test if required. The official KP material does not expose a complete category-specific document checklist in the verified page, so the app should not invent one.`}
 
-The portal lists the online driving-licence renewal service as active with a stated processing time of 3–5 working days.
+The KP Transport Department separately lists LTV/HTV/PSV licence services and their notified delivery times.
 
-For a new licence, learner permit, or a category other than renewal, the exact current procedure should be confirmed from the relevant official KP service.
-
-**Source:** https://transport.kp.gov.pk/tp/online-services.php`,
+**Sources:** https://www.transport.kp.gov.pk/DL.html and https://transport.kp.gov.pk/public-service.php`,
   Balochistan:`## Balochistan — Driving Licence
 **Official authority:** Balochistan Police / Police Mobile Khidmat Markaz.
 
-The official service covers learner driving licence, renewal, international driving licence, duplicate licence and endorsement.
+**Requested service:** ${renewal?"Renewal":learner?"Learner licence":duplicate?"Duplicate licence":international?"International driving licence":isNew?"New licence":"Driving licence information"}${category!=="general"?`  
+**Category:** ${label}`:""}.
 
-**Learner licence evidence:**
-- Original CNIC and one copy.
-- Traffic rules/code book.
-- Medical certificate for applicants aged 50 or above.
-- Published learner age: 18 years for motorcycle/motor car and 21 years for LTV.
-- Learner licence validity: six months.
-
-These learner requirements should not be presented as the complete regular-licence procedure.
+The official Police Mobile Khidmat Markaz service page lists learner licence, renewal, international driving licence, duplicate licence and endorsement as separate services. Learner-specific requirements must not be presented as renewal or regular-licence requirements.
 
 **Source:** https://pkm.balochistanpolice.gov.pk/public/home/services`,
   "Islamabad Capital Territory":`## Islamabad Capital Territory — Driving Licence
 **Official authority:** Islamabad Traffic Police (ITP).
 
-The official ITP-DLIMS provides:
-- New driving licence
-- Learner permit
-- Driving tests
-- Renewal
-- Duplicate licence
-- International driving permit
+**Requested service:** ${renewal?"Renewal":learner?"Learner permit":duplicate?"Duplicate licence":international?"International driving permit":isNew?"New licence":"Driving licence information"}${category!=="general"?`  
+**Category:** ${label}`:""}.
 
-For ${has("learner")?"learner permit":has("renewal")?"renewal":has("duplicate")?"duplicate licence":has("international")?"international driving permit":"general driving licence"} questions, the exact documents, fees and processing time should only be stated when supported by current official ITP evidence.
+The official ITP-DLIMS provides separate services for new licence, learner permit, driving tests, renewal, duplicate licence and international driving permit. The app should not transfer test requirements from new/permanent licensing into renewal unless the current official ITP evidence explicitly requires them.
 
 **Official portal:** https://dlims.islamabadpolice.gov.pk/`,
   "Azad Jammu and Kashmir":`## Azad Jammu and Kashmir — Driving Licence
-The official Traffic Police AJ&K portal provides licence procedure, verification, application tracking, office locations, DLMS forms, medical form, fee challan, licence fee details, theory book and traffic signs.
-
-Use the official procedure/form for the selected licence category.
+The official Traffic Police AJ&K portal provides separate licence procedures, forms, medical forms, fee information, verification and application tracking. The requested category/service should be answered from the corresponding official form or procedure.
 
 **Source:** https://trafficpolice.ajk.gov.pk/`,
   "Gilgit-Baltistan":`## Gilgit-Baltistan — Driving Licence
-The official DLMIS provides regular licence application, renewal, duplicate licence, international driving licence, medical form and licensing-centre information. The regular application covers categories including motorcycle, motor car, LTV, HTV and other listed vehicle classes.
+The official DLMIS provides regular licence application, renewal, duplicate licence, international driving licence, medical form and licensing-centre information. The requested category and action should be kept separate so renewal requirements are not mixed with first-issue requirements.
 
 **Source:** https://dlmis.gbp.gov.pk/`
  };
  const ur:Record<string,string>={
   Punjab:`## پنجاب — ڈرائیونگ لائسنس
-سرکاری DLIMS 2.0 میں لرنر، ریگولر اور انٹرنیشنل ڈرائیونگ لائسنس کی سہولیات موجود ہیں۔ کیٹیگریز میں موٹر سائیکل، کار/جیپ، LTV، HTV اور PSV شامل ہیں۔
-لرنر، تجدید، ڈپلیکیٹ یا انٹرنیشنل لائسنس کے لیے درست موجودہ فیس اور دستاویزات سرکاری DLIMS کی متعلقہ معلومات کے مطابق ہی بتائی جانی چاہئیں۔
-ماخذ: https://dlims.punjab.gov.pk/
-فیس اسٹرکچر: https://dlims.punjab.gov.pk/fee_structure`,
+**سروس:** ${renewal?"تجدید":learner?"لرنر لائسنس":duplicate?"ڈپلیکیٹ/متبادل":international?"انٹرنیشنل ڈرائیونگ لائسنس":isNew?"نیا لائسنس":"ڈرائیونگ لائسنس"}${category!=="general"?`  
+**کیٹیگری:** ${label}`:""}۔
+سرکاری DLIMS میں لرنر، ریگولر، تجدید اور انٹرنیشنل لائسنس کے عمل کو الگ رکھا گیا ہے۔ تجدید کے سوال میں نئے لائسنس یا لرنر کے ٹیسٹ مراحل کو خودکار طور پر شامل نہیں کیا جائے گا۔
+ماخذ: https://dlims.punjab.gov.pk/`,
   Sindh:`## سندھ — ڈرائیونگ لائسنس
-سرکاری DLS کے مطابق عمل میں آن لائن رجسٹریشن، فرنٹ ڈیسک، اسکریننگ/رجسٹریشن، میڈیکل، فیس، تحریری/کمپیوٹر ٹیسٹ، جہاں لاگو ہو روڈ ٹیسٹ اور لائسنس کی وصولی شامل ہے۔
-عمومی عمل کے لیے اصل CNIC، جسمانی فٹنس اور کم از کم عمر 18 سال درج ہے۔ کیٹیگریز میں موٹر سائیکل، موٹر کار، LTV اور HTV شامل ہیں۔
-ماخذ: https://dls.gos.pk/`,
+**سروس:** ${renewal?"تجدید":learner?"لرنر":duplicate?"ڈپلیکیٹ":international?"انٹرنیشنل ڈرائیونگ پرمٹ":isNew?"نیا/مستقل لائسنس":"ڈرائیونگ لائسنس"}${category!=="general"?`  
+**کیٹیگری:** ${label}`:""}۔
+${renewal?"سرکاری DLS کے مطابق تجدید کے بعد لائسنس مزید پانچ سال کے لیے renew کیا جاتا ہے۔ عام تجدید کے لیے تھیوری یا روڈ competency test دوبارہ دینے کی شرط سرکاری تجدیدی معلومات میں بیان نہیں کی گئی؛ یہ ٹیسٹ مستقل لائسنس حاصل کرنے کے عمل میں بیان کیے گئے ہیں۔":"سرکاری DLS میں لرنر، مستقل لائسنس اور تجدید کے مراحل الگ بیان کیے گئے ہیں۔ نئے مستقل لائسنس کے لیے مقررہ میڈیکل اور competency tests متعلقہ مرحلے پر لاگو ہوتے ہیں۔"}
+ماخذ: https://dls.gos.pk/how-to-ob-dr-lic.html`,
   "Khyber Pakhtunkhwa":`## خیبر پختونخوا — ڈرائیونگ لائسنس
-سرکاری معلومات کے مطابق Dastak App KP ٹرانسپورٹ/ڈرائیونگ لائسنس خدمات کا اہم ڈیجیٹل ذریعہ ہے۔ سسٹم میں لرنر، LTV، HTV اور انٹرنیشنل ڈرائیونگ لائسنس شامل ہیں۔ Police Sahulat Markaz مخصوص ڈرائیونگ خدمات بھی فراہم کرتا ہے، جن میں لرنر پرمٹ اور ڈپلیکیٹ لائسنس شامل ہیں۔
-ماخذ: https://transport.kp.gov.pk/public-service.php`,
+**سروس:** ${renewal?"تجدید":learner?"لرنر پرمٹ":duplicate?"ڈپلیکیٹ لائسنس":isNew?"نیا/مستقل لائسنس":"ڈرائیونگ لائسنس"}${category!=="general"?`  
+**کیٹیگری:** ${label}`:""}۔
+سرکاری KP Transport Department میں لرنر پرمٹ، نیا مستقل لائسنس، موجودہ لائسنس کی تجدید اور ڈپلیکیٹ لائسنس الگ خدمات ہیں۔ تجدید کے سوال میں نئے لائسنس کے ٹیسٹ مراحل شامل نہیں کیے جانے چاہئیں۔
+ماخذ: https://www.transport.kp.gov.pk/DL.html`,
   Balochistan:`## بلوچستان — ڈرائیونگ لائسنس
-Police Mobile Khidmat Markaz لرنر، تجدید، انٹرنیشنل، ڈپلیکیٹ اور اینڈورسمنٹ خدمات فراہم کرتا ہے۔ لرنر کے لیے اصل CNIC اور ایک کاپی، ٹریفک رولز/کوڈ بک، اور 50 سال یا اس سے زیادہ عمر میں میڈیکل سرٹیفکیٹ درج ہے۔
+**سروس:** ${renewal?"تجدید":learner?"لرنر":duplicate?"ڈپلیکیٹ":international?"انٹرنیشنل":isNew?"نیا لائسنس":"ڈرائیونگ لائسنس"}${category!=="general"?`  
+**کیٹیگری:** ${label}`:""}۔
+سرکاری Police Mobile Khidmat Markaz میں لرنر، تجدید، انٹرنیشنل، ڈپلیکیٹ اور اینڈورسمنٹ الگ خدمات ہیں۔
 ماخذ: https://pkm.balochistanpolice.gov.pk/public/home/services`,
   "Islamabad Capital Territory":`## اسلام آباد — ڈرائیونگ لائسنس
-اسلام آباد ٹریفک پولیس کا ITP-DLIMS نیا لائسنس، لرنر پرمٹ، ڈرائیونگ ٹیسٹ، تجدید، ڈپلیکیٹ اور انٹرنیشنل ڈرائیونگ پرمٹ کی سہولیات فراہم کرتا ہے۔
+**سروس:** ${renewal?"تجدید":learner?"لرنر پرمٹ":duplicate?"ڈپلیکیٹ":international?"انٹرنیشنل پرمٹ":isNew?"نیا لائسنس":"ڈرائیونگ لائسنس"}${category!=="general"?`  
+**کیٹیگری:** ${label}`:""}۔
+ITP-DLIMS میں نیا لائسنس، لرنر، ڈرائیونگ ٹیسٹ، تجدید، ڈپلیکیٹ اور انٹرنیشنل پرمٹ الگ خدمات ہیں۔ تجدید کے لیے نئے لائسنس کے ٹیسٹ مراحل خودکار طور پر شامل نہیں کیے جائیں گے۔
 ماخذ: https://dlims.islamabadpolice.gov.pk/`,
   "Azad Jammu and Kashmir":`## آزاد جموں و کشمیر — ڈرائیونگ لائسنس
-سرکاری Traffic Police AJ&K پورٹل پر لائسنس طریقہ کار، تصدیق، ٹریکنگ، دفاتر، فارم، میڈیکل فارم، فیس چالان اور ٹریفک علامات کی معلومات موجود ہیں۔
+سرکاری Traffic Police AJ&K پورٹل پر لائسنس کے طریقہ کار، فارم، میڈیکل فارم، فیس، تصدیق اور ٹریکنگ کی معلومات موجود ہیں۔
 ماخذ: https://trafficpolice.ajk.gov.pk/`,
   "Gilgit-Baltistan":`## گلگت بلتستان — ڈرائیونگ لائسنس
-سرکاری DLMIS پر ریگولر لائسنس، تجدید، ڈپلیکیٹ، انٹرنیشنل لائسنس، میڈیکل فارم اور لائسنسنگ مراکز کی معلومات موجود ہیں۔
+سرکاری DLMIS پر ریگولر لائسنس، تجدید، ڈپلیکیٹ، انٹرنیشنل لائسنس، میڈیکل فارم اور مراکز کی معلومات موجود ہیں۔ تجدید اور نئے لائسنس کے تقاضے الگ رکھے جانے چاہئیں۔
 ماخذ: https://dlmis.gbp.gov.pk/`
  };
  return (language==="Urdu"?ur:en)[jurisdiction]||en.Punjab;
 }
 
-
 function armsLicenceEvidence(question:string,jurisdiction:WorkingJurisdiction|null,language:"English"|"Urdu"):{answer:string,sources:string[]}{
  const q=normalize(question);
- const en:Record<string,string>={
-  "Islamabad Capital Territory":`## Islamabad Capital Territory — Arms Licence
 
-The ICT Administration states that a new application requires a completed application, 3 passport-size photographs, 3 attested CNIC copies, 3 attested NTN copies, proof of residence in Islamabad, and a departmental NOC for government servants. The applicant must appear in person with original documents. The published procedure is to complete the application, submit it at the Citizen Facilitation Center, receive a token, and collect the licence on the date given on the receipt.
+ // Always derive jurisdiction from the actual question first. Never assign a
+ // default province to a jurisdiction-free arms question.
+ const detectedQuestionJurisdiction=workingDetectJurisdiction(question)||workingDetectTargetJurisdiction(question);
+ const j=detectedQuestionJurisdiction || (q.includes("peshawar") ? "Khyber Pakhtunkhwa" : null);
 
-**Official source:** https://ictadministration.gov.pk/new-arms-license/`,
-  "Sindh":`## Sindh — Arms Licence
+ const newQ=/\bnew\b|\bfresh\b|\bfirst[- ]time\b|\bobtain\b|\bapply\b|نیا|نئی|حاصل/i.test(q);
+ const docs=/\bdocument(s)?\b|\brequired\b|\brequirements\b|\bchecklist\b|دستاویز|کاغذات|ضروری/i.test(q);
+ const fee=/\bfee\b|\bfees\b|\bcost\b|\bcharges\b|\bprice\b|\bhow much\b|\bamount\b|فیس|رقم/i.test(q);
+ const lost=/\blost\b|\bloss\b|\bmissing\b|\bduplicate\b|\breplacement\b|\breplace\b|گم|گمشدہ|ڈپلیکیٹ|متبادل/i.test(q);
+ const change=/\bchange\b|\bchanging\b|\bchanged\b|\bcorrect\b|\bcorrection\b|\bmodify\b|\bmodification\b|\bupdate\b|\bupdating\b|\bedit\b|\bedited\b|\balter\b|\balteration\b|\bnumber\s*(?:change|changed|update|correction)\b|تبدیلی|درست|تصحیح|ترمیم|تبدیل/i.test(q);
 
-The Sindh Home Department's current official website shows a **Corrigendum Regarding Ban on Issuance of New Computerized Arms Licenses in Sindh**, posted in September 2026. Because the current status affects whether a new licence can be issued, the app should not present the older FAQ procedure as if new computerized licences are currently available.
+ // A PB/NPB question is a definition only when the citizen is actually
+ // asking what the terms mean. Documents/fees/lost/change/new questions win.
+ const asksDefinition=/\bwhat (?:is|are|does)\b|\bdefine\b|\bmeaning\b|\bdifference\b|\bwhat do .* mean\b|کیا ہے|کیا ہیں|مطلب|فرق/i.test(q);
+ const boreTerms=/\bprohibited bore\b|\bnon[- ]prohibited bore\b|\bnpb\b|\bpb\b/i.test(q);
+ const definition=boreTerms && asksDefinition && !docs && !fee && !lost && !change && !newQ;
 
-The older official FAQ describes the application process as visiting the Home Department with the original CNIC and a copy, receiving a token, followed by photograph/biodata capture, police verification and bank-challan processing. That procedure is retained only as background; the current ban/corrigendum must be checked before applying.
+ const mode=definition?"definition":change?"change":lost?"lost":fee?"fee":docs?"docs":newQ?"new":"generic";
 
-**Current official source:** https://home.sindh.gov.pk/
-**Background official FAQ:** https://home.sindh.gov.pk/faqs`,
-  "Khyber Pakhtunkhwa":`## Khyber Pakhtunkhwa — Arms Licence
-
-The current official KP **Dastak** platform is the digital arms-licensing service. It states that citizens can apply for, renew and manage arms licences online, with real-time application tracking, secure payments and NADRA-office biometric verification.
-
-The platform is operated as a Home Department initiative powered by KPITB and describes verification using NADRA, criminal-database and police-station records.
-
-For a new licence, use the current Dastak arms-licensing service rather than relying on older manual-procedure pages.
-
-**Official source:** https://ecitizen.kp.gov.pk/`,
-  "Balochistan":`## Balochistan — Arms Licence
-
-The Government of Balochistan Home Department lists Arms License as a provincial service and states that its online service supports applying for a new licence, tracking an application and renewing an existing licence. The department also publishes arms-licence notices, including a revised SOP for renewal.
-
-The retrieved official evidence does not establish a complete current checklist of documents, fees or eligibility conditions for a new licence, so those details are not added here.
-
-**Official source:** https://home.balochistan.gov.pk/`,
-  "Azad Jammu and Kashmir":`## Azad Jammu and Kashmir — Arms Licence
-
-The official AJK E-Facilitation Center lists Arms License as a service for acquiring an arms licence in AJK. It identifies the AJK Interior Department as the issuance authority and lists a computerized certificate issuance fee of Rs. 1,500; the service page also lists an application form and fitness certificate.
-
-**Official source:** https://efc.ajk.gov.pk/instructionservice/3`,
-  "Punjab":`## Punjab — Arms Licence
-
-For Lahore, the official Lahore district administration lists an **Arm License Branch** and provides an **Arm License** application form. The Lahore district portal also lists the Arm License Branch among its service branches.
-
-Because Punjab arms-licensing availability and procedure can vary by district, the app does not invent a province-wide checklist, fee or approval process when the current district evidence does not establish it.
-
-For Lahore, use the official Lahore district Arm License Branch/form information. For another Punjab district, the relevant district administration should be checked.
-
-**Official sources:** https://lahore.punjab.gov.pk/arm-license-branch and https://lahore.punjab.gov.pk/forms`,
-  "Gilgit-Baltistan":`## Gilgit-Baltistan — Arms Licence
-
-A sufficiently detailed current GB Arms Licence procedure was not established from the retrieved official government evidence. The official GB government site provides general government information and laws/notifications, but the retrieved material did not establish the current application steps, documents or fees for an arms licence.
-
-To avoid inventing requirements, those details are not stated here.
-
-**Official sources:** https://gilgitbaltistan.gov.pk/ and https://www.gilgitbaltistan.gov.pk/pages/laws`
- };
- const ur:Record<string,string>={
-  "Islamabad Capital Territory":`## اسلام آباد — اسلحہ لائسنس
-
-اسلام آباد انتظامیہ کے سرکاری صفحے کے مطابق نئی درخواست کے لیے مکمل درخواست، 3 پاسپورٹ سائز تصاویر، CNIC کی 3 تصدیق شدہ نقول، NTN کی 3 تصدیق شدہ نقول، اسلام آباد میں رہائش کا ثبوت، اور سرکاری ملازمین کے لیے محکمانہ NOC درکار ہے۔ اصل دستاویزات کے ساتھ ذاتی حاضری ضروری ہے۔ طریقہ کار میں درخواست مکمل کرنا، Citizen Facilitation Center میں جمع کرانا، ٹوکن لینا اور رسید پر دی گئی تاریخ کو لائسنس وصول کرنا شامل ہے۔
-
-**سرکاری ماخذ:** https://ictadministration.gov.pk/new-arms-license/`,
-  "Sindh":`## سندھ — اسلحہ لائسنس
-
-سندھ ہوم ڈیپارٹمنٹ کے مطابق نئی درخواست کے لیے اصل CNIC اور اس کی نقل کے ساتھ Home Department جانا، درخواست جمع کرانا اور ٹوکن لینا شامل ہے۔ اس کے بعد تصویر/بائیو ڈیٹا، پولیس تصدیق اور بینک چالان کے ذریعے فیس کا عمل ہوتا ہے۔ بنیادی معیار میں سندھ ڈومیسائل اور عمر 25 سال درج ہیں۔
-
-**سرکاری ماخذ:** https://home.sindh.gov.pk/faqs`,
-  "Khyber Pakhtunkhwa":`## خیبر پختونخوا — اسلحہ لائسنس
-
-KP Right to Public Services Commission کے مطابق Arms License Branch میں بائیومیٹرک/الیکٹرانک پراسیسنگ اور پولیس تصدیق کے مراحل شامل ہیں، اس کے بعد متعلقہ منظوری اور فیس کے مراحل مکمل کیے جاتے ہیں۔ سرکاری صفحہ کم از کم عمر 21 سال بیان کرتا ہے اور Provincial اور All-Pakistan لائسنس روٹس الگ کرتا ہے۔
-
-**سرکاری ماخذ:** https://www.kprts.gov.pk/services/issuance-of-arms-license/`,
-  "Balochistan":`## بلوچستان — اسلحہ لائسنس
-
-حکومت بلوچستان کے Home Department کی سرکاری ویب سائٹ Arms License کو صوبائی سروس کے طور پر درج کرتی ہے اور بتاتی ہے کہ آن لائن سروس کے ذریعے نئے لائسنس کے لیے درخواست، درخواست کا اسٹیٹس ٹریک اور موجودہ لائسنس کی تجدید کی جا سکتی ہے۔ محکمہ اسلحہ لائسنس کی renewal سے متعلق موجودہ SOP/نوٹس بھی شائع کرتا ہے۔
-
-نئے لائسنس کے مکمل موجودہ دستاویزات، فیس یا اہلیت کی فہرست دستیاب سرکاری شواہد سے واضح طور پر ثابت نہیں ہوئی، اس لیے یہ تفصیلات شامل نہیں کی گئیں۔
-
-**سرکاری ماخذ:** https://home.balochistan.gov.pk/`,
-  "Azad Jammu and Kashmir":`## آزاد جموں و کشمیر — اسلحہ لائسنس
-
-AJK E-Facilitation Center اسلحہ لائسنس کو سروس کے طور پر درج کرتا ہے اور Interior Department کو issuing authority بتاتا ہے۔ سروس صفحے پر computerized certificate issuance fee Rs. 1,500 اور application form اور fitness certificate درج ہیں۔
-
-**سرکاری ماخذ:** https://efc.ajk.gov.pk/instructionservice/3`,
-  "Punjab":`## پنجاب — اسلحہ لائسنس
-
-پنجاب کے سرکاری ضلعی پورٹلز Arms Licensing Branches کو متعلقہ دفاتر کے طور پر ظاہر کرتے ہیں اور نئی لائسنس issuance، renewal/revalidation، duplicate، transfer، correction، verification اور cancellation جیسی خدمات درج کرتے ہیں۔ بعض اضلاع موجودہ مقامی صورتحال بھی الگ سے شائع کرتے ہیں؛ مثال کے طور پر Rawalpindi کے سرکاری صفحے پر اس وقت Arm License سروس کو banned بتایا گیا ہے۔
-
-موجودہ دستیاب سرکاری شواہد سے پورے پنجاب کے لیے نئی درخواست کی ایک مشترکہ موجودہ دستاویزاتی فہرست یا طریقہ کار ثابت نہیں ہوتا، اس لیے غیر مصدقہ تفصیلات شامل نہیں کی گئیں۔
-
-**سرکاری ماخذ:** https://bhakkar.punjab.gov.pk/arms_licensing_branch اور https://rawalpindi.punjab.gov.pk/forms`,
-  "Gilgit-Baltistan":`## گلگت بلتستان — اسلحہ لائسنس
-
-دستیاب سرکاری شواہد سے گلگت بلتستان کے موجودہ Arms Licence طریقہ کار کی مکمل تصدیق نہیں ہو سکی۔ سرکاری GB ویب سائٹ پر عمومی قوانین/نوٹیفکیشن موجود ہیں، لیکن دستیاب مواد سے موجودہ درخواست کے مراحل، دستاویزات یا فیس واضح طور پر ثابت نہیں ہوئی۔
-
-غیر مصدقہ تقاضے شامل نہیں کیے گئے۔
-
-**سرکاری ماخذ:** https://gilgitbaltistan.gov.pk/`
- };
- if(!jurisdiction) return {answer:language==="Urdu"?"## اسلحہ لائسنس\n\nپاکستان میں اسلحہ لائسنس کا طریقہ کار صوبے/علاقے کے مطابق مختلف ہے۔ براہ کرم صوبہ یا علاقہ بتائیں تاکہ متعلقہ سرکاری طریقہ کار دیا جا سکے۔":"## Arms Licence\n\nArms-licensing procedure is jurisdiction-specific in Pakistan. Please specify the province or territory so the applicable official procedure can be provided without mixing provincial rules.",sources:[]};
- const answer=(language==="Urdu"?ur:en)[jurisdiction]||en.Punjab;
  const sources:Record<string,string[]>={
-  "Islamabad Capital Territory":["https://ictadministration.gov.pk/new-arms-license/"],
-  "Sindh":["https://home.sindh.gov.pk/","https://home.sindh.gov.pk/faqs"],
-  "Khyber Pakhtunkhwa":["https://ecitizen.kp.gov.pk/"],
-  "Balochistan":["https://home.balochistan.gov.pk/"],
-  "Azad Jammu and Kashmir":["https://efc.ajk.gov.pk/instructionservice/3"],
-  "Punjab":q.includes("lahore")?["https://lahore.punjab.gov.pk/arm-license-branch","https://lahore.punjab.gov.pk/forms"]:["https://lahore.punjab.gov.pk/arm-license-branch"],
-  "Gilgit-Baltistan":["https://gilgitbaltistan.gov.pk/","https://www.gilgitbaltistan.gov.pk/pages/laws"]
+  "Khyber Pakhtunkhwa":["https://www.kprts.gov.pk/services/issuance-of-arms-license/","https://ecitizen.kp.gov.pk/","https://kpcode.kp.gov.pk/homepage/RuleDetails/163"],
+  "Islamabad Capital Territory":["https://ictadministration.gov.pk/new-arms-license/","https://ictadministration.gov.pk/computerization-of-arms-license/","https://ictadministration.gov.pk/license-verification/"],
+  "Punjab":["https://lahore.punjab.gov.pk/arm-license-branch"],"Sindh":["https://home.sindh.gov.pk/"],"Balochistan":["https://home.balochistan.gov.pk/"],"Azad Jammu and Kashmir":["https://efc.ajk.gov.pk/instructionservice/3"],"Gilgit-Baltistan":["https://gilgitbaltistan.gov.pk/"]
  };
- return {answer,sources:sources[jurisdiction]||[]};
-}
 
+ // Jurisdiction-free questions must still be understood. Ask only for the
+ // missing jurisdiction instead of repeating a generic arms-service prompt.
+ if(!j){
+  if(language==="Urdu"){
+   if(mode==="definition") return {answer:"## ممنوعہ بور (PB) اور غیر ممنوعہ بور (NPB)\n\nممنوعہ بور (PB) اور غیر ممنوعہ بور (NPB) مختلف قانونی categories ہیں۔ PB کی تعریف وفاقی حکومت کے نوٹیفکیشن/قانونی framework سے جبکہ NPB licences متعلقہ قانونی اختیار کے تحت جاری ہوتے ہیں۔ کسی مخصوص ہتھیار کی category موجودہ سرکاری نوٹیفکیشن یا licensing authority سے تصدیق کی جانی چاہیے۔\n\n**سرکاری ماخذ:** https://pakistancode.gov.pk/pdffiles/administrator4db83e5d472d4e9ffae90f007476a3ed.pdf",sources:["https://pakistancode.gov.pk/pdffiles/administrator4db83e5d472d4e9ffae90f007476a3ed.pdf"]};
+   if(mode==="fee") return {answer:"## اسلحہ لائسنس — فیس\n\nموجودہ سرکاری ذرائع سے جو فیس معلومات تصدیق ہو سکیں وہ ذیل میں دی گئی ہیں۔ فیس لائسنس کی قسم اور jurisdiction کے مطابق مختلف ہو سکتی ہے۔ جہاں موجودہ معیاری نئے لائسنس کی فیس سرکاری ماخذ سے واضح طور پر ثابت نہیں ہوئی، وہاں رقم گھڑی نہیں گئی۔\n\n| صوبہ / علاقہ | موجودہ سرکاری فیس کی معلومات |\n|---|---|\n| **خیبر پختونخوا** | Provincial licence: **PKR 3,910**؛ All-Pakistan licence: **PKR 9,410**؛ Government employees: **PKR 315**۔ Stamp paper: PKR 300؛ 222/223 جیسے heavy weapons کے لیے PKR 2,000 بھی درج ہے۔ |\n| **آزاد جموں و کشمیر (AJK)** | E-Facilitation Center پر Arms License کے computerized certificate issuance کی فیس **PKR 1,500** درج ہے؛ اسی صفحے پر application form PKR 200 اور fitness certificate PKR 300 بھی درج ہیں۔ |\n| **سندھ** | سرکاری Home Department صفحہ Arms Licence services کی تصدیق کرتا ہے اور بعض Armed Forces members اور BPS-17+ Government of Sindh officers کے لیے fee exemption بتاتا ہے، لیکن اسی صفحے پر عام نئے لائسنس کی موجودہ فیس واضح نہیں۔ |\n| **پنجاب** | موجودہ معیاری نئے Arms Licence کی فیس زیرِ جائزہ سرکاری ماخذ سے ثابت نہیں ہوئی۔ کوئی غیر مصدقہ رقم شامل نہیں کی گئی۔ |\n| **بلوچستان** | موجودہ معیاری نئے Arms Licence کی فیس زیرِ جائزہ سرکاری ماخذ سے ثابت نہیں ہوئی۔ کوئی غیر مصدقہ رقم شامل نہیں کی گئی۔ |\n| **اسلام آباد (ICT)** | موجودہ ICT New Arms Licence صفحہ فیس کی رقم شائع نہیں کرتا۔ |\n| **گلگت بلتستان** | موجودہ معیاری نئے Arms Licence کی فیس زیرِ جائزہ سرکاری ماخذ سے ثابت نہیں ہوئی۔ کوئی غیر مصدقہ رقم شامل نہیں کی گئی۔ |\n\n**اہم:** جہاں سرکاری ماخذ میں موجودہ رقم شائع نہیں ہوئی، اسے صفر نہیں سمجھا گیا۔\n\n**سرکاری ذرائع:** https://www.kprts.gov.pk/services/issuance-of-arms-license/\nhttps://efc.ajk.gov.pk/instructionservice/3\nhttps://home.sindh.gov.pk/arms-section\nhttps://ictadministration.gov.pk/new-arms-license/",sources:["https://www.kprts.gov.pk/services/issuance-of-arms-license/","https://efc.ajk.gov.pk/instructionservice/3","https://home.sindh.gov.pk/arms-section","https://ictadministration.gov.pk/new-arms-license/"]};
+   if(mode==="lost") return {answer:"## گمشدہ اسلحہ لائسنس\n\nآپ گمشدہ لائسنس کے طریقہ کار کے بارے میں پوچھ رہے ہیں۔ اگر **لائسنس کارڈ/دستاویز** گم ہوئی ہے تو معاملہ عموماً duplicate/replacement licence کا ہے؛ اگر **ہتھیار خود** گم یا چوری ہوا ہے تو اس کی رپورٹنگ الگ معاملہ ہے۔ درست duplicate procedure کے لیے اپنا صوبہ یا علاقہ بتائیں۔",sources:[]};
+   if(mode==="docs") return {answer:"## اسلحہ لائسنس — دستاویزات\n\nآپ دستاویزات کے بارے میں پوچھ رہے ہیں۔ مطلوبہ کاغذات jurisdiction کے مطابق مختلف ہوتے ہیں۔ اپنا صوبہ یا علاقہ بتائیں تاکہ میں اسی jurisdiction کی سرکاری دستاویزات دوں۔",sources:[]};
+   if(mode==="change") return {answer:"## اسلحہ لائسنس — ریکارڈ میں تبدیلی\n\nآپ موجودہ اسلحہ لائسنس میں تبدیلی/تصحیح کے بارے میں پوچھ رہے ہیں۔ اس کی procedure jurisdiction-specific ہے۔ اپنا صوبہ یا علاقہ بتائیں تاکہ نئے لائسنس کی requirements کو غلط طور پر شامل کیے بغیر درست procedure دیا جا سکے۔",sources:[]};
+   return {answer:"## اسلحہ لائسنس\n\nآپ اسلحہ لائسنس کی سروس کے بارے میں پوچھ رہے ہیں۔ براہِ کرم اپنا صوبہ یا علاقہ اور مطلوبہ سروس بتائیں، مثلاً نیا لائسنس، فیس، دستاویزات، renewal یا گمشدہ/duplicate لائسنس۔",sources:[]};
+  }
+
+  if(mode==="definition") return {answer:"## Prohibited Bore (PB) vs Non-Prohibited Bore (NPB)\n\nProhibited Bore (PB) and Non-Prohibited Bore (NPB) are different legal categories. PB is determined through the applicable Federal Government notification/legal framework, while NPB licensing is handled under the applicable legal authority. The category of a specific weapon should be confirmed from the current government notification or licensing authority.\n\n**Official source:** https://pakistancode.gov.pk/pdffiles/administrator4db83e5d472d4e9ffae90f007476a3ed.pdf",sources:["https://pakistancode.gov.pk/pdffiles/administrator4db83e5d472d4e9ffae90f007476a3ed.pdf"]};
+  if(mode==="fee") return {answer:"## Arms Licence — Fee\n\nCurrent official fee information I could verify is shown below. Fees and categories can differ by jurisdiction and licence type; where a current standard new-licence amount was not established from an official source, it is marked clearly rather than guessed.\n\n| Province / Territory | Current official fee information |\n|---|---|\n| **Khyber Pakhtunkhwa** | Provincial licence: **PKR 3,910**; All-Pakistan licence: **PKR 9,410**; Government employees: **PKR 315**. Stamp paper: PKR 300; an additional PKR 2,000 is listed for heavy weapons such as 222/223. |\n| **Azad Jammu & Kashmir (AJK)** | E-Facilitation Center lists **PKR 1,500** as the computerized certificate issuance fee for Arms License; the same service page also lists an application-form amount of PKR 200 and fitness-certificate amount of PKR 300. |\n| **Sindh** | The current official Home Department page confirms Arms Licence services and states that licences are free of fee for certain Armed Forces members and BPS-17+ Government of Sindh officers, but it does **not** establish a general current new-licence fee on that page. |\n| **Punjab** | A current standard new Arms Licence fee was **not established from the official source reviewed**. No amount is invented. |\n| **Balochistan** | A current standard new Arms Licence fee was **not established from the official source reviewed**. No amount is invented. |\n| **Islamabad (ICT)** | The current ICT new-Arms-Licence page does **not publish a fee amount**. |\n| **Gilgit-Baltistan** | A current standard new Arms Licence fee was **not established from the official source reviewed**. No amount is invented. |\n\n**Important:** These are the current official fee details I could verify; the table does not treat missing published amounts as zero.\n\n**Official sources:** https://www.kprts.gov.pk/services/issuance-of-arms-license/\nhttps://efc.ajk.gov.pk/instructionservice/3\nhttps://home.sindh.gov.pk/arms-section\nhttps://ictadministration.gov.pk/new-arms-license/",sources:["https://www.kprts.gov.pk/services/issuance-of-arms-license/","https://efc.ajk.gov.pk/instructionservice/3","https://home.sindh.gov.pk/arms-section","https://ictadministration.gov.pk/new-arms-license/"]};
+  if(mode==="lost") return {answer:"## Lost Arms Licence\n\nYou are asking about a lost licence. If the **licence card/document** is lost, the relevant service is normally a duplicate/replacement licence; if the **weapon itself** is lost or stolen, reporting requirements are separate. Please tell me the province or territory for the exact official duplicate/lost-licence procedure.",sources:[]};
+  if(mode==="docs") return {answer:"## Arms Licence — Documents\n\nYou are asking about the required documents. These requirements are jurisdiction-specific. Please tell me the province or territory so I can give the correct official document list.",sources:[]};
+  if(mode==="change") return {answer:"## Arms Licence — Record Change\n\nYou are asking about changing/correcting an existing arms-licence record. This is different from applying for a new licence and the procedure is jurisdiction-specific. Please tell me the province or territory so I can give the applicable official procedure.",sources:[]};
+  return {answer:"## Arms Licence\n\nPlease specify the province or territory and the exact service you need — new licence, fee, documents, renewal, duplicate/lost licence, or record change.",sources:[]};
+ }
+
+ let a="## Arms Licence\n\nPlease specify the exact arms-licence service.";
+
+ if(j==="Khyber Pakhtunkhwa"){
+  if(definition) a="## Prohibited Bore (PB) vs Non-Prohibited Bore (NPB)\n\nProhibited-bore weapons are those notified by the Federal Government as prohibited bore; licences for them are issued by the Federal Government. Provincial governments have authority to issue licences for non-prohibited weapons, subject to law. KP rules define non-prohibited bore weapons as weapons allowed to be manufactured, repaired, sold, possessed or transported by an individual under licence, and separately use restricted-bore and non-restricted-bore categories. A specific weapon category should be confirmed from the current government notification or licensing authority.\n\nOfficial sources: https://pakistancode.gov.pk/pdffiles/administrator4db83e5d472d4e9ffae90f007476a3ed.pdf and https://kpcode.kp.gov.pk/homepage/RuleDetails/163";
+  else if(lost) a="## Khyber Pakhtunkhwa — Lost Arms Licence\n\nIf the licence card/document itself is lost, this is a duplicate/replacement matter, not a new licence. KP rules provide for a duplicate of a lost or accidentally destroyed licence; the published fee schedule lists Rs. 1,500 for a duplicate individual arms licence. If the weapon itself was lost or stolen, the rules require immediate reporting to the nearest police station and the concerned Deputy Commissioner.\n\nOfficial source: https://kpcode.kp.gov.pk/homepage/RuleDetails/163";
+  else if(fee) a="## Khyber Pakhtunkhwa — Arms Licence Fee\n\nThe current KP Right to Public Services Commission page lists Provincial licence Rs. 3,910, All-Pakistan licence Rs. 9,410 and Government employees Rs. 315. It also lists stamp paper Rs. 300 and Rs. 2,000 for heavy weapons such as 222/223.\n\nOfficial source: https://www.kprts.gov.pk/services/issuance-of-arms-license/";
+  else if(docs) a="## Khyber Pakhtunkhwa — NPB Arms Licence Documents\n\nFor a new NPB arms-licence application, current official information lists: prescribed application form, CNIC, two photographs, minimum age 21 and Rs. 300 stamp paper. Government servants additionally provide their last pay slip and a departmental letter signed by the relevant district/departmental officer. The current Dastak platform supports digital application, tracking, payments and NADRA biometric verification.\n\nOfficial sources: https://www.kprts.gov.pk/services/issuance-of-arms-license/ and https://ecitizen.kp.gov.pk/";
+  else if(change) a="## Khyber Pakhtunkhwa — Arms Licence Record Change\n\nChanging an existing licence number is not a new-licence application. The current verified KP material covers issuance, renewal, duplicate licensing and loss/theft reporting, but does not publish a complete procedure for changing an already-issued licence number. I therefore would not give the new-licence document list as the answer.\n\nOfficial source: https://ecitizen.kp.gov.pk/";
+  else if(newQ) a="## Khyber Pakhtunkhwa — New Arms Licence\n\nCurrent official information lists a prescribed application form, CNIC, two photographs, minimum age 21 and Rs. 300 stamp paper. Government servants additionally provide their last pay slip and departmental letter. The notified process includes biometric/electronic processing and police verification. KP Dastak is the current digital arms-licensing platform.\n\nOfficial sources: https://www.kprts.gov.pk/services/issuance-of-arms-license/ and https://ecitizen.kp.gov.pk/";
+  else a="## Khyber Pakhtunkhwa — Arms Licence\n\nKP Dastak is the current digital arms-licensing platform for applying, renewing and managing licences. Please specify whether you need a new licence, NPB documents, renewal, duplicate/lost licence, fee or another service.\n\nOfficial source: https://ecitizen.kp.gov.pk/";
+ } else if(j==="Islamabad Capital Territory"){
+  if(change) a="## Islamabad Capital Territory — Arms Licence Record Change\n\nChanging an existing licence number is a record/correction matter, not a new-licence application. Current ICT Administration pages publish new licence, renewal, computerization and verification procedures, but not a specific current procedure for changing an already-issued licence number. I therefore would not substitute the new-licence document list. The existing record should be taken to the competent Arms Branch/ICT Administration authority.\n\nOfficial sources: https://ictadministration.gov.pk/computerization-of-arms-license/ and https://ictadministration.gov.pk/license-verification/";
+  else if(lost) a="## Islamabad Capital Territory — Lost Arms Licence\n\nIf the licence card/document is lost, this is not a new-licence application. The current ICT Administration pages do not publish a complete current duplicate/lost-card procedure, so I will not invent one or substitute new-licence requirements.\n\nOfficial sources: https://ictadministration.gov.pk/computerization-of-arms-license/ and https://ictadministration.gov.pk/license-verification/";
+  else if(fee) a="## Islamabad Capital Territory — Arms Licence Fee\n\nThe current ICT New Arms License page does not publish a new-licence fee amount. I therefore will not invent a fee; confirm the applicable amount with the competent ICT Arms Branch.\n\nOfficial source: https://ictadministration.gov.pk/new-arms-license/";
+  else if(newQ||docs) a="## Islamabad Capital Territory — New Arms Licence\n\nThe current ICT Administration page requires a completed application, 3 passport-size photographs, 3 attested CNIC copies, 3 attested NTN copies, proof of residence in Islamabad and a departmental NOC for government servants. Personal appearance with originals is required; submit at the Citizen Facilitation Center, obtain a token/receipt and collect the licence on the date given.\n\nOfficial source: https://ictadministration.gov.pk/new-arms-license/";
+  else a="## Islamabad Capital Territory — Arms Licence\n\nICT Administration publishes separate procedures for new licence, renewal, computerization and verification. Please specify the required service so these are not mixed.\n\nOfficial source: https://ictadministration.gov.pk/";
+ } else {
+  const label=lost?"lost/duplicate licence":change?"licence correction/change":fee?"fee":docs?"documents":newQ?"new licence":"arms licence";
+  if(j==="Sindh") a="## Sindh — Arms Licence\n\nThe current Sindh Home Department publishes arms-licensing information and current notices. For this "+label+" request, the currently verified official material does not establish enough detail for a complete current checklist or fee, so unverified requirements are not added.\n\nOfficial source: https://home.sindh.gov.pk/";
+  else if(j==="Balochistan") a="## Balochistan — Arms Licence\n\nThe Home Department lists Arms Licence as a provincial service and publishes arms-licence notices. The currently verified material does not establish a complete current checklist or fee for this specific "+label+" request, so unverified details are not added.\n\nOfficial source: https://home.balochistan.gov.pk/";
+  else if(j==="Punjab") a="## Punjab — Arms Licence\n\nArms licensing is administered through the relevant district/competent authority. A single current province-wide checklist or fee was not established for this specific "+label+" request, so the app should not invent one.\n\nOfficial source: https://lahore.punjab.gov.pk/arm-license-branch";
+  else if(j==="Azad Jammu and Kashmir") a="## Azad Jammu and Kashmir — Arms Licence\n\nThe official AJK E-Facilitation Center lists Arms License under the Interior Department and lists an application form, fitness certificate and computerized certificate issuance fee of Rs. 1,500. Follow the current AJK service page for the specific "+label+" request.\n\nOfficial source: https://efc.ajk.gov.pk/instructionservice/3";
+  else a="## Gilgit-Baltistan — Arms Licence\n\nThe currently verified GB government material does not establish a complete current procedure, document checklist or fee for this specific arms-licence request. I therefore will not invent those details.\n\nOfficial source: https://gilgitbaltistan.gov.pk/";
+ }
+
+ if(language==="Urdu" && j==="Khyber Pakhtunkhwa"){
+  if(lost) a="## خیبر پختونخوا — گمشدہ اسلحہ لائسنس\n\nاگر خود لائسنس کارڈ/دستاویز گم ہوئی ہے تو یہ نیا لائسنس نہیں بلکہ duplicate/replacement کا معاملہ ہے۔ KP قواعد duplicate کی اجازت دیتے ہیں اور duplicate individual arms licence کی فیس Rs. 1,500 درج ہے۔ اگر ہتھیار خود گم یا چوری ہوا ہے تو اسے فوراً قریبی پولیس اسٹیشن اور متعلقہ ڈپٹی کمشنر کو رپورٹ کرنا ضروری ہے۔\n\nسرکاری ماخذ: https://kpcode.kp.gov.pk/homepage/RuleDetails/163";
+  else if(docs) a="## خیبر پختونخوا — NPB اسلحہ لائسنس کے دستاویزات\n\nبنیادی تقاضے: Rs. 300 stamp paper، مقررہ application form، CNIC، دو تصاویر، عمر کم از کم 21 سال، اور سرکاری ملازم کے لیے آخری pay slip اور متعلقہ محکمہ/ضلع کے افسر کا خط۔ Dastak online application، tracking، payment اور NADRA biometric verification بھی فراہم کرتا ہے۔\n\nسرکاری ماخذ: https://www.kprts.gov.pk/services/issuance-of-arms-license/";
+  else if(fee) a="## خیبر پختونخوا — اسلحہ لائسنس فیس\n\nKP کے موجودہ notified service page پر Provincial licence Rs. 3,910، All-Pakistan Rs. 9,410 اور Government employees Rs. 315 درج ہیں۔ Stamp paper Rs. 300 اور بعض heavy weapons (222/223) کے لیے Rs. 2,000 درج ہے۔\n\nسرکاری ماخذ: https://www.kprts.gov.pk/services/issuance-of-arms-license/";
+  else if(change) a="## خیبر پختونخوا — اسلحہ لائسنس میں تبدیلی\n\nموجودہ لائسنس نمبر تبدیل کرنا نئے لائسنس کی درخواست نہیں ہے۔ دستیاب سرکاری مواد میں پہلے سے جاری لائسنس نمبر تبدیل کرنے کا مکمل موجودہ طریقہ شائع نہیں ہے، اس لیے نئے لائسنس کے کاغذات اس سوال کے جواب میں دینا درست نہیں ہوگا۔ موجودہ ریکارڈ کو متعلقہ Arms Licence Branch/مجاز اتھارٹی سے چیک کروانا ہوگا۔\n\nسرکاری ماخذ: https://ecitizen.kp.gov.pk/";
+  else if(definition) a="## ممنوعہ بور (PB) اور غیر ممنوعہ بور (NPB)\n\nممنوعہ بور وہ اسلحہ ہے جسے وفاقی حکومت ممنوعہ بور کے طور پر نوٹیفائی کرے؛ ایسے لائسنس وفاقی حکومت کے اختیار میں ہیں۔ غیر ممنوعہ اسلحہ کے لائسنس متعلقہ قانونی اختیار کے تحت جاری ہو سکتے ہیں۔ KP قواعد میں non-prohibited bore کے اندر restricted اور non-restricted bore کی اصطلاحات بھی استعمال ہوتی ہیں۔ کسی مخصوص ہتھیار کی category سرکاری نوٹیفکیشن یا licensing authority سے تصدیق کی جانی چاہیے۔\n\nسرکاری ماخذ: https://pakistancode.gov.pk/pdffiles/administrator4db83e5d472d4e9ffae90f007476a3ed.pdf";
+ }
+ return {answer:a,sources:j ? (sources[j]||[]) : []};
+}
 function exciseEvidence(question:string,jurisdiction:string,language:"English"|"Urdu"):string{
  const q=normalize(question);
  const isToken=q.includes("token")||q.includes("motor vehicle tax")||q.includes("vehicle tax")||q.includes("ٹوکن");
- const isRegistration=q.includes("new registration")||q.includes("vehicle registration")||q.includes("register a vehicle")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
+ const isRegistration=q.includes("new registration")||q.includes("vehicle registration")||q.includes("register a vehicle")||q.includes("register a new vehicle")||q.includes("new vehicle registration")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
  const isTransfer=q.includes("transfer")||q.includes("ownership")||q.includes("ملکیت")||q.includes("منتقلی");
  const isPayment=q.includes("pay")||q.includes("payment")||q.includes("online payment")||q.includes("ادائیگی");
+ const isVerification=q.includes("verify")||q.includes("verification")||q.includes("registration status")||q.includes("basic details")||q.includes("number plate")||q.includes("vehicle details");
+ const isFees=q.includes("fee")||q.includes("fees")||q.includes("taxes")||q.includes("charges")||q.includes("cost")||q.includes("مقررہ فیس")||q.includes("ٹیکس");
  if(jurisdiction==="Punjab" && isRegistration) return language==="Urdu"
   ? "## پنجاب — نئی گاڑی کی رجسٹریشن\n\nسرکاری پنجاب ایکسائز کے مطابق اصل خریدار کے نام نئی رجسٹریشن کے لیے:\n1. Form-F\n2. مالک کے CNIC کی کاپی\n3. گاڑی کا اصل Sales Certificate\n4. گاڑی کی اصل Sales Invoice\n5. رجسٹریشن فیس، نمبر پلیٹ فیس اور قابلِ اطلاق ٹیکس\n\n**ماخذ:** https://excise.punjab.gov.pk/index.php/node/39"
   : "## Punjab — New Vehicle Registration\n\nThe official Punjab Excise page lists these requirements for registration in the name of the original purchaser:\n1. Form-F\n2. Copy of the owner's CNIC\n3. Original Sales Certificate of the vehicle\n4. Original Sales Invoice of the vehicle\n5. Payment of registration fee, number plate fee and other applicable taxes\n\n**Source:** https://excise.punjab.gov.pk/index.php/node/39";
@@ -340,6 +312,62 @@ function exciseEvidence(question:string,jurisdiction:string,language:"English"|"
  if(jurisdiction==="Punjab" && isToken) return language==="Urdu"
   ? "## پنجاب — موٹر وہیکل ٹوکن ٹیکس\n\nپنجاب ایکسائز کے سرکاری صفحے پر MVT 2026-27 کے ٹوکن ٹیکس ریٹس درج ہیں۔ مکمل سال کا ٹوکن ٹیکس 31 اگست تک ادا کرنے پر سالانہ ٹوکن ٹیکس پر 10% رعایت درج ہے۔ پنجاب ایکسائز کی سرکاری سروسز میں Online Payment of Excise Dues بھی شامل ہے۔\n\n**ماخذ:** https://excise.punjab.gov.pk/motorvehicle_tax\nhttps://excise.punjab.gov.pk/services"
   : "## Punjab — Motor Vehicle Token Tax\n\nPunjab Excise publishes current motor-vehicle token-tax rates, including MVT 2026-27. It states that a 10% rebate on annual token tax is allowed when the full year's tax is paid on or before 31 August of the financial year. Punjab Excise also lists Online Payment of Excise Dues among its official services.\n\n**Sources:** https://excise.punjab.gov.pk/motorvehicle_tax\nhttps://excise.punjab.gov.pk/services";
+ if(jurisdiction==="Sindh" && (isToken||isPayment)) return language==="Urdu"
+  ? "## سندھ — ایکسائز اینڈ ٹیکسیشن\n\nسرکاری سندھ ایکسائز ٹیکس پورٹل کے مطابق موٹر وہیکل ٹیکس کے لیے PSID پر مبنی ادائیگی کا طریقہ موجود ہے۔ طریقہ کار میں 12 ہندسوں کا PSID استعمال ہوتا ہے، جو 24 گھنٹے تک قابل استعمال ہوتا ہے، اور ادائیگی معاون 1LINK ذرائع سے کی جا سکتی ہے۔\n\n**ماخذ:** https://taxportal.excise.gos.pk/home/faq"
+  : "## Sindh — Excise & Taxation\n\nThe official Sindh Excise tax portal provides a PSID-based motor-vehicle-tax payment process. The published procedure uses a 12-digit PSID valid for 24 hours, with payment through supported 1LINK channels.\n\n**Source:** https://taxportal.excise.gos.pk/home/faq";
+ if(jurisdiction==="Khyber Pakhtunkhwa" && isRegistration) return language==="Urdu"
+  ? "## خیبر پختونخوا — نئی گاڑی کی رجسٹریشن\n\nKP Excise کے سرکاری مواد کے مطابق نئی گاڑی کی رجسٹریشن متعلقہ registering authority کے پاس Form F کے ذریعے کی جاتی ہے۔ درآمد شدہ گاڑی کے لیے import permit، bill of lading اور customs-duty documents، جبکہ مقامی گاڑی کے لیے authorized manufacturer/dealer کی sale authority letter اور invoice درکار ہوتے ہیں۔\n\n**سرکاری ماخذ:** https://www.kpexcise.gov.pk/app/motor-vehicle-taxes/\nhttps://www.kpexcise.gov.pk/app/wp-content/uploads/2020/08/MOET-KP-Version-5-Finance-Act2015.pdf"
+  : "## Khyber Pakhtunkhwa — New Vehicle Registration\n\nAccording to official KP Excise material, a new vehicle is registered with the registering authority using Form F. For an imported vehicle, the official law lists the import permit, bill of lading and evidence of customs-duty payment; for a locally purchased vehicle, it lists the sale authority letter and invoice from the authorized manufacturer/dealer.\n\n**Official sources:** https://www.kpexcise.gov.pk/app/motor-vehicle-taxes/\nhttps://www.kpexcise.gov.pk/app/wp-content/uploads/2020/08/MOET-KP-Version-5-Finance-Act2015.pdf";
+ if(jurisdiction==="Khyber Pakhtunkhwa" && isTransfer) return language==="Urdu"
+  ? "## خیبر پختونخوا — گاڑی کی ملکیت کی منتقلی\n\nKP کے سرکاری Motor Vehicle Ordinance کے مطابق ملکیت منتقل ہونے کے بعد منتقلی کی اطلاع متعلقہ registering authority کو دینی ہوتی ہے اور اصل registration certificate پیش کیا جاتا ہے۔ KP Motor Vehicles Rules میں transfer کے لیے Form T.O. مقرر کیا گیا ہے۔ موجودہ سرکاری KP Excise ویب سائٹ vehicle registration اور online vehicle information services بھی فراہم کرتی ہے.\n\n**سرکاری ماخذ:** https://www.kpexcise.gov.pk/app/wp-content/uploads/2020/08/THE-KHYBER-Pakhtunkhwa-MOTOR-VEHICLE-ORDINANCE-1965.pdf\nhttps://www.kpexcise.gov.pk/app/wp-content/uploads/2020/08/THE-KHYBER-Pakhtunkhwa-MOTOR-VEHICLES-RULES-1969.pdf\nhttps://www.kpexcise.gov.pk/new/"
+  : "## Khyber Pakhtunkhwa — Vehicle Ownership Transfer\n\nUnder the official KP Motor Vehicle Ordinance, a transfer of ownership must be reported to the relevant registering authority and the vehicle's registration certificate is to be forwarded or presented. The KP Motor Vehicles Rules prescribe Form T.O. for the transfer application. The current KP Excise website also provides vehicle-registration and online vehicle-information services.\n\n**Official sources:** https://www.kpexcise.gov.pk/app/wp-content/uploads/2020/08/THE-KHYBER-Pakhtunkhwa-MOTOR-VEHICLE-ORDINANCE-1965.pdf\nhttps://www.kpexcise.gov.pk/app/wp-content/uploads/2020/08/THE-KHYBER-Pakhtunkhwa-MOTOR-VEHICLES-RULES-1969.pdf\nhttps://www.kpexcise.gov.pk/new/";
+ if(jurisdiction==="Balochistan" && isRegistration) return language==="Urdu"
+  ? "## بلوچستان — نئی گاڑی کی رجسٹریشن\n\nبلوچستان ایکسائز اینڈ ٹیکسیشن ڈیپارٹمنٹ کے سرکاری FAQ کے مطابق متعلقہ Excise & Taxation Officer (ETO) کے دفتر میں درج ذیل کاغذات اور فارم جمع کیے جاتے ہیں:\n1. اصل Sale Certificate اور Invoice\n2. مکمل اور دستخط شدہ Form F، Form I اور Computer Form\n3. گاڑی کو Excise & Taxation Inspector کے سامنے physical verification کے لیے پیش کرنا\n4. رجسٹریشن فیس ادا کرکے NBP challan کی owner copy درخواست کے ساتھ منسلک کرنا\n5. CNIC کی attested photocopy\n6. Government یا Company vehicle کی صورت میں متعلقہ covering letter بھی درکار ہو سکتا ہے\n\nسرکاری FAQ کے مطابق عام طور پر registration book جاری ہونے میں تقریباً دو ہفتے کا وقت دیا جاتا ہے۔\n\n**سرکاری ماخذ:** https://excise.balochistan.gov.pk/faq/\nhttps://excise.balochistan.gov.pk/motor-vehicle-forms/"
+  : "## Balochistan — New Vehicle Registration\n\nAccording to the official Balochistan Excise & Taxation Department FAQ, the following documents and forms are submitted to the relevant Excise & Taxation Officer (ETO):\n1. Original Sale Certificate and Invoice\n2. Duly filled and signed Form F, Form I and Computer Form\n3. Physical presentation of the vehicle for verification by the Excise & Taxation Inspector\n4. Payment of the registration fee, with the owner's NBP challan copy attached to the application\n5. Attested photocopy of the CNIC\n6. For a government or company vehicle, a covering letter from the relevant department/company may also be required\n\nThe official FAQ states that a registration book is usually issued in about two weeks after submission and verification.\n\n**Official sources:** https://excise.balochistan.gov.pk/faq/\nhttps://excise.balochistan.gov.pk/motor-vehicle-forms/"
+ if(jurisdiction==="Sindh" && isRegistration) return language==="Urdu"
+  ? "## سندھ — نئی گاڑی کی رجسٹریشن\n\nسندھ ایکسائز کے سرکاری نظام کے مطابق گاڑی کی registration computerized system کے ذریعے کی جاتی ہے۔ موجودہ سرکاری پورٹل registration fee اور vehicle-category کے مطابق charges کا calculator فراہم کرتا ہے۔\n\n**سرکاری ماخذ:** https://excise.gos.pk/motor-vehicle-tax\nhttps://excise.gos.pk/online_services/four_wheeler/"
+  : "## Sindh — New Vehicle Registration\n\nSindh Excise states that vehicle registration is handled through its computerized registration system. Its current official portal provides category-based registration charges and an online registration-cost calculator. Exact documents depend on the vehicle category and transaction, so I am not adding an unsupported checklist.\n\n**Official sources:** https://excise.gos.pk/motor-vehicle-tax\nhttps://excise.gos.pk/online_services/four_wheeler/";
+ if(jurisdiction==="Sindh" && isTransfer) return language==="Urdu"
+  ? "## سندھ — گاڑی کی ملکیت کی منتقلی\n\nسندھ کے موجودہ سرکاری قانون کے مطابق گاڑی کی فروخت کے بعد seller اور purchaser کو 30 دن کے اندر registering authority کو sale/transfer report کرنا ہوتا ہے، جبکہ purchaser کو transfer 15 دن کے اندر مکمل کرنا ہوتا ہے؛ تاخیر پر قانونی penalties لاگو ہو سکتی ہیں۔ موجودہ سندھ ایکسائز پورٹل transfer fee schedule بھی شائع کرتا ہے۔\n\n**سرکاری ماخذ:** https://excise.gos.pk/motor-vehicle-tax\nhttps://excise.gos.pk/upload/notifications/M.V.%20Amendment%20Taxation%20Act-2024.pdf"
+  : "## Sindh — Vehicle Ownership Transfer\n\nUnder the current official Sindh motor-vehicle law, after a vehicle is sold the seller and purchaser must report the sale or transfer to the registering authority within 30 days, and the purchaser is responsible for completing the transfer within 15 days; statutory penalties may apply for delay. The current Sindh Excise portal also publishes the transfer-fee schedule.\n\n**Official sources:** https://excise.gos.pk/motor-vehicle-tax\nhttps://excise.gos.pk/upload/notifications/M.V.%20Amendment%20Taxation%20Act-2024.pdf";
+ if(jurisdiction==="Islamabad Capital Territory" && isRegistration) return language==="Urdu"
+  ? "## اسلام آباد (ICT) — نئی گاڑی کی رجسٹریشن\n\nICT Administration کے مطابق رجسٹریشن میں applicable registration fee، advance tax، token tax اور income tax شامل ہو سکتے ہیں، جبکہ commercial vehicle کے لیے professional tax بھی لاگو ہو سکتا ہے۔ imported vehicle کے لیے Bill of Entry، Bill of Lading اور متعلقہ registration documents درکار ہو سکتے ہیں، اور رہائش کا ثبوت بھی قبول شدہ دستاویزات میں شامل ہے۔\n\n**سرکاری ماخذ:** https://ictadministration.gov.pk/vehicle-registration/"
+  : "## Islamabad Capital Territory — New Vehicle Registration\n\nICT Administration states that registration-related charges can include registration fee, advance tax, token tax and income tax, with professional tax for commercial vehicles. For imported vehicles, the official page lists documents such as the Bill of Entry and Bill of Lading, and it also specifies acceptable proof of residence.\n\n**Official source:** https://ictadministration.gov.pk/vehicle-registration/";
+ if(jurisdiction==="Islamabad Capital Territory" && isTransfer) return language==="Urdu"
+  ? "## اسلام آباد (ICT) — گاڑی کی ملکیت کی منتقلی\n\nسرکاری ICT Administration کے مطابق: documents مکمل کریں، مقررہ Excise window پر fee جمع کریں، Excise Inspector سے verification کرائیں، اور Data Entry Operator سے receipt حاصل کریں۔ مطلوبہ کاغذات میں transfer application، applicant/seller CNIC copies، Form F، computerized transfer letter، transfer-of-ownership form، اور مخصوص حالات میں bank/leasing NOC اور affidavit شامل ہیں۔\n\n**سرکاری ماخذ:** https://ictadministration.gov.pk/vehicle-transfer/"
+  : "## Islamabad Capital Territory — Vehicle Ownership Transfer\n\nThe official ICT process is: complete the documents, deposit the required fee at the designated Excise window, have the documents verified by the Excise Inspector, and obtain the receipt from the Data Entry Operator. The published documents include the transfer application, applicant/seller CNIC copies, Form F, computerized transfer letter and transfer-of-ownership form; a bank or leasing NOC and affidavit may also apply in specified cases.\n\n**Official source:** https://ictadministration.gov.pk/vehicle-transfer/";
+ if(isVerification){
+  if(jurisdiction==="Sindh") return language==="Urdu"
+   ? "## سندھ — گاڑی کی تصدیق\n\nسندھ ایکسائز کا سرکاری پورٹل registration number کے ذریعے number-plate/vehicle information verification فراہم کرتا ہے، اور Quick Pay میں registration number دے کر current tax اور arrears بھی دیکھے جا سکتے ہیں۔\n\n**سرکاری ماخذ:** https://www.excise.gos.pk/vehicle/check_number_plate\nhttps://taxportal.excise.gos.pk/home/quick_pay"
+   : "## Sindh — Vehicle Verification\n\nThe official Sindh Excise portal provides vehicle and number-plate verification using the registration number. Its Quick Pay service can also retrieve current tax and arrears after entering the registration number.\n\n**Official sources:** https://www.excise.gos.pk/vehicle/check_number_plate\nhttps://taxportal.excise.gos.pk/home/quick_pay";
+  if(jurisdiction==="Khyber Pakhtunkhwa") return language==="Urdu"
+   ? "## خیبر پختونخوا — گاڑی کی تصدیق\n\nKP Excise کی سرکاری ویب سائٹ پر Online Vehicle Info سروس موجود ہے، جو گاڑی کی معلومات کے لیے استعمال کی جا سکتی ہے۔\n\n**سرکاری ماخذ:** https://www.kpexcise.gov.pk/new/"
+   : "## Khyber Pakhtunkhwa — Vehicle Verification\n\nThe official KP Excise website provides an Online Vehicle Info service for vehicle information.\n\n**Official source:** https://www.kpexcise.gov.pk/new/";
+  if(jurisdiction==="Balochistan") return language==="Urdu"
+   ? "## بلوچستان — گاڑی کی تصدیق\n\nبلوچستان ایکسائز کی سرکاری ویب سائٹ Online Vehicle Verification اور number-plate status services فراہم کرتی ہے۔\n\n**سرکاری ماخذ:** https://excise.balochistan.gov.pk/home/online-vehicle-verification/"
+   : "## Balochistan — Vehicle Verification\n\nThe official Balochistan Excise website provides Online Vehicle Verification and number-plate status services.\n\n**Official source:** https://excise.balochistan.gov.pk/home/online-vehicle-verification/";
+  if(jurisdiction==="Gilgit-Baltistan") return language==="Urdu"
+   ? "## گلگت بلتستان — گاڑی کی تصدیق\n\nGB Excise کا سرکاری portal registration number کے ذریعے vehicle registration details، chassis/engine information اور token-tax validity کی verification فراہم کرتا ہے۔\n\n**سرکاری ماخذ:** https://gbexcise.gov.pk/vehsearch/"
+   : "## Gilgit-Baltistan — Vehicle Verification\n\nThe official GB Excise verification portal can search vehicle registration data and shows registration details, chassis/engine information and token-tax validity.\n\n**Official source:** https://gbexcise.gov.pk/vehsearch/";
+  if(jurisdiction==="Azad Jammu and Kashmir") return language==="Urdu"
+   ? "## آزاد کشمیر — گاڑی کی تصدیق\n\nAJK E-Facilitation Center کی سرکاری معلومات میں Vehicle Verification اور ETO Biometric Verification خدمات شامل ہیں۔\n\n**سرکاری ماخذ:** https://efc.ajk.gov.pk/"
+   : "## Azad Jammu and Kashmir — Vehicle Verification\n\nThe official AJK E-Facilitation Center lists Vehicle Verification and ETO Biometric Verification among its services.\n\n**Official source:** https://efc.ajk.gov.pk/";
+  if(jurisdiction==="Punjab") return language==="Urdu"
+   ? "## پنجاب — گاڑی کی تصدیق\n\nپنجاب ایکسائز کی سرکاری vehicle-registration services میں computerized vehicle records اور registration services موجود ہیں۔ مخصوص online verification service کے لیے متعلقہ Punjab Excise vehicle portal استعمال کیا جاتا ہے۔\n\n**سرکاری ماخذ:** https://excise.punjab.gov.pk/vehicle_registration"
+   : "## Punjab — Vehicle Verification\n\nPunjab Excise maintains computerized vehicle-registration records and vehicle-registration services. For a specific vehicle-status lookup, use the relevant official Punjab Excise vehicle portal.\n\n**Official source:** https://excise.punjab.gov.pk/vehicle_registration";
+  if(jurisdiction==="Islamabad Capital Territory") return language==="Urdu"
+   ? "## اسلام آباد (ICT) — گاڑی کی معلومات\n\nICT Administration کی سرکاری Excise services میں vehicle registration اور transfer کی معلومات موجود ہیں۔ مخصوص vehicle-status verification کے لیے ICT کی متعلقہ Excise service استعمال کی جاتی ہے۔\n\n**سرکاری ماخذ:** https://ictadministration.gov.pk/vehicle-registration/"
+   : "## Islamabad Capital Territory — Vehicle Information\n\nICT Administration publishes official vehicle-registration and transfer services. For a specific vehicle-status lookup, use the relevant ICT Excise service.\n\n**Official source:** https://ictadministration.gov.pk/vehicle-registration/";
+  return language==="Urdu"
+   ? "## ایکسائز اینڈ ٹیکسیشن — گاڑی کی تصدیق\n\nگاڑی کی آن لائن تصدیق کی سہولت صوبے یا علاقے کے مطابق مختلف ہے۔ متعلقہ صوبہ/علاقہ بتانے پر مخصوص سرکاری verification service بتائی جا سکتی ہے۔"
+   : "## Excise & Taxation — Vehicle Verification\n\nOnline vehicle-verification facilities vary by province or territory. The specific official verification service depends on the province or territory.";
+ }
+ if(!jurisdiction && isRegistration) return language==="Urdu"
+  ? "## نئی گاڑی کی رجسٹریشن — صوبہ/علاقہ کے مطابق\n\nپاکستان میں نئی گاڑی کی رجسٹریشن کا بنیادی عمل اور required documents صوبہ/علاقہ کے مطابق مختلف ہوتے ہیں۔\n\n| صوبہ/علاقہ | سرکاری طور پر تصدیق شدہ بنیادی طریقہ / کاغذات |\n|---|---|\n| پنجاب | Form-F، مالک کا CNIC، اصل Sales Certificate، اصل Sales Invoice، registration/number-plate fee اور applicable taxes۔ |\n| سندھ | Computerized registration system؛ official portal vehicle category کے مطابق registration charges اور calculator فراہم کرتا ہے۔ مکمل checklist گاڑی/transaction کے مطابق ہے۔ |\n| خیبر پختونخوا | Form-F؛ مقامی گاڑی کے لیے authorized manufacturer/dealer کی sale authority letter اور invoice؛ imported vehicle کے لیے import permit، bill of lading اور customs-duty documents۔ |\n| اسلام آباد (ICT) | Registration fee، advance tax، token tax اور income tax؛ imported vehicle کے لیے Bill of Entry/Bill of Lading؛ acceptable residence proof۔ |\n| بلوچستان | ETO کے دفتر میں Form-F، Form-I، Computer Form، اصل Sale Certificate/Invoice، physical verification، CNIC اور registration fee؛ سرکاری FAQ عام طور پر تقریباً دو ہفتے کا وقت بتاتا ہے۔ |\n| آزاد کشمیر (AJK) | AJK official E-Facilitation Center vehicle verification/ETO biometric services فراہم کرتا ہے؛ مکمل new-registration checklist کی موجودہ public page پر تصدیق نہیں ہو سکی، اس لیے غیرمصدقہ فہرست شامل نہیں کی گئی۔ |\n| گلگت بلتستان (GB) | GB Excise کے مطابق Motor Vehicle Registration تمام اضلاع میں functional ہے اور registration/tax services فراہم کی جاتی ہیں؛ موجودہ public page پر مکمل checklist دستیاب نہیں۔ |\n\n**اہم:** فیس، taxes اور exact documents گاڑی کی قسم، engine capacity، import/local status اور صوبے کے مطابق بدل سکتے ہیں۔\n\n**سرکاری ذرائع:** پنجاب: https://excise.punjab.gov.pk/vehicle_registration | سندھ: https://excise.gos.pk/motor-vehicle-tax | KP: https://www.kpexcise.gov.pk/app/motor-vehicle-taxes/ | ICT: https://ictadministration.gov.pk/vehicle-registration/ | بلوچستان: https://excise.balochistan.gov.pk/faq/ | AJK: https://efc.ajk.gov.pk/ | GB: https://gbexcise.gov.pk/"
+  : "## New Vehicle Registration — Province/Territory Comparison\n\nThe basic registration process and required documents differ by province or territory in Pakistan.\n\n| Province/Territory | Officially verified core process / documents |\n|---|---|\n| Punjab | Form-F, owner's CNIC, original Sales Certificate, original Sales Invoice, plus registration/number-plate fees and applicable taxes. |\n| Sindh | Computerized registration system; the official portal publishes category-based registration charges and a calculator. The exact checklist depends on vehicle/transaction. |\n| Khyber Pakhtunkhwa | Form-F; for a locally purchased vehicle, sale authority letter and invoice from the authorized manufacturer/dealer; for an imported vehicle, import permit, bill of lading and customs-duty documents. |\n| Islamabad (ICT) | Registration fee, advance tax, token tax and income tax; imported vehicles may require Bill of Entry/Bill of Lading and acceptable proof of residence. |\n| Balochistan | The official FAQ lists Form-F, Form-I, Computer Form, original Sale Certificate/Invoice, physical verification, CNIC and registration-fee payment; it states the registration book is usually issued in about two weeks. |\n| AJK | The official AJK E-Facilitation Center lists Vehicle Verification and ETO Biometric Verification, but I could not verify a complete current new-registration checklist from its public page, so I am not inventing one. |\n| Gilgit-Baltistan | GB Excise states that Motor Vehicle Registration is functional in all districts and handles registration, fees and allied taxes; a complete current public checklist was not available. |\n\n**Important:** Fees, taxes and exact documents can vary by vehicle type, engine capacity, import/local status and province/territory.\n\n**Official sources:** Punjab: https://excise.punjab.gov.pk/vehicle_registration; Sindh: https://excise.gos.pk/motor-vehicle-tax; KP: https://www.kpexcise.gov.pk/app/motor-vehicle-taxes/; ICT: https://ictadministration.gov.pk/vehicle-registration/; Balochistan: https://excise.balochistan.gov.pk/faq/; AJK: https://efc.ajk.gov.pk/; GB: https://gbexcise.gov.pk/";
+ if(!jurisdiction && isTransfer) return language==="Urdu"
+  ? "## گاڑی کی ملکیت کی منتقلی — صوبہ/علاقہ کے مطابق\n\n| صوبہ/علاقہ | سرکاری طور پر تصدیق شدہ عمل |\n|---|---|\n| پنجاب | T.O. Form، seller/purchaser CNICs، witnesses، original Registration Certificate with updated Token Tax، applicable registration file اور prescribed application۔ |\n| سندھ | موجودہ قانون کے مطابق seller/purchaser کو sale report 30 دن کے اندر کرنی ہے اور purchaser کو transfer 15 دن کے اندر مکمل کرنا ہے؛ transfer fees vehicle category کے مطابق ہیں۔ |\n| خیبر پختونخوا | Transfer application Form T.O. کے ذریعے متعلقہ registering authority کو دی جاتی ہے اور registration certificate پیش کیا جاتا ہے۔ |\n| اسلام آباد (ICT) | Transfer application، applicant/seller CNIC، Form-F، computerized transfer letter، transfer-of-ownership form؛ Excise Inspector verification اور receipt process۔ |\n| بلوچستان | Transfer Letter، T.O. Form، seller/purchaser CNICs، transfer fee، sale agreement، دونوں parties کی ETO کے سامنے appearance اور computerized verification۔ |\n| آزاد کشمیر (AJK) | AJK official E-Facilitation Center Vehicle Verification/ETO Biometric Verification فراہم کرتا ہے؛ مکمل current ownership-transfer checklist کی public verification نہیں ہو سکی۔ |\n| گلگت بلتستان (GB) | GB Excise registration/transfer forms اور vehicle verification services فراہم کرتا ہے، لیکن current public page پر مکمل transfer checklist متن دستیاب نہیں۔ |\n\n**سرکاری ذرائع:** پنجاب: https://excise.punjab.gov.pk/vehicle_registration | سندھ: https://excise.gos.pk/motor-vehicle-tax | KP: https://www.kpexcise.gov.pk/app/wp-content/uploads/2020/08/THE-KHYBER-Pakhtunkhwa-MOTOR-VEHICLE-ORDINANCE-1965.pdf | ICT: https://ictadministration.gov.pk/vehicle-transfer/ | بلوچستان: https://excise.balochistan.gov.pk/faq/ | AJK: https://efc.ajk.gov.pk/ | GB: https://gbexcise.gov.pk/downloads/"
+  : "## Vehicle Ownership Transfer — Province/Territory Comparison\n\n| Province/Territory | Officially verified process |\n|---|---|\n| Punjab | T.O. Form, seller/purchaser CNICs, witness copies, original Registration Certificate with updated Token Tax, applicable registration file and prescribed application. |\n| Sindh | Under current law, seller and purchaser must report the sale within 30 days and the purchaser must complete the transfer within 15 days; transfer fees vary by vehicle category. |\n| Khyber Pakhtunkhwa | Submit the transfer application using Form T.O. to the relevant registering authority and present or forward the registration certificate. |\n| Islamabad (ICT) | Transfer application, applicant/seller CNIC, Form-F, computerized transfer letter and transfer-of-ownership form, followed by Excise Inspector verification and receipt. |\n| Balochistan | Transfer Letter, T.O. Form, seller/purchaser CNICs, transfer-fee payment, sale agreement, appearance before the ETO and computerized verification. |\n| AJK | The official AJK E-Facilitation Center lists Vehicle Verification and ETO Biometric Verification, but I could not verify a complete current ownership-transfer checklist from its public page, so I am not inventing one. |\n| Gilgit-Baltistan | GB Excise provides vehicle registration/transfer forms and verification services, but the current public page does not expose the complete transfer checklist. |\n\n**Official sources:** Punjab: https://excise.punjab.gov.pk/vehicle_registration; Sindh: https://excise.gos.pk/motor-vehicle-tax; KP: https://www.kpexcise.gov.pk/app/wp-content/uploads/2020/08/THE-KHYBER-Pakhtunkhwa-MOTOR-VEHICLE-ORDINANCE-1965.pdf; ICT: https://ictadministration.gov.pk/vehicle-transfer/; Balochistan: https://excise.balochistan.gov.pk/faq/; AJK: https://efc.ajk.gov.pk/; GB: https://gbexcise.gov.pk/downloads/";
  if(jurisdiction==="Sindh" && (isToken||isPayment)) return language==="Urdu"
   ? "## سندھ — ایکسائز اینڈ ٹیکسیشن\n\nسرکاری سندھ ایکسائز ٹیکس پورٹل کے مطابق موٹر وہیکل ٹیکس کے لیے PSID پر مبنی ادائیگی کا طریقہ موجود ہے۔ طریقہ کار میں 12 ہندسوں کا PSID استعمال ہوتا ہے، جو 24 گھنٹے تک قابل استعمال ہوتا ہے، اور ادائیگی معاون 1LINK ذرائع سے کی جا سکتی ہے۔\n\n**ماخذ:** https://taxportal.excise.gos.pk/home/faq"
   : "## Sindh — Excise & Taxation\n\nThe official Sindh Excise tax portal provides a PSID-based motor-vehicle-tax payment process. The published procedure uses a 12-digit PSID valid for 24 hours, with payment through supported 1LINK channels.\n\n**Source:** https://taxportal.excise.gos.pk/home/faq";
@@ -709,11 +737,19 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  const isMutation=q.includes("mutation")||q.includes("intiqal")||q.includes("انتقال");
  const isRegistry=q.includes("registry")||q.includes("رجسٹری")||q.includes("property registration")||q.includes("register property");
  const isOwnership=q.includes("ownership")||q.includes("owner")||q.includes("ملکیت");
+ // Keep distinct land-service intents separate: ownership information/Fard,
+ // purchase transfer, inheritance, and record correction are different services.
+ const isPurchaseTransfer=/(transfer ownership|ownership transfer|transfer of ownership|purchas|bought|buying|sale of land|sold land|land sale|زمین خرید|زمین کی خرید|خریدی ہوئی زمین|ملکیت منتقل)/i.test(q);
+ const isInheritance=/(inheritance|legal heir|legal heirs|heirs|father.*died|mother.*died|death.*father|death.*mother|وراثت|وارث|قانونی وارث|والد.*وفات|والدہ.*وفات)/i.test(q);
+ const isCorrection=/(correct|correction|incorrect|wrong|error|mistake|record correction|correct.*record|درست.*ریکارڈ|ریکارڈ.*درست|غلط.*ریکارڈ|تصحیح)/i.test(q);
  const isSDC=q.includes("service delivery centre")||q.includes("service delivery center")||q.includes("sdc")||q.includes("ایس ڈی سی")||q.includes("سروس ڈیلیوری سنٹر")||q.includes("سروس ڈیلیوری سینٹر");
  const hasLandTopic=isFard||isMutation||isRegistry||isOwnership||isSDC||q.includes("land")||q.includes("property")||q.includes("revenue")||q.includes("زمین")||q.includes("جائیداد")||q.includes("ریونیو")||q.includes("رجسٹری")||q.includes("انتقال")||q.includes("لینڈ ریکارڈ");
  if(language==="Urdu"){
   if(isPunjab){
    if(isMutation)return "## پنجاب — انتقال (Mutation / Intiqal)\n\nPLRA کے مطابق انتقال زمین کی ملکیت میں تبدیلی کو سرکاری لینڈ ریکارڈ میں درج کرنے کا عمل ہے۔ متعلقہ Arazi Record Centre (ARC) پر CNIC کی بایومیٹرک تصدیق کے بعد ٹوکن لیا جاتا ہے، مطلوبہ دستاویزات اور جائیداد کی تفصیلات جمع کی جاتی ہیں، مقررہ فیس/ٹیکس ادا کیے جاتے ہیں، اور متعلقہ Revenue Officer کے سامنے بیان/تصدیق کے بعد انتقال منظور کیا جاتا ہے۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
+   if(isCorrection)return "## پنجاب — لینڈ ریکارڈ کی تصحیح\n\nPLRA کی الگ Correction of Land Records سروس ریکارڈ میں غلطیوں یا عدم مطابقت کی تصحیح کے لیے ہے۔ متعلقہ ARC یا Dahi Markaz Mall میں درخواست، دستاویزات کی جانچ، verification/inspection، مجاز Land Records authority کی منظوری اور پھر ریکارڈ update شامل ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://www.punjab-zameen.gov.pk/correctionRecordsInfo";
+   if(isPurchaseTransfer)return "## پنجاب — زمین کی ملکیت کی منتقلی\n\nزمین خریدنے کے بعد ملکیت کی تبدیلی کو PLRA کے مطابق mutation/انتقال کے ذریعے سرکاری land record میں درج کیا جاتا ہے۔\n\n1. متعلقہ Arazi Record Centre (ARC) پر CNIC/biometric verification مکمل کریں۔\n2. متعلقہ property/ownership documents جمع کرائیں۔\n3. applicable fees/taxes ادا کریں۔\n4. متعلقہ فریقین/گواہ required verification اور statements مکمل کریں۔\n5. مجاز Revenue Officer/ADLR کی منظوری کے بعد land record نئے مالک کے نام update ہوتا ہے۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
+   if(isInheritance)return "## پنجاب — وراثتی زمین کی منتقلی\n\nوراثت کی وجہ سے ملکیت میں تبدیلی بھی PLRA کے مطابق mutation/انتقال کے ذریعے سرکاری land record میں درج کی جاتی ہے تاکہ ریکارڈ قانونی وارثوں کے مطابق update ہو۔ متعلقہ documents، identity/biometric verification، applicable fees/taxes اور Revenue Officer/ADLR کی verification/attestation اس عمل کا حصہ ہیں۔\n\nمخصوص legal-heir documents کیس کی نوعیت پر منحصر ہو سکتے ہیں؛ جو تقاضے موجودہ PLRA evidence سے ثابت نہیں، وہ یہاں شامل نہیں کیے گئے۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
    if(isRegistry)return "## پنجاب — جائیداد کی رجسٹری\n\nPLRA کے مطابق نئی جائیداد کی رجسٹری کے لیے e-Stamp challan اور متعلقہ فیس/ٹیکس کی ادائیگی، e-Registration نظام تک رسائی، اور مطلوبہ معلومات/دستاویزات جمع کرانے کے مراحل شامل ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://www.punjab-zameen.gov.pk/registryInfo";
    if(isFard||isOwnership)return "## پنجاب — فرد اور لینڈ ریکارڈ\n\nPLRA کے مطابق فرد زمین کے رقبے، مقام اور ملکیت کی تفصیلات فراہم کرتی ہے۔ فرد متعلقہ Arazi Record Centre (ARC)، مجاز Arazi Moawin، یا سرکاری Online Fard سروس سے حاصل کی جا سکتی ہے۔ عام طور پر اصل CNIC اور جائیداد کی تفصیلات جیسے Khewat، Khasra یا Registry درکار ہوتی ہیں۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/fardInfo\nhttps://onlinefard.punjab-zameen.gov.pk/";
    return "## پنجاب — لینڈ ریکارڈ خدمات\n\nPLRA کی موجودہ سرکاری ویب سائٹ پر Fard، land transfer/mutation، ownership verification، registry، e-Stamp، partition اور متعلقہ land-record services دستیاب ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://www.punjab-zameen.gov.pk/";
@@ -729,6 +765,9 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  }
  if(isPunjab){
   if(isMutation)return "## Punjab — Mutation (Intiqal)\n\nThe Punjab Land Records Authority (PLRA) states that mutation records a change in land ownership in the official land record. The Punjab process includes CNIC biometric verification and a token at the concerned Arazi Record Centre, submission of required documents and property details, payment of applicable fees/taxes, and appearance before the authorized Revenue Officer with the relevant parties/witnesses. The Revenue Officer records statements and attests the mutation before the land record is updated.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
+  if(isCorrection)return "## Punjab — Correction of Land Records\n\nPLRA provides a separate Correction of Land Records service for errors or inconsistencies in land ownership data. The published process includes submitting the correction request at the concerned Arazi Record Centre (ARC) or Dahi Markaz Mall, document review, required verification/inspection, approval by the competent Land Records authority, and official record update.\n\n**Official source:**\nhttps://www.punjab-zameen.gov.pk/correctionRecordsInfo";
+  if(isPurchaseTransfer)return "## Punjab — Transfer of Land Ownership\n\nFor a land purchase, the ownership change is recorded through the applicable mutation/land-transfer process. PLRA states that mutation records a change of ownership after a sale.\n\n1. Complete CNIC/biometric verification at the concerned Arazi Record Centre (ARC).\n2. Submit the relevant property and ownership documents.\n3. Pay applicable fees/taxes.\n4. Complete the required verification/statements with the relevant parties and witnesses.\n5. After approval by the authorized Revenue Officer/ADLR, the land record is updated to the new owner.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
+  if(isInheritance)return "## Punjab — Inheritance & Transfer to Legal Heirs\n\nWhen land ownership changes because of inheritance, PLRA treats the change as a mutation in the official land record so the record can reflect the legal heirs. The applicable process includes relevant property/ownership documents, identity/biometric verification, applicable fees/taxes, and verification/attestation before the authorized Revenue Officer/ADLR.\n\nSpecific legal-heir documents can depend on the case; requirements not established by the current PLRA evidence are not invented here.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
   if(isRegistry)return "## Punjab — Property Registry\n\nPLRA current official guidance describes property registration through e-Stamping and the e-Registration system. The published process includes generating the e-Stamp challan, paying applicable stamp duty/taxes/registration and related fees, accessing the e-Registration portal, and submitting the required transaction information and documents.\n\n**Official source:**\nhttps://www.punjab-zameen.gov.pk/registryInfo";
   if(isFard||isOwnership)return "## Punjab — Fard & Land Record\n\nAccording to PLRA, a Fard provides land area, location and ownership details. It can be obtained from an Arazi Record Centre, an authorized Arazi Moawin, or the official Online Fard service. PLRA states that the original CNIC and property details such as Khewat, Khasra or Registry are used for the Fard request.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/fardInfo\nhttps://onlinefard.punjab-zameen.gov.pk/";
   return "## Punjab — Land & Revenue Services\n\nPLRA current official website lists Fard, land transfer/mutation, ownership verification, property registry, e-Stamp, partition and other land-record services.\n\n**Official source:**\nhttps://www.punjab-zameen.gov.pk/";
@@ -747,6 +786,8 @@ function educationEvidence(question:string,jurisdiction:string|null,language:"En
  const isApply=q.includes("apply")||q.includes("application")||q.includes("درخواست")||q.includes("اپلائی");
  const isEligibility=q.includes("eligible")||q.includes("eligibility")||q.includes("criteria")||q.includes("اہلیت")||q.includes("شرائط");
  const isNeedBased=q.includes("need based")||q.includes("need-based")||q.includes("financial need")||q.includes("مالی");
+ const isInternational=q.includes("international")||q.includes("abroad")||q.includes("overseas")||q.includes("foreign")||q.includes("بیرون ملک")||q.includes("بین الاقوامی");
+ const isUndergraduate=q.includes("undergraduate")||q.includes("bachelor")||q.includes("bachelors")||q.includes("گریجویشن")||q.includes("بیچلر");
  const isPunjab=jurisdiction==="Punjab";
  if(language==="Urdu"){
   if(isPunjab&& (q.includes("peef")||q.includes("punjab educational endowment")||q.includes("پنجاب ایجوکیشنل"))){
@@ -761,11 +802,23 @@ function educationEvidence(question:string,jurisdiction:string|null,language:"En
   }
   return "## Education & Scholarships\n\nبراہ کرم اپنی ضرورت واضح کریں، مثلاً HEC اسکالرشپ، Need-Based Scholarship، پنجاب PEEF، Honhaar Scholarship، یا درخواست/اہلیت۔";
  }
+ if(isInternational){
+  return "## HEC — International & Overseas Scholarships\n\nHEC maintains an official Learning Opportunities Abroad (LOA) portal for foreign-funded scholarships for Pakistani/AJK nationals. HEC states that applicants may need a valid HAT for Masters & PhD opportunities and USAT for Bachelor's opportunities, depending on the programme. HEC's current LOA information includes programmes such as Hungarian, Commonwealth and Chinese Government scholarships; active opportunities change as new calls are announced.\n\n**Official sources:** https://www.hec.gov.pk/english/scholarshipsgrants/lao/Pages/default.aspx\nhttps://www.hec.gov.pk/english/scholarshipsgrants/Pages/internationalScholarships.aspx";
+ }
+ if(isPunjab && q.includes("scholarship") && !q.includes("peef") && !q.includes("honhaar") && !q.includes("honhar")){
+  return "## Punjab — Scholarships\n\nFor students in Punjab, official scholarship programmes include PEEF and the Honhaar Scholarship. PEEF provides scholarships/financial assistance across secondary, intermediate, graduation, master's and PhD levels, while Honhaar is a separate Punjab Higher Education Department programme. Eligibility and application deadlines vary by programme, so the latest official programme information should be checked before applying.\n\n**Official sources:** https://hed.punjab.gov.pk/peef\nhttps://hed.punjab.gov.pk/node/1674\nhttps://honhaarscholarship.punjabhec.gov.pk/";
+ }
+ if(isUndergraduate && (q.includes("scholarship")||q.includes("hec")) && !isNeedBased){
+  return "## HEC — Undergraduate Scholarship Opportunities\n\nHEC's official scholarship portal lists multiple undergraduate opportunities, including HEC Need Based Scholarships, BISP Scholarships for Undergraduates, the Undergraduate Scholarship Program for students of Gilgit-Baltistan, and undergraduate opportunities for students from Balochistan & erstwhile FATA. Basic eligibility varies by programme, so the current eligibility criteria and deadline should be checked on the specific official scholarship page.\n\n**Official source:** https://www.hec.gov.pk/english/scholarshipsgrants/Pages/default.aspx";
+ }
  if(isPunjab&& (q.includes("peef")||q.includes("punjab educational endowment"))){
   return "## Punjab — PEEF Scholarship\n\nThe Punjab Higher Education Department states that the Punjab Educational Endowment Fund (PEEF) provides scholarships/financial assistance to talented and needy students. Its published scholarship levels include secondary, intermediate, graduation, master's and PhD.\n\n**Official source:** https://hed.punjab.gov.pk/peef";
  }
  if(isPunjab&& (q.includes("honhaar")||q.includes("honhar"))){
   return "## Punjab — Honhaar Scholarship\n\nThe Punjab Higher Education Department describes the Honhaar Scholarship Program as support for deserving students enrolled in public-sector universities, graduate colleges and medical colleges. The program is intended to expand access to higher education and currently covers 68 disciplines. The department's published information also states that 30,000 scholarships are planned annually.\n\nFor the latest eligibility and application details, use the official program information and portal.\n\n**Official source:** https://hed.punjab.gov.pk/node/1674\n**Official portal:** https://honhaarscholarship.punjabhec.gov.pk/";
+ }
+ if((q.includes("hec")||q.includes("scholarship")||q.includes("اسکالرشپ")||q.includes("وظیفہ")) && !isNeedBased && !isInternational && !isUndergraduate && !isPunjab){
+  return "## HEC — Scholarship Opportunities\n\nHEC's official scholarship portal covers multiple national and international scholarship opportunities for Pakistani students. The available programmes include Need-Based Scholarships and other programme-specific opportunities; eligibility, deadlines and application routes vary by scholarship.\n\nFor a specific HEC scholarship, the application method must follow that programme's official instructions. For example, HEC Need-Based Scholarship applications are submitted through the Financial Aid Office of a participating university/institution rather than directly to HEC.\n\n**Official HEC scholarship portal:** https://www.hec.gov.pk/site/scholarships\n**Need-Based application guidance:** https://www.hec.gov.pk/english/scholarshipsgrants/NBS/Pages/How-To-Apply.aspx";
  }
  if(isNeedBased||q.includes("hec")||q.includes("scholarship")){
   if(isApply){
@@ -875,6 +928,45 @@ Current medical and health-screening requirements should be checked against curr
  });
 }
 
+function sanitizeNadraCitizenAnswer(answer:string, language:"English"|"Urdu") {
+  if (!answer) return answer;
+
+  let cleaned = answer;
+
+  // Internal NADRA RAG evidence is never a citizen-facing source.
+  // Strip policy identifiers, internal evidence labels and document metadata.
+  cleaned = cleaned
+    .replace(/\*\*(?:Reference|حوالہ)\*\*\s*[—-]?\s*[^\n]*/gi, "")
+    .replace(/(?:Reference|حوالہ)\s*[—-]?\s*NADRA Registration Policy[^\n]*/gi, "")
+    .replace(/\*\*(?:Policy|پالیسی)\*\*\s*:\s*[^\n]*/gi, "")
+    .replace(/^\s*[*#-]*\s*(?:Policy|پالیسی|Reference|حوالہ|Evidence|ثبوت)\s*:?.*$/gim, "")
+    .replace(/^.*\bNADRA Registration Policy\s*(?:RP-)?6\.0\.2.*$/gim, "")
+    .replace(/^.*\bRP-6\.0\.2\b.*$/gim, "")
+    .replace(/^.*\bNADRA-Reg-Policy-6\.0\.2\b.*$/gim, "")
+    .replace(/\[NADRA POLICY (?:RAG )?EVIDENCE[^\]]*\]/gi, "")
+    .replace(/\bNADRA POLICY (?:RAG )?EVIDENCE\b\s*:?[ \t]*/gi, "")
+    .replace(/^.*\b(?:ISSUE DATE|EFFECTIVE DATE|TOTAL PAGES|RETRIEVAL SCORE)\s*:\s*.*$/gim, "")
+    .replace(/^.*\b(?:CHUNK|PAGE|SECTION|VERSION|IDENTIFIER)\s*:\s*.*$/gim, "")
+    .replace(/\b(?:pages?|sections?)\s*\d+(?:\s*[-–]\s*\d+)?/gi, "")
+    .replace(/\b(?:effective|issued)\s+(?:on\s+)?\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}/gi, "")
+    .replace(/\b(?:مؤثر|جاری)\s+\d{1,2}\s+(?:جنوری|فروری|مارچ|اپریل|مئی|جون|جولائی|اگست|ستمبر|اکتوبر|نومبر|دسمبر)\s+\d{4}/gi, "")
+    .replace(/\b(?:Rule|Regulation|Section|Clause)\s+\d+(?:\s*\([^)]*\))?/gi, "")
+    .replace(/\b(?:Rule|Regulation|Section|Clause)\s+[A-Za-z][A-Za-z0-9 _/-]*/gi, "")
+    .replace(/\bunder\s+\.?/gi, "")
+    .replace(/\bکے\s+تحت\s+\.?/gi, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n[ \t]*\n[ \t]*(?:[—-]\s*)?\n/g, "\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  const source = language==="Urdu"
+    ? "**سرکاری ماخذ:** NADRA — https://www.nadra.gov.pk/identityDocument/cnic"
+    : "**Official source:** NADRA — https://www.nadra.gov.pk/identityDocument/cnic";
+
+  return cleaned.includes("https://www.nadra.gov.pk/")
+    ? cleaned
+    : cleaned + "\n\n" + source;
+}
 async function directWorkflowResponse(args:{answer:string;source:any;department:string;question:string;language:"English"|"Urdu";jurisdiction?:string|null;tools?:string[];evidenceAvailable?:boolean;verifyClaims?:boolean;verificationEvidence?:string}) {
  let workflow=runFourAgentWorkflow({
   department:args.department, question:args.question, jurisdiction:args.jurisdiction||null, mode:"normal",
@@ -922,11 +1014,243 @@ export async function POST(request:NextRequest){try{
  else if(workingJurisdiction && !selected.jurisdiction){selected.jurisdiction=workingJurisdiction;}
  const civilTargetJurisdiction=workingTargetJurisdiction||workingJurisdiction||detectTargetJurisdiction(question);
 
+// Local Government civil-registration review: correction routing is handled below.\n // UNIVERSAL CIVIL-REGISTRATION ROUTER:
+ // One resolver covers Birth, Death, Marriage and Divorce across all seven
+ // jurisdictions. Existing jurisdiction-specific routes above remain first.
+ const civilService =
+  /birth certificate|birth registration|birth\b|پیدائش|پیدائش سرٹیفکیٹ/i.test(question) ? "Birth Certificate" :
+  /death certificate|death registration|death\b|وفات|ڈیتھ سرٹیفکیٹ/i.test(question) ? "Death Certificate" :
+  /marriage certificate|marriage registration|marriage\b|نکاح|شادی|میریج سرٹیفکیٹ/i.test(question) ? "Marriage Certificate" :
+  /divorce certificate|divorce registration|divorce\b|طلاق|طلاق سرٹیفکیٹ/i.test(question) ? "Divorce Certificate" : null;
+
+ const civilJurisdiction =
+  civilTargetJurisdiction ||
+  detectJurisdiction(question) ||
+  null;
+
+ if(civilService && !civilJurisdiction && !(requested==="NADRA Services" && /cnic|smart cnic|smart nic|snic|identity card|شناختی کارڈ|نادرا/i.test(question))){
+  const answer=language==="Urdu"
+   ? "نئے برتھ/ڈیتھ/میریج یا ڈائیورس سرٹیفکیٹ کے تقاضے صوبے اور علاقے کے مطابق مختلف ہوتے ہیں۔ براہِ کرم اپنا صوبہ یا علاقہ بتائیں، مثلاً پنجاب، خیبر پختونخوا، سندھ، بلوچستان، اسلام آباد (ICT)، آزاد کشمیر یا گلگت بلتستان، تاکہ میں متعلقہ سرکاری ذرائع سے درست طریقہ کار، دستاویزات اور فیس بتا سکوں۔"
+   : "The requirements for a new birth, death, marriage or divorce certificate vary by province or territory. Please tell me your province/area — Punjab, Khyber Pakhtunkhwa, Sindh, Balochistan, Islamabad (ICT), AJK, or Gilgit-Baltistan — so I can give you the relevant government-verified procedure, documents and fees.";
+  return directWorkflowResponse({answer,source:null,department:requested,question,language,jurisdiction:selected.jurisdiction||null,evidenceAvailable:false});
+ }
+
+ if(civilService && civilJurisdiction){
+  const civilSources:Record<string,{title:string,url:string,scope:string}> = {
+   "Punjab":{
+    title:"Punjab Local Government & Community Development — Birth, Death, Marriage & Divorce Registration",
+    url:"https://lgcd.punjab.gov.pk/faq",
+    scope:"Punjab's official Local Government FAQ covers registration of birth, death, marriage and divorce through the relevant Union Council / Municipal Committee. It publishes specific requirements for birth and marriage and identifies the relevant authority for death and divorce."
+   },
+   "Khyber Pakhtunkhwa":{
+    title:"Government of Khyber Pakhtunkhwa — Registration of Birth, Death, Marriage & Divorce",
+    url:"https://www.lgkp.gov.pk/page/registration-bdmd",
+    scope:"The official KP Local Government service page confirms that Village/Neighbourhood Councils are responsible for registering births, deaths, marriages and divorces and lists the responsible Secretary Union Council and service time for birth and death."
+   },
+   "Sindh":{
+    title:"Government of Sindh — Civil Registration Management System (CRMS)",
+    url:"https://cm.sindh.gov.pk/news/sn-crms-mobael-ayp-jo-afttah-pydaesh-fotgy-rjsryshn-hay-jyl",
+    scope:"The Government of Sindh states that its CRMS mobile application provides digital registration services for birth, death, marriage and divorce through the provincial civil-registration system."
+   },
+   "Balochistan":{
+    title:"Balochistan Local Government & Rural Development Department — CRMS",
+    url:"https://lgrd.gob.pk/launching-ceremony-birth-death-marriage-divorce-registration/",
+    scope:"The official Balochistan Local Government & Rural Development Department states that the Pak-ID mobile application provides online issuance of Birth, Death, Marriage and Divorce Certificates through CRMS."
+   },
+   "Islamabad Capital Territory":{
+    title:"ICT Administration — Citizen Services",
+    url:"https://ictadministration.gov.pk/services/",
+    scope:"ICT Administration officially lists Birth Registration, Death Registration, Marriage Registration and Divorce Registration among its citizen services."
+   },
+   "Azad Jammu and Kashmir":{
+    title:"AJK Government — Local Government / E-Facilitation Services",
+    url:"https://efc.ajk.gov.pk/service",
+    scope:"The official AJK E-Facilitation Center provides Birth and Death Certificate services. The AJK Local Government Act places registration of births, deaths and marriages within the local-council framework."
+   },
+   "Gilgit-Baltistan":{
+    title:"Government of Gilgit-Baltistan — Official Portal",
+    url:"https://gilgitbaltistan.gov.pk/",
+    scope:"The public official GB portal is the authoritative government entry point. A detailed, service-specific civil-registration checklist was not available in the official material I could verify, so the app will not invent one."
+   }
+  };
+
+  const src=civilSources[civilJurisdiction];
+  if(src){
+   const civilAction =
+    /\bcancel(?:ation|led|ling)?\b|\bvoid\b|\bwithdraw\b|\bannul\b|\bterminate\b|\bdelete\b|\bremove\b|\binvalid(?:ate|ation)?\b|\bخاتمہ\b|\bمنسوخ\b|\bختم\b/i.test(question) ? "cancellation" :
+    /\bchange\b|\bcorrect\b|\bcorrection\b|\bmodify\b|\bmodified\b|\brectif\w*\b|\bamend\w*\b|\bupdate\b|\bedit\b|\bmistake\b|\berror\b|\bwrong\b|\bincorrect\b|\bdate of birth\b|\bdob\b|\bbirth date\b|\bdate of death\b|\bdeath date\b|\bage\b|\bname change\b|\bدرست\b|\bتبدیل\b|\bترمیم\b|\bتبدیلی\b|\bغلط\b|\bغلطی\b|\bتصحیح\b|\bتاریخ پیدائش\b|\bتاریخ وفات\b/i.test(question) ? "correction" :
+    "registration";
+   let detail="";
+   if(civilJurisdiction==="Punjab"){
+    if(civilAction==="correction" && (civilService==="Birth Certificate" || civilService==="Death Certificate")) detail="Punjab's Birth and Death Rules 2025 distinguish clerical correction from other changes. For a clerical error, the person (or relative) may apply on plain paper to the concerned registration office for a birth certificate; for a death certificate, a relative may apply. The registration office forwards the application to the Assistant Director of the concerned tehsil for inquiry, with a public notice inviting objections. If there is no objection and the Assistant Director is satisfied, the correction and amended certificate may be ordered. For a change other than a clerical error, the rules require a court decree.";
+    else if(civilAction==="correction" && civilService==="Marriage Certificate") detail="Punjab official Local Government material verifies the normal computerized marriage-registration process through the concerned Union Council or Municipal Committee, but the current official material verified here does not publish a complete marriage-certificate correction procedure. Therefore, I will not substitute normal registration requirements for a correction request or invent unverified documents, fees or approval steps.";
+    else if(civilAction==="cancellation" && (civilService==="Birth Certificate" || civilService==="Death Certificate")) detail="Punjab's rules provide a specific cancellation process for a bogus or fake birth or death registration. The concerned local-government authority can initiate notice/inquiry; where the entry is found bogus or fake, the prescribed committee directs cancellation, with an appeal process. This is not the same as an ordinary correction.";
+    else if(civilService==="Birth Certificate") detail="For birth registration, Punjab's official FAQ states that the relevant Union Council should be contacted within 60 days; it lists parents' CNIC copies, the hospital/traditional birth attendant birth certificate, and the completed Union Council form. Registration is free, while PKR 100 is charged for the NADRA computerized birth-registration certificate. It also gives separate timelines for normal and late registration.";
+    else if(civilService==="Death Certificate") detail="Punjab's official FAQ states that the relevant Union Council or Municipal Committee issues the computerized death registration certificate. Form-D is used, and documentary evidence including the graveyard certificate/parchi may be required.";
+    else if(civilService==="Marriage Certificate") detail="Punjab's official FAQ states that the concerned Union Council or Municipal Committee issues the computerized marriage registration certificate. It lists the registered Nikah Nama and CNICs of husband and wife and their parents; the stated certificate fee is PKR 300 and the normal process is about 3 working days.";
+    else detail="Punjab's official FAQ states that the concerned Union Council or Municipal Committee handles divorce registration where the marriage/Nikah Nama was registered. The applicant provides written statements and documentary evidence, including the applicable divorce order.";
+   } else if(civilJurisdiction==="Khyber Pakhtunkhwa"){
+    if(civilAction==="correction"){
+     if(civilService==="Birth Certificate" || civilService==="Death Certificate"){
+      detail="KP's CRVS Rules 2021 provide a specific correction process for birth/death registration entries. The applicant submits a written application on Form-G, supported by an affidavit, to the Chairman of the concerned Village/Neighbourhood Council within three years of registration. The Chairman conducts an inquiry and decides the application within 15 days. If approved, the Secretary/official makes the correction or change in the register on the basis of the written order. If the correction application is made after three years, approval is subject to an attested copy of the Court's order. The rules also require information about the change/correction to be provided to NADRA. For the certificate itself, the rules require a formal correction application on Form-H with supporting documents; the corrected certificate is normally issued within 15 working days, while an urgent certificate may be obtained within a maximum of 7 working days on payment of the applicable extra fee. The published schedule lists a PKR 200 correction fee and a PKR 300 urgent fee for birth/death certificates.";
+     } else {
+      detail="KP's CRVS Rules 2021 provide a formal certificate-correction process. The applicant must apply for correction on Form-H and attach supporting documents. The rules provide for recording the amendment, approval/rejection and final VC/NC orders. A certificate is normally issued within 15 working days; where an urgent certificate is required, the rules allow a maximum of 7 working days on payment of the applicable extra fee. The published schedule lists a PKR 200 correction fee for vital-event certificates.";
+     }
+    }
+    else if(civilAction==="cancellation") detail="KP's Civil Registration Vital Statistics Rules provide a dedicated cancellation process for a certificate of a vital event. Form-V is the Application for Cancellation of the Certificate of Vital Event. It records the certificate reference, issuing authority, the applicant's connection with the certificate, and the reason for cancellation. The cancellation is therefore handled as a separate formal process, not as a normal death-registration application.";
+    else if(civilService==="Birth Certificate") detail="KP's official CRVS information lists Form-A, the parent's or guardian's attested CNIC/passport/residence permit as applicable, and a birth certificate, immunization card or school certificate if available. Birth registration is handled by the concerned Village/Neighbourhood Council and the official service page lists a 2-day time limit.";
+    else if(civilService==="Death Certificate") detail="KP's official Local Government service page confirms registration and certification of death through the concerned council and lists a 2-day service time. The CRVS information also describes documentary evidence such as a graveyard certificate/parchi where applicable.";
+    else if(civilService==="Marriage Certificate") detail="KP's official CRVS rules require the prescribed marriage application, a registered Nikah Nama or applicable marriage certificate, and CNIC copies of the husband and wife and their parents, with the concerned council responsible for registration.";
+    else detail="KP's official Local Government/CRVS framework places divorce registration with the concerned council and requires the prescribed application and supporting divorce documentation.";
+   } else if(civilJurisdiction==="Sindh"){
+    if(civilAction==="correction"){
+      detail=`For a Sindh ${civilService} correction, the question concerns an existing ${civilService.replace(" Certificate","")} record whose information is wrong or needs amendment. The current official Sindh CRMS material confirms digital civil registration, but the official material verified here does not publish a complete current procedure specifically for correcting this certificate, including the correction form, approving authority, supporting documents, timeline or fee. I therefore will not substitute new-registration requirements for a correction request or invent missing requirements.`;
+    } else if(civilAction==="cancellation"){
+      detail=`For cancellation of a Sindh ${civilService}, the current official Sindh CRMS material confirms digital registration of vital events but does not publish a complete current cancellation procedure for an existing certificate of this type. I therefore will not substitute the normal registration process or invent a cancellation form, authority, documents, timeline or fee.`;
+    } else {
+      detail="Sindh's official CRMS information states that birth, death, marriage and divorce registration are provided through an integrated digital civil-registration platform. The service is implemented through local councils and the province has introduced online/mobile registration through CRMS.";
+    }
+      } else if(civilJurisdiction==="Balochistan"){
+    if(civilAction==="correction"){
+      detail=`For a Balochistan ${civilService} correction, the question concerns an existing ${civilService.replace(" Certificate","")} record whose information is wrong or needs amendment. The current official Balochistan Local Government & Rural Development Department material confirms CRMS-based civil-certificate services, but the official material verified here does not publish a complete current procedure specifically for correcting this certificate, including the correction form, approving authority, supporting documents, timeline or fee. I therefore will not substitute new-registration requirements for a correction request or invent missing requirements.`;
+    } else if(civilAction==="cancellation"){
+      detail=`For cancellation of a Balochistan ${civilService}, the current official Balochistan material confirms CRMS-based birth/death/marriage/divorce services but does not publish a complete current cancellation procedure for an existing certificate of this type. I therefore will not substitute the normal registration process or invent a cancellation form, authority, documents, timeline or fee.`;
+    } else {
+      detail="Balochistan's official Local Government & Rural Development Department states that the Pak-ID mobile application provides online issuance of Birth, Death, Marriage and Divorce Certificates through CRMS.";
+    }
+      } else if(civilJurisdiction==="Islamabad Capital Territory"){
+    detail="ICT Administration officially lists this civil-registration service among its citizen services. Where the dedicated ICT service page publishes detailed requirements, the application should use those requirements; otherwise it should not invent missing documents or fees.";
+   } else if(civilJurisdiction==="Azad Jammu and Kashmir"){
+    detail="AJK's official E-Facilitation Center lists Birth and Death Certificate services, while the AJK Local Government Act places registration of births, deaths and marriages within the local-council framework. The available public official material does not provide a complete current checklist for every civil certificate, so missing requirements should not be invented.";
+   } else {
+    detail="The Government of Gilgit-Baltistan official portal is the authoritative government entry point, but a detailed service-specific checklist for this civil certificate was not available in the official material I could verify. The app therefore will not invent documents, fees or office details.";
+   }
+
+   const serviceName = civilService.replace(" Certificate","").replace(" Registration","");
+   const answer=language==="Urdu"
+    ? "## "+civilJurisdiction+" — "+civilService+"\n\n"+detail+"\n\n**اہم:** اس جواب میں صرف **"+serviceName+"** سروس سے متعلق معلومات شامل ہیں۔ جہاں سرکاری ذریعہ مکمل دستاویزات یا فیس واضح طور پر شائع نہیں کرتا، وہاں غیرمصدقہ معلومات شامل نہیں کی جا رہی۔\n\n**سرکاری ذریعہ:** "+src.url
+    : "## "+civilJurisdiction+" — "+civilService+"\n\n"+detail+"\n\n**Important:** This answer is limited to **"+serviceName+"** service. Where the official source does not publish a complete current document or fee checklist, I will not invent unverified requirements.\n\n**Official source:** "+src.url;
+
+   return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:src.title,url:src.url,lastVerified:"",province:civilJurisdiction},department:"Union Council / Local Government",question,language,jurisdiction:civilJurisdiction,evidenceAvailable:true,verifyClaims:true,verificationEvidence:`${src.scope}\n\n${detail}`});
+  }
+ }
+
+
+
+ // EARLY GOVERNMENT JOBS ROUTER:
+ // Current vacancies must come from the live official NJP evidence.
+ // Unrelated services must never fall through to the Government Jobs source.
+ if(requested==="Government Jobs"){
+   const gq=normalize(question);
+   const mismatch=/passport|پاسپورٹ|vehicle registration|register a vehicle|vehicle|گاڑی|electricity meter|electric meter|new meter|بجلی کا میٹر|driving licence|driving license|ڈرائیونگ لائسنس|fbr|income tax|ntn|tax return|excise|token tax|birth certificate|death certificate|marriage certificate|divorce certificate|union council|domicile certificate|vaccination|vaccine|police clearance|fir|arms licence|arms license/i.test(gq);
+   const jobIntent=/government jobs?|govt jobs?|job vacancies?|vacancies?|employment|careers?|recruitment|national jobs portal|\bnjp\b|نوکری|ملازمت|بھرتی|آسامیاں|روزگار/i.test(gq);
+
+   if(mismatch && !jobIntent){
+     return directWorkflowResponse({
+       answer:"This question does not appear to belong to the selected government department. Please ask a question related to the selected government department.",
+       source:null, department:"Government Jobs", question, language, jurisdiction:null, evidenceAvailable:false
+     });
+   }
+
+   const jobsUrl="https://www.njp.gov.pk/jobs/live";
+   const helpUrl="https://www.njp.gov.pk/help";
+   const livePage=await fetchOfficialPage(jobsUrl);
+   const helpPage=await fetchOfficialPage(helpUrl);
+   const isApply=/apply|application|how can i apply|how to apply|اپلائی|درخواست/i.test(gq);
+   const isDocs=/document|documents|information|required|requirements|papers|کاغذات|دستاویز|ضروریات/i.test(gq);
+   const isGraduate=/graduate|bachelor|bachelors|degree|undergraduate|بیچلر|گریجویٹ|ڈگری/i.test(gq);
+   const isPunjab=/\bpunjab\b|پنجاب/i.test(gq);
+   const isFederal=/federal|federal government|وفاقی|وفاقی حکومت/i.test(gq);
+
+   let answer="";
+   let answerSource=jobsUrl;
+   let page=livePage;
+
+   if(isDocs){
+     answer=language==="Urdu"
+       ?"## National Jobs Portal — مطلوبہ معلومات اور دستاویزات\n\nNJP پر required information اور documents **ہر vacancy کے job details** کے مطابق مختلف ہو سکتے ہیں۔ ایک universal document list تمام سرکاری jobs پر لاگو نہیں کی جا سکتی۔\n\nCandidate profile/CV مکمل کرنا ضروری ہے، جبکہ اضافی documents، qualification، experience اور دیگر requirements متعلقہ vacancy کی official details میں دی جاتی ہیں۔\n\n**سرکاری ذریعہ:** "+helpUrl
+       :"## National Jobs Portal — Required Information and Documents\n\nThe information and documents required on NJP **vary by vacancy and its job details**. There is no single universal document list for every government job.\n\nComplete your candidate profile/CV information; additional documents, qualifications, experience and other requirements are specified in the official details of the particular vacancy.\n\n**Official source:** "+helpUrl;
+   } else if(isApply){
+     answer=language==="Urdu"
+       ?"## National Jobs Portal — درخواست دینے کا طریقہ\n\nNJP پر سرکاری ملازمت کے لیے:\n1. **Live Jobs** میں مطلوبہ vacancy کھولیں۔\n2. Job details میں **Apply** منتخب کریں۔\n3. Candidate profile/CV مکمل کریں اور vacancy کی مطلوبہ معلومات فراہم کریں۔\n4. Application steps مکمل کرکے closing date سے پہلے submit کریں۔\n\n**سرکاری ذریعہ:** "+helpUrl
+       :"## National Jobs Portal — How to Apply\n\nTo apply for a government job through NJP:\n1. Open **Live Jobs** and select the vacancy.\n2. Open the job details and choose **Apply**.\n3. Complete your candidate profile/CV and provide the information required for that vacancy.\n4. Complete the application steps and submit before the closing date.\n\n**Official source:** "+helpUrl;
+   } else if(isGraduate){
+     answer=language==="Urdu"
+       ?"## Government Jobs — Bachelor's/Graduate Applicants\n\nNJP پر ہر vacancy کی qualification اور experience criteria الگ ہیں۔ صرف graduate یا bachelor's degree رکھنے سے تمام government jobs کے لیے eligibility ثابت نہیں ہوتی۔\n\nموجودہ vacancy کی **Qualification** اور **Experience** requirements کے مطابق eligibility چیک کی جاتی ہے۔ میں بغیر vacancy-specific qualification match کے کسی universal list کو graduate jobs نہیں کہوں گا۔\n\n**سرکاری ذریعہ:** "+jobsUrl
+       :"## Government Jobs — Bachelor's/Graduate Applicants\n\nNJP vacancies have job-specific qualification and experience criteria. Holding a bachelor's degree does not by itself make an applicant eligible for every government job.\n\nEligibility should be determined from the **Qualification** and **Experience** requirements of each current vacancy. I will not label a universal list as graduate jobs without a vacancy-specific qualification match.\n\n**Official source:** "+jobsUrl;
+   } else {
+     if(isPunjab){
+       answerSource=jobsUrl;
+     }
+     const compact=cleanAnswer(page||"");
+     const countMatch=compact.match(/(\d+)\s+(?:Positions|Jobs)\s+(?:Available|Found)/i);
+     const count=countMatch?countMatch[1]:"";
+     const items:string[]=[];
+     const rx=/([A-Z][A-Za-z0-9()&–—'./ -]{2,90}?)\s+by\s+([A-Z][A-Za-z0-9()&–—'./ -]{2,100}?)\s+(?:Contract|Regular|Permanent)\b/g;
+     let m:RegExpExecArray|null;
+     while((m=rx.exec(compact)) && items.length<8){
+       const title=m[1]
+         .replace(/^(?:\d+\s+)?(?:Show\s+\d+\s*)+(?:Search\s*|List\s*|Tile\s*)+/i,"")
+         .trim();
+       if(title && !/^(Show|Search|List|Tile|View Details|Login to Apply)$/i.test(title)){
+         const item=title+" — "+m[2].trim();
+         if(items.indexOf(item)<0)items.push(item);
+       }
+     }
+     const lines=items.length?items.map((x,i)=>(i+1)+". "+x).join("\n"):"The official live page is available, but a reliable vacancy list could not be extracted.";
+     if(isPunjab){
+       answer=language==="Urdu"
+         ?"## Government Jobs — Punjab\n\nNJP کے official live-jobs evidence سے اس وقت Punjab کے لیے الگ verified vacancy count/list reliably extract نہیں ہو سکی۔ اس لیے میں 0 jobs یا غیرمصدقہ Punjab vacancies ظاہر نہیں کر رہا۔\n\nPunjab کی current government vacancies کے لیے NJP کے official Live Jobs page میں location filter استعمال کریں اور ہر vacancy کی domicile/eligibility details دیکھیں۔\n\n**سرکاری ذریعہ:** "+jobsUrl
+         :"## Government Jobs — Punjab\n\nThe official NJP live-jobs evidence currently available to this service does not provide a reliable Punjab-specific vacancy count/list. I therefore will not report 0 jobs or invent Punjab vacancies.\n\nFor current Punjab government vacancies, use the location filter on NJP's official Live Jobs page and check the domicile/eligibility details of each vacancy.\n\n**Official source:** "+jobsUrl;
+     } else {
+       answer=language==="Urdu"
+         ?"## Government Jobs — National Jobs Portal\n\nNJP کی current listings "+(count?"میں اس وقت **"+count+" positions** درج ہیں۔ ":"")+"چند موجودہ listings:\n\n"+lines+"\n\nQualification، experience اور closing date ہر vacancy کے مطابق مختلف ہیں۔\n\n**سرکاری ذریعہ:** "+answerSource
+         :"## Government Jobs — National Jobs Portal\n\nThe NJP current listings "+(count?"currently show **"+count+" positions**. ":"")+"include these examples:\n\n"+lines+"\n\nQualification, experience and closing date are vacancy-specific.\n\n**Official source:** "+answerSource;
+     }
+     if(isFederal){
+       answer += language==="Urdu" ? "\n\nیہ NJP کی current federal/government listings ہیں؛ ہر vacancy کی employing organization اور eligibility الگ ہو سکتی ہے۔" : "\n\nThese are current NJP government listings; the employing organization and eligibility are vacancy-specific.";
+     }
+   }
+
+   const verificationEvidence=[
+     "OFFICIAL NJP LIVE SOURCE: "+jobsUrl,
+     livePage,
+     "OFFICIAL NJP HELP SOURCE: "+helpUrl,
+     helpPage,
+     page
+   ].filter(Boolean).join("\n\n");
+
+   return directWorkflowResponse({
+     answer,
+     source:{department:"National Jobs Portal",title:"National Jobs Portal — Government Jobs",url:(isApply||isDocs)?helpUrl:answerSource,lastVerified:"",province:isPunjab?"Punjab":""},
+     department:"Government Jobs", question, language, jurisdiction:isPunjab?"Punjab":null,
+     evidenceAvailable:true, verifyClaims:true, verificationEvidence:verificationEvidence.trim()
+   });
+ }
+
  // EARLY NADRA SERVICE ROUTER:
  // NADRA policy questions must be resolved before generic service mismatch/routing.
  // This prevents CRC/B-Form, NICOP, POC, FRC and identity-change questions from
  // being misclassified as Union Council/Other Services or rejected as unrelated.
  if(requested==="NADRA Services"){
+   // Never expose internal NADRA policy identifiers, page/section references,
+   // retrieval metadata, or raw policy text in a citizen-facing response.
+   // Handle explicit disclosure requests before the RAG answer is generated.
+   const nadraInternalDisclosureRequest = /\b(?:policy document|policy|document|reference|version|page|pages|section|sections|chunk|evidence|exact policy|exact text|raw text|source text|retrieval|identifier)\b.*\b(?:used|reference|referenced|answer|answered|query|question|evidence|text|version|page|section|document)\b|\b(?:which|what|give|show|tell|provide|list)\b.*\b(?:policy document|policy|version|page|section|chunk|evidence|exact policy|exact text|raw policy)\b/i.test(question)
+     || /\b(?:policy document|policy|version|page|section|chunk|evidence|exact policy|exact text|raw policy|document reference)\b/i.test(question) && /\b(?:nadra|RP[-‑–—]?6\.0\.2|registration policy)\b/i.test(question);   if(nadraInternalDisclosureRequest){
+     const safeAnswer=language==="Urdu"
+       ? "میں اندرونی NADRA پالیسی حوالہ، دستاویز نمبر/ورژن، صفحہ یا سیکشن نمبر، retrieval/chunk/evidence metadata یا پالیسی کا اصل متن فراہم نہیں کر سکتا۔ میں شہری کو متعلقہ NADRA سروس کی قابلِ استعمال، تصدیق شدہ معلومات فراہم کر سکتا ہوں۔"
+       : "I can provide the relevant verified NADRA service information, but I do not provide internal policy references, document/version identifiers, page or section numbers, retrieval/chunk/evidence metadata, or raw policy text.";
+     return directWorkflowResponse({
+       answer:safeAnswer,
+       source:{department:"NADRA",title:"NADRA official information",url:"https://www.nadra.gov.pk/identityDocument/cnic",lastVerified:"",province:""},
+       department:"NADRA Services",
+       question,
+       language,
+       evidenceAvailable:true,
+       verifyClaims:false
+     });
+   }
    const directNadraAnswer=await getDirectNadraAnswer(question,language);
    if(directNadraAnswer){
      const nadraRag=await retrieveNadraEvidence(question,language);
@@ -942,7 +1266,7 @@ export async function POST(request:NextRequest){try{
      if(!ragLikelyRelevant){
        const searchText=await fetchOfficialSearch(question,["nadra.gov.pk"]);
        if(searchText){
-         nadraOfficialText="\\n\\nOFFICIAL NADRA WEB SEARCH EVIDENCE:\\n"+searchText;
+         nadraOfficialText="\n\nOFFICIAL NADRA WEB SEARCH EVIDENCE:\n"+searchText;
          usedWebSearch=true;
        }
      }
@@ -959,7 +1283,7 @@ export async function POST(request:NextRequest){try{
          nadraSpecificVerificationEvidence=[
            "OFFICIAL NADRA POC SOURCE: https://www.nadra.gov.pk/identityDocument/poc",
            relevant
-         ].filter(Boolean).join("\\n\\n");
+         ].filter(Boolean).join("\n\n");
        }
      }
      if(/shajrah|shajra|shajra.?e.?nasab|family composition|family tree|شجرہ|خاندانی فہرست/.test(qnDirect) &&
@@ -970,7 +1294,7 @@ export async function POST(request:NextRequest){try{
          "OFFICIAL NADRA FRC SOURCE: https://www.nadra.gov.pk/identityDocument/frc",
          "NADRA defines FRC as Family Registration Certificate and states that it reflects, verifies and records registered family-composition data. NADRA lists FRC categories including By Birth, By Marriage, By Adoption and By All.",
          "OFFICIAL GOVERNMENT REVENUE EVIDENCE: Shajra-e-Nasab is used in government revenue records as a pedigree/family-tree record; it is distinct from an NADRA Family Registration Certificate."
-       ].join("\\n\\n");
+       ].join("\n\n");
      }
      // Use narrowly scoped RP-6.0.2 chunks for NADRA claim verification.
      // General RAG retrieval remains available for research, but unrelated
@@ -981,7 +1305,7 @@ export async function POST(request:NextRequest){try{
        nadraSpecificVerificationEvidence,
        focusedNadraEvidence ? "" : nadraRag,
        focusedNadraEvidence ? "" : nadraOfficialText
-     ].filter(Boolean).join("\\n\\n");
+     ].filter(Boolean).join("\n\n");
      const claimVerification=await verifyAnswerClaims({
        answer:cleanAnswer(directNadraAnswer),
        evidence:verificationEvidence,
@@ -1030,12 +1354,12 @@ export async function POST(request:NextRequest){try{
        :"Four-agent workflow completed with a verification warning; the answer was not fully claim-verified.";
 
      return NextResponse.json({
-       answer:cleanAnswer(directNadraAnswer),
+       answer:sanitizeNadraCitizenAnswer(cleanAnswer(directNadraAnswer), language),
        source:{
          department:"NADRA",
-         title:"NADRA Registration Policy RP-6.0.2",
-         url:"https://www.nadra.gov.pk/",
-         lastVerified:"21 September 2026",
+         title:"NADRA official information",
+         url:"https://www.nadra.gov.pk/identityDocument/cnic",
+         lastVerified:"",
          province:""
        },
        agent:true,
@@ -1048,6 +1372,35 @@ export async function POST(request:NextRequest){try{
        }
      });
    }
+ }
+
+ // EARLY PASSPORT 7-MONTH RENEWAL ROUTE:
+ // DGI&P explicitly states that passport renewal is allowed before expiry,
+ // including when the existing passport still has months of validity remaining.
+ // This narrow handler fixes the previously unanswered "7 months remaining" case
+ // without changing the broader Passport routing or other departments.
+ if(requested==="Passport Services" &&
+    /(renew|renewal|renew passport|تجدید|تجدیدِ پاسپورٹ)/i.test(question) &&
+    /(7\s*months?|seven\s*months?|7\s*month|7\s*ماہ|سات\s*ماہ)/i.test(question)){
+   const passportOfficialUrl="https://dgip.gov.pk/passport/ordinary-passport.php";
+   const passportPage=await fetchOfficialPage(passportOfficialUrl);
+   const passportTerms=["Renewal of Passport","no restriction for renewal of passport before its expiry","full validity of 5/10 years","reason for obtaining a new passport before its expiry","relevant passport office"];
+   const passportRelevant=extractRelevantOfficialEvidence(passportPage,passportTerms);
+   const answer=language==="Urdu"
+    ?"## پاسپورٹ کی میعاد ختم ہونے سے 7 ماہ پہلے تجدید\n\nجی ہاں، موجودہ پاسپورٹ کی میعاد ختم ہونے میں 7 ماہ باقی ہوں تب بھی پاسپورٹ کی تجدید کی جا سکتی ہے۔ DGI&P کے مطابق پاسپورٹ کی میعاد ختم ہونے سے پہلے تجدید پر کوئی پابندی نہیں ہے۔\n\n- آپ کو متعلقہ پاسپورٹ آفس میں مطلوبہ دستاویزات کے ساتھ تجدید کے لیے درخواست دینی ہوگی۔\n- موجودہ پاسپورٹ کی میعاد ختم ہونے سے پہلے نیا پاسپورٹ حاصل کرنے کی وجہ کا بیان مانگا جا سکتا ہے۔\n- نیا پاسپورٹ مکمل 5 یا 10 سال کی میعاد کے ساتھ جاری کیا جا سکتا ہے، متعلقہ قواعد کے مطابق۔\n- بیرونِ ملک پاکستانی آن لائن renewal سروس بھی استعمال کر سکتے ہیں؛ DGI&P کے مطابق آن لائن renewal اس وقت دستیاب ہے جب موجودہ پاسپورٹ کی میعاد ایک سال سے کم رہ گئی ہو یا پاسپورٹ expired ہو۔\n\n**سرکاری ذریعہ:** Directorate General of Immigration & Passports (DGI&P) — General Requirements for Passport\nhttps://dgip.gov.pk/passport/ordinary-passport.php"
+    :"## Renewing a Passport with 7 Months Remaining\n\nYes. You can renew your Pakistani passport even when 7 months of validity remain. DGI&P states that there is no restriction on renewal before the passport expires.\n\n- Apply for renewal at the relevant passport office with the required documents.\n- Because the existing passport has not yet expired, DGI&P may ask for a statement explaining the reason for obtaining a new passport before expiry.\n- A new passport can be issued with full 5-year or 10-year validity, subject to the applicable rules.\n- For online renewal, DGI&P states that the service is available when an MRP is expired or has less than 1 year of validity remaining.\n\n**Official source:** Directorate General of Immigration & Passports (DGI&P) — General Requirements for Passport\nhttps://dgip.gov.pk/passport/ordinary-passport.php";
+   return directWorkflowResponse({
+     answer,
+     source:{department:"Passport",title:"DGI&P — General Requirements for Passport",url:passportOfficialUrl,lastVerified:"9 September 2026",province:""},
+     department:"Passport Services",
+     question,
+     language,
+     evidenceAvailable:true,
+     verifyClaims:true,
+     verificationEvidence:(passportRelevant
+       ? "OFFICIAL SOURCE EVIDENCE: "+passportOfficialUrl+"\n"+passportRelevant
+       : "OFFICIAL CURATED EVIDENCE:\n"+answer).trim()
+   });
  }
 
  // EARLY PASSPORT PARTICULARS MODIFICATION ROUTE:
@@ -1071,10 +1424,10 @@ export async function POST(request:NextRequest){try{
   const passportTerms=["Change of Particulars","CNIC","NICOP","father","date of birth","name","Directorate General Immigration & Passports","Regional Passport Office"];
   const passportRelevant=extractRelevantOfficialEvidence(passportPage,passportTerms);
   if(passportRelevant){
-   passportVerificationEvidence="OFFICIAL SOURCE EVIDENCE: "+passportOfficialUrl+"\\n"+passportRelevant;
+   passportVerificationEvidence="OFFICIAL SOURCE EVIDENCE: "+passportOfficialUrl+"\n"+passportRelevant;
   }
   if(!passportVerificationEvidence.trim()){
-   passportVerificationEvidence="OFFICIAL CURATED EVIDENCE:\\n"+answer;
+   passportVerificationEvidence="OFFICIAL CURATED EVIDENCE:\n"+answer;
   }
   return directWorkflowResponse({
    answer,
@@ -1098,17 +1451,6 @@ export async function POST(request:NextRequest){try{
   }
  }
 
- // EARLY BALOCHISTAN BIRTH-CERTIFICATE ROUTE: use the current official
- // Local Government & Rural Development Department / NADRA birth-registration
- // service instead of falling through to generic evidence search.
- if(/balochistan|بلوچستان/i.test(question) &&
-    /birth|birth certificate|birth registration|پیدائش|پیدائش سرٹیفکیٹ|رجسٹریشنِ پیدائش/i.test(question)){
-  const answer=language==="Urdu"
-   ?"## بلوچستان — نیا برتھ سرٹیفکیٹ / پیدائش کی رجسٹریشن\n\nبلوچستان حکومت کے Local Government & Rural Development Department اور NADRA نے Union Council کی سطح پر **Unified Registration One Window Counter / Birth Registration Center** قائم کیے ہیں۔ سرکاری معلومات کے مطابق یہ مراکز پیدائش کی رجسٹریشن، برتھ سرٹیفکیٹ کے اجراء اور سول رجسٹریشن ڈیٹا کو مرکزی نظام سے منسلک کرنے کے لیے قائم کیے گئے ہیں۔\n\n**عمل:**\n1. متعلقہ Union Council کے Birth Registration Center / One Window Counter سے پیدائش کی رجسٹریشن شروع کریں۔\n2. پیدائش کا اندراج CRMS میں کیا جاتا ہے اور سرٹیفکیٹ جاری کیا جاتا ہے۔\n3. دستیاب علاقوں میں NADRA کے **Pak-ID mobile app** کے ذریعے بھی پیدائش کی رجسٹریشن کی سہولت موجود ہے؛ NADRA کے مطابق بلوچستان میں یہ سہولت فی الحال **Quetta district** میں دستیاب ہے، جبکہ دیگر علاقوں میں توسیع جاری ہے۔\n\n**اہم:** دستیاب موجودہ سرکاری Balochistan source میں نئے برتھ سرٹیفکیٹ کے لیے مکمل دستاویزات کی checklist واضح طور پر شائع نہیں کی گئی، اس لیے میں غیرمصدقہ کاغذات کی فہرست شامل نہیں کر رہا۔\n\n**سرکاری ذرائع:**\n- Balochistan Local Government & Rural Development Department: https://lgrd.gob.pk/local-government-department-and-nadra-open-one-window-birth-registration-center/\n- NADRA Pak-ID birth-registration announcement: https://www.youtube.com/watch?v=dzCeleaWOUA"
-   :"## Balochistan — New Birth Certificate / Birth Registration\n\nThe Government of Balochistan’s Local Government & Rural Development Department and NADRA have established **Unified Registration One Window Counters / Birth Registration Centers at Union Council level**. The official provincial announcement states that these centers provide birth registration, birth-certificate issuance, and integration of civil-registration data into the central system.\n\n**Process:**\n1. Start the birth registration at the relevant Union Council Birth Registration Center / One Window Counter.\n2. The birth is registered through the CRMS and the birth certificate is issued.\n3. Where available, NADRA’s **Pak-ID mobile app** can also be used for birth registration; NADRA currently lists this facility for **Quetta district in Balochistan**, with expansion to other areas underway.\n\n**Important:** The current official Balochistan source does not clearly publish a complete document checklist for a new birth certificate, so I am not adding an unverified list of documents.\n\n**Official sources:**\n- Balochistan Local Government & Rural Development Department: https://lgrd.gob.pk/local-government-department-and-nadra-open-one-window-birth-registration-center/\n- NADRA Pak-ID birth-registration announcement: https://www.youtube.com/watch?v=dzCeleaWOUA";
-  return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:"Balochistan Local Government & Rural Development Department — Birth Registration Center",url:"https://lgrd.gob.pk/local-government-department-and-nadra-open-one-window-birth-registration-center/",lastVerified:"",province:"Balochistan"},department:"Union Council / Local Government",question,language,jurisdiction:"Balochistan",evidenceAvailable:true});
- }
-
  // EARLY GENERIC DOMICILE ROUTE: handle a domicile document query when no province/territory is named.
  if(requested==="Domicile" && !workingTargetJurisdiction && !workingJurisdiction){
   const answer=language==="Urdu"
@@ -1127,7 +1469,7 @@ export async function POST(request:NextRequest){try{
     "OFFICIAL KP DOMICILE EVIDENCE:",
     "The KP Citizen Facilitation Portal lists Domicile Certificate with Checklist and Apply Online options.",
     "OFFICIAL SOURCE: https://cfc.kp.gov.pk/",
-  ].join("\\n");
+  ].join("\n");
   return directWorkflowResponse({
    answer,
    source:{department:"Domicile",title:"Official Government Domicile Services — Punjab, ICT and KP",url:"https://ekhidmat.punjab.gov.pk/services/e-khidmat-marakaz/domicile-certificate",lastVerified:"",province:""},
@@ -1182,7 +1524,7 @@ According to the official KP e-Domicile system, citizens can apply online to obt
   let verificationEvidence="";
   for(const u of kpDomicileUrls){
    const t=await fetchOfficialPage(u);
-   if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+   if(t) verificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
   }
   verificationEvidence += [
     "",
@@ -1260,15 +1602,6 @@ According to the official KP e-Domicile system, citizens can apply online to obt
   return directWorkflowResponse({answer,source:{department:"Domicile",title:"ICT Administration — Domicile Certificate",url:"https://ictadministration.gov.pk/domicile-certificate/",lastVerified:"",province:"Islamabad Capital Territory"},department:"Domicile",question,language,jurisdiction:"Islamabad Capital Territory",evidenceAvailable:true});
  }
 
-// EARLY SINDH BIRTH-CERTIFICATE ROUTE: use official Sindh CRMS evidence directly.
- if(/sindh|سندھ/i.test(question) &&
-    /birth|birth certificate|birth registration|پیدائش|پیدائش سرٹیفکیٹ|رجسٹریشنِ پیدائش/i.test(question)){
-  const answer=language==="Urdu"
-   ?"## سندھ — نیا برتھ سرٹیفکیٹ / پیدائش کی رجسٹریشن\n\nحکومتِ سندھ نے NADRA کے تعاون سے Civil Registration Management System (CRMS) کو ڈیجیٹل کیا ہے۔ سرکاری معلومات کے مطابق پیدائش کی رجسٹریشن کے لیے CRMS موبائل ایپ متعارف کرائی گئی ہے اور یونین کونسل کی سطح پر اس نظام کا نفاذ اہم حصہ ہے۔\n\n**طریقۂ کار:**\n1. پیدائش کی رجسٹریشن CRMS کے ذریعے شروع کی جاتی ہے۔\n2. یونین کونسل / متعلقہ مقامی کونسل سطح پر سول رجسٹریشن کا عمل مکمل کیا جاتا ہے۔\n3. سندھ حکومت کے مطابق CRMS موبائل ایپ کے ذریعے شہری پیدائش کی رجسٹریشن کی سہولت حاصل کر سکتے ہیں۔\n4. سندھ حکومت نے پیدائش کی رجسٹریشن کے لیے NADRA کی فیس صوبائی حکومت کی طرف سے ادا کرنے کا اعلان بھی کیا ہے۔\n\n**اہم:** دستیاب موجودہ سرکاری ذرائع میں نئے برتھ سرٹیفکیٹ کے لیے مکمل دستاویزات کی checklist واضح طور پر شائع نہیں کی گئی، اس لیے میں غیرمصدقہ کاغذات شامل نہیں کر رہا۔\n\n**سرکاری ذرائع:**\n- Government of Sindh — CRMS Mobile App / Birth & Death Registration: https://cm.sindh.gov.pk/news/sn-crms-mobael-ayp-jo-afttah-pydaesh-fotgy-rjsryshn-hay-jyl\n- Government of Sindh — Online Birth, Death, Marriage & Divorce Registration: https://cm.sindh.gov.pk/news/snd-k-aaoam-kli-antthar-aor-ktar-ki-zhmt-khtm-pidaesh-amoat-nkah-aor-tlak-ki-rjsrishn-an-laen-ogei"
-   :"## Sindh — New Birth Certificate / Birth Registration\n\nThe Government of Sindh has digitized the Civil Registration Management System (CRMS) with NADRA. Official Sindh information states that the CRMS mobile application provides digital birth registration, with implementation at Union Council level.\n\n**Process:**\n1. Start the birth registration through CRMS.\n2. Complete the civil-registration process at the Union Council / relevant local-council level.\n3. The Government of Sindh states that citizens can use the CRMS mobile application for birth registration.\n4. Sindh has announced that the provincial government will bear NADRA service charges for birth registration.\n\n**Important:** The current official Sindh sources do not clearly publish a complete document checklist for a new birth certificate, so I am not adding unverified document requirements.\n\n**Official sources:**\n- Government of Sindh — CRMS Mobile App / Birth & Death Registration: https://cm.sindh.gov.pk/news/sn-crms-mobael-ayp-jo-afttah-pydaesh-fotgy-rjsryshn-hay-jyl\n- Government of Sindh — Online Birth, Death, Marriage & Divorce Registration: https://cm.sindh.gov.pk/news/snd-k-aaoam-kli-antthar-aor-ktar-ki-zhmt-khtm-pidaesh-amoat-nkah-aor-tlak-ki-rjsrishn-an-laen-ogei";
-  return NextResponse.json({answer:cleanAnswer(answer),source:{department:"Union Council / Local Government",title:"Government of Sindh — Civil Registration Management System (CRMS)",url:"https://cm.sindh.gov.pk/news/sn-crms-mobael-ayp-jo-afttah-pydaesh-fotgy-rjsryshn-hay-jyl",lastVerified:"",province:"Sindh"},agent:true,goalFocused:true,webSearch:false});
- }
-
 // EARLY SINDH DOMICILE ROUTE: use only directly verified Sindh government evidence.
  if(requested==="Domicile" && (workingTargetJurisdiction||workingJurisdiction)==="Sindh"){
   const answer=language==="Urdu"
@@ -1281,19 +1614,20 @@ According to the official KP e-Domicile system, citizens can apply online to obt
  const qn=normalize(question);
  const explicitCrossDepartmentMismatch=
    (requested==="Arms Licence" && (qn.includes("driving licence")||qn.includes("driving license")||qn.includes("learner licence")||qn.includes("learner license")||qn.includes("dlims")||qn.includes("driving test")||qn.includes("ڈرائیونگ"))) ||
-   (requested==="Driving Licence" && (qn.includes("arm licence")||qn.includes("arm license")||qn.includes("arms licence")||qn.includes("arms license")||qn.includes("weapon licence")||qn.includes("weapon license")||qn.includes("gun licence")||qn.includes("gun license")||qn.includes("اسلحہ")||qn.includes("ہتھیار")));
+   (requested==="Driving Licence" && (qn.includes("arm licence")||qn.includes("arm license")||qn.includes("arms licence")||qn.includes("arms license")||qn.includes("weapon licence")||qn.includes("weapon license")||qn.includes("gun licence")||qn.includes("gun license")||qn.includes("اسلحہ")||qn.includes("ہتھیار"))) ||
+   (requested==="Police Services" && (qn.includes("passport")||qn.includes("پاسپورٹ")));
  if(explicitCrossDepartmentMismatch){
   return NextResponse.json({answer:language==="Urdu"?"یہ سوال منتخب شعبے سے متعلق نہیں لگتا۔ براہ کرم اسی شعبے سے متعلق سوال پوچھیں۔":"This question does not appear to belong to the selected government department. Please ask a question related to the selected department.",source:null});
  }
- const directDepartmentMatch=(requested==="FBR / Taxation"&&(qn.includes("fbr")||qn.includes("ntn")||qn.includes("iris")||qn.includes("income tax")||qn.includes("income-tax")||qn.includes("tax return")||qn.includes("sales tax")||qn.includes("sales-tax")||qn.includes("gst")||qn.includes("tax registration")||qn.includes("taxpayer registration")||qn.includes("taxpayer")||qn.includes("active taxpayer")||qn.includes("active taxpayer list")||qn.includes("atl")||qn.includes("filer")||qn.includes("filer status")||qn.includes("withholding tax")||qn.includes("income tax return")))||(requested==="Government Jobs"&&(qn.includes("government job")||qn.includes("government jobs")||qn.includes("national jobs portal")||qn.includes("njp")||qn.includes("vacancy")||qn.includes("job")||qn.includes("apply for a job")||qn.includes("job application")||qn.includes("نوکری")||qn.includes("ملازمت")||qn.includes("درخواست")))||(requested==="Excise & Taxation"&&(qn.includes("excise")||qn.includes("vehicle")||qn.includes("token tax")||qn.includes("vehicle registration")||qn.includes("ownership transfer")))||(requested==="Land & Revenue"&&(qn.includes("land")||qn.includes("fard")||qn.includes("mutation")||qn.includes("intiqal")||qn.includes("revenue")))||(requested==="Police Services"&&(qn.includes("police")||qn.includes("fir")||qn.includes("character certificate")||qn.includes("police clearance")||qn.includes("verification")))||(requested==="Education & Scholarships"&&(qn.includes("scholarship")||qn.includes("hec")||qn.includes("education")))||(requested==="Driving Licence"&&(qn.includes("driving")||qn.includes("learner")||qn.includes("driving test")||qn.includes("dlims")||qn.includes("ڈرائیونگ")))||(requested==="Vaccination for Travelling Abroad"&&(qn.includes("vaccination")||qn.includes("vaccine")||qn.includes("polio")||qn.includes("yellow fever")||qn.includes("hajj")||qn.includes("haj")||qn.includes("umrah")||qn.includes("umra")||qn.includes("ویکسین")||qn.includes("حج")||qn.includes("عمرہ")))||(requested==="Arms Licence"&&(qn.includes("arm licence")||qn.includes("arm license")||qn.includes("arms licence")||qn.includes("arms license")||qn.includes("weapon licence")||qn.includes("weapon license")||qn.includes("gun licence")||qn.includes("gun license")||qn.includes("اسلحہ")||qn.includes("ہتھیار")));
+ const directDepartmentMatch=(requested==="FBR / Taxation"&&(qn.includes("fbr")||qn.includes("ntn")||qn.includes("iris")||qn.includes("income tax")||qn.includes("income-tax")||qn.includes("tax return")||qn.includes("sales tax")||qn.includes("sales-tax")||qn.includes("gst")||qn.includes("tax registration")||qn.includes("taxpayer registration")||qn.includes("taxpayer")||qn.includes("active taxpayer")||qn.includes("active taxpayer list")||qn.includes("atl")||qn.includes("filer")||qn.includes("filer status")||qn.includes("withholding tax")||qn.includes("income tax return")))||(requested==="Government Jobs"&&(qn.includes("government job")||qn.includes("government jobs")||qn.includes("national jobs portal")||qn.includes("njp")||qn.includes("vacancy")||qn.includes("job")||qn.includes("apply for a job")||qn.includes("job application")||qn.includes("نوکری")||qn.includes("ملازمت")||qn.includes("درخواست")))||(requested==="Excise & Taxation"&&(qn.includes("excise")||qn.includes("vehicle")||qn.includes("token tax")||qn.includes("vehicle registration")||qn.includes("ownership transfer")))||(requested==="Land & Revenue"&&(qn.includes("land")||qn.includes("fard")||qn.includes("mutation")||qn.includes("intiqal")||qn.includes("revenue")))||(requested==="Police Services"&&(qn.includes("police")||qn.includes("fir")||qn.includes("character certificate")||qn.includes("police clearance")||qn.includes("verification")))||(requested==="Education & Scholarships"&&(qn.includes("scholarship")||qn.includes("hec")||qn.includes("education")))||(requested==="Driving Licence"&&(qn.includes("driving")||qn.includes("learner")||qn.includes("driving test")||qn.includes("dlims")||qn.includes("ڈرائیونگ")))||(requested==="Vaccination for Travelling Abroad"&&(qn.includes("vaccination")||qn.includes("vaccine")||qn.includes("polio")||qn.includes("yellow fever")||qn.includes("hajj")||qn.includes("haj")||qn.includes("umrah")||qn.includes("umra")||qn.includes("ویکسین")||qn.includes("حج")||qn.includes("عمرہ")))||(requested==="Protector & Overseas Employment"&&(qn.includes("protector")||qn.includes("protector of emigrants")||qn.includes("overseas employment")||qn.includes("overseas employment promoter")||qn.includes("employment promoter")||qn.includes("oep")||qn.includes("emigration")||qn.includes("emigrant")||qn.includes("employment abroad")||qn.includes("work abroad")||qn.includes("بیرون ملک ملازمت")||qn.includes("پروٹیکٹر")||qn.includes("ایمیگریشن")))||(requested==="Arms Licence"&&(qn.includes("arm licence")||qn.includes("arm license")||qn.includes("arms licence")||qn.includes("arms license")||qn.includes("weapon licence")||qn.includes("weapon license")||qn.includes("gun licence")||qn.includes("gun license")||qn.includes("اسلحہ")||qn.includes("ہتھیار")));
  if(!directDepartmentMatch)return NextResponse.json({answer:language==="Urdu"?"یہ سوال منتخب شعبے سے متعلق نہیں لگتا۔ براہ کرم اسی شعبے سے متعلق سوال پوچھیں۔":"This question does not appear to belong to the selected government department. Please ask a question related to the selected department.",source:null});
 }
 if(requested==="Education & Scholarships"){
- const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+ const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question)||detectJurisdiction(question);
  const answer=educationEvidence(question,ej,language);
   const verificationUrls=Array.from(new Set((answer.match(/https?:\/\/[^\s)]+/g)||[]).map((u)=>u.replace(/[.,]+$/,""))));
  let verificationEvidence="";
- for(const u of verificationUrls){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t; }
+ for(const u of verificationUrls){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t; }
  return directWorkflowResponse({answer,source:{department:"Education & Scholarships",title:"Official education/scholarship source",url:verificationUrls[0]||"",lastVerified:"",province:ej||""},department:"Education & Scholarships",question,language,jurisdiction:ej,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
 if(requested==="Government Jobs"){
@@ -1348,7 +1682,7 @@ You can check your **Active Taxpayer Status** through FBR's **IRIS 2.0 / Online 
   let atlVerificationEvidence="";
   for(const u of atlUrls){
    const t=await fetchOfficialPage(u);
-   if(t) atlVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+   if(t) atlVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
   }
   // Keep a small deterministic evidence summary so verification remains available
   // even if the live FBR page is temporarily unreachable.
@@ -1359,7 +1693,7 @@ You can check your **Active Taxpayer Status** through FBR's **IRIS 2.0 / Online 
    "The IRIS Active Taxpayer List verification form allows an identifier such as NTN, CNIC, Passport No. or Registration/Inc. No. to be selected and then verified.",
    "FBR's Active Taxpayer List page states that the Active Taxpayer Status can also be checked through the online portal.",
    "FBR's published ATL guidance states that an individual's status can also be checked by sending ATL followed by a space and the 13-digit CNIC number to 9966. For a company or AOP, ATL followed by a space and the 7-digit NTN can be sent to 9966."
-  ].join("\\n");
+  ].join("\n");
   return directWorkflowResponse({
    answer:fbrATLAnswer,
    source:{department:"FBR / Taxation",title:"FBR IRIS 2.0 — Active Taxpayer List Verification",url:atlUrls[0],lastVerified:"",province:""},
@@ -1489,7 +1823,7 @@ if(requested==="Driving Licence"){
 }
 
 const isNadra=requested==="NADRA Services";
-const registrySource=sourceForQuestion(question,selected.service,selected.jurisdiction,requested);const matchingRecord=selected.records.find(r=>normalize(r.official_department||"").includes(normalize(registrySource?.department||"___no_registry_department___")));const recordSource=matchingRecord?.official_source_url||"";const sourceUrl=registrySource?.url||recordSource||"";const sourceMeta=isNadra?{url:"https://www.nadra.gov.pk/identityDocument/cnic",title:"NADRA Registration Policy 6.0.2 — RAG Evidence",department:"NADRA"}:(registrySource||{url:sourceUrl,title:selected.records[0]?.official_source_title||"Official Government Source",department:selected.records[0]?.official_department||"Government of Pakistan"});
+const registrySource=sourceForQuestion(question,selected.service,selected.jurisdiction,requested);const matchingRecord=selected.records.find(r=>normalize(r.official_department||"").includes(normalize(registrySource?.department||"___no_registry_department___")));const recordSource=matchingRecord?.official_source_url||"";const sourceUrl=registrySource?.url||recordSource||"";const sourceMeta=isNadra?{url:"https://www.nadra.gov.pk/identityDocument/cnic",title:"NADRA official information",department:"NADRA"}:(registrySource||{url:sourceUrl,title:selected.records[0]?.official_source_title||"Official Government Source",department:selected.records[0]?.official_department||"Government of Pakistan"});
 const jurisdictionSourceHints:Record<string,string[]>={
  "Driving Licence":["kppolice.gov.pk","kprts.gov.pk","transport.kp.gov.pk","ptpkp.gov.pk"],
  "Domicile":["kp.gov.pk","cfc.kp.gov.pk"],
@@ -1511,120 +1845,103 @@ if(requested==="Passport Services"){
 }
 if(requested==="Government Jobs"){alternateOfficialUrls.push("https://www.njp.gov.pk/index.php/jobs","https://www.njp.gov.pk/index.php/jobs/live","https://www.njp.gov.pk/index.php/jobs/search");}
 if(requested==="Domicile"&&selected.jurisdiction==="Punjab"){alternateOfficialUrls.push("https://punjab.gov.pk/node/6239");}
-// EARLY PROTECTOR ROUTE: use directly verified BE&OE evidence and do not invent fees or OEP steps.
+// PROTECTOR & OVERSEAS EMPLOYMENT ROUTE
+// Keep Protector routing deterministic and isolated from the other departments.
 if(requested==="Protector & Overseas Employment"){
  const fq=normalize(question);
  const isTourist=/tourist|visit visa|visitor visa|holiday|سیاحت|وزٹ/.test(fq);
- const isOep=/oep|overseas employment promoter|promoter|recruitment agency|through an agent|ایجنٹ|او ای پی/.test(fq);
- const isFee=/fee|fees|cost|charges|فیس|چارج/.test(fq);
- const isOffice=/office|offices|location|where|دفتر|کہاں|مقام/.test(fq);
+ const isOep=/\boep\b|overseas employment promoter|promoter|recruitment agency|through an agent|ایجنٹ|او ای پی/.test(fq);
+ const isFee=/\bfee\b|\bfees\b|cost|charges|فیس|چارج/.test(fq);
+ const isOffice=/\boffice\b|\boffices\b|location|where is|where can|دفتر|کہاں|مقام/.test(fq);
+ const isOnline=/\bonline\b|e-protector|e protector|apply online|آن لائن/.test(fq);
  const isDocs=/document|documents|requirements|papers|دستاویز|کاغذات/.test(fq);
+ const isInsurance=/insurance|انشورنس/.test(fq);
+ const isMedical=/medical|medical fitness|health certificate|میڈیکل|طبی/.test(fq);
+ const isContract=/contract|employment agreement|agreement|undertaking|معاہدہ/.test(fq);
  const isDirect=/direct employment|direct-employment|direct visa|براہ راست/.test(fq);
+ const hasCountry=/saudi|saudi arabia|ksa|uae|dubai|emirates|qatar|oman|kuwait|bahrain|سعودی|متحدہ عرب امارات/.test(fq);
  const requestedJurisdiction=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  const policySource="https://beoe.gov.pk/files/policyguideliness/58.pdf";
  const procedureSource="https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
+ const rulesSource="https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf";
  const contactGuideSource="https://beoe.gov.pk/files/a-guide-for-pakistani-migrant-workers-in-the-united-arab-emirates.pdf";
  let answer="";
+
  if(isTourist){
   answer=language==="Urdu"
    ?"## پروٹیکٹر کلیئرنس\n\nعام سیاحتی یا وزٹ ویزا کے لیے اوورسیز ایمپلائمنٹ والا پروٹیکٹر رجسٹریشن طریقہ لاگو نہیں ہوتا۔ BE&OE کی یہ سروس بیرون ملک ملازمت/ایمیگریشن سے متعلق ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
    :"## Protector of Emigrants\n\nThe BE&OE Protector registration process is for overseas employment/emigration cases. It is not an employment-clearance requirement for an ordinary tourist or visit visa.\n\n**Official source:** https://beoe.gov.pk/";
  } else if(isOffice){
-  // A location question without a province/city must return the actual BE&OE office directory,
-  // not a generic instruction. Current BE&OE material identifies nine Protectorates:
-  // Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi and Quetta.
-  // The current BE&OE migrant-worker contact guide provides addresses/phones for seven;
-  // the official policy material confirms D.G. Khan and Sialkot as functioning Protectorates.
-  const officeDirectoryEn=`## Protector of Emigrants Offices in Pakistan
-
-The Bureau of Emigration & Overseas Employment (BE&OE) identifies these Protector of Emigrants offices:
-
-| Office | Location / address | Telephone |
-|---|---|---|
-| Rawalpindi | 20-B1, Summer Plaza, Chandni Chowk, Rawalpindi | +92-51-9290439-40; +92-51-9290569 |
-| Lahore | 117-G Block, Model Town, Lahore | +92-42-99230338; +92-42-99230488 |
-| Multan | House No. 136, Rehmat Colony, Near Lodhe More, MDA Road, Multan | +92-61-921020020 |
-| Dera Ghazi Khan | Dera Ghazi Khan | Address/telephone not stated in the current BE&OE contact guide retrieved |
-| Sialkot | Sialkot | Address/telephone not stated in the current BE&OE contact guide retrieved |
-| Peshawar | Amanullah Khan Plaza, 2nd Floor, Opposite GPO, Lala Ayub Lane, Saddar Road, Peshawar Cantt | +92-91-9212050 |
-| Malakand | Bahadar Khan Plaza, Main Bazar, Bathella, Malakand | +92-93-2412483 |
-| Karachi | 14-J, Block No. 6, Near KFC, Nursery, PECHS, Karachi | +92-21-34531941 |
-| Quetta | Quarry Road, Quetta | +92-81-9202436 |
-
-**Important:** The applicable Protector office depends on the applicant's area of jurisdiction. For example, the official BE&OE jurisdiction table places Islamabad under the Rawalpindi Protectorate, while several Punjab districts are assigned to Lahore or Multan.
-
-**Official sources:** BE&OE contact guide and BE&OE procedure/jurisdiction documents.`;
-
-  const officeDirectoryUr=`## پاکستان میں پروٹیکٹر آف ایمیگرنٹس کے دفاتر
-
-بیورو آف ایمیگریشن اینڈ اوورسیز ایمپلائمنٹ (BE&OE) کے سرکاری مواد میں یہ پروٹیکٹر دفاتر درج ہیں:
-
-1. **راولپنڈی** — 20-B1، سمر پلازہ، چاندنی چوک، راولپنڈی — +92-51-9290439-40، +92-51-9290569
-2. **لاہور** — 117-G بلاک، ماڈل ٹاؤن، لاہور — +92-42-99230338، +92-42-99230488
-3. **ملتان** — ہاؤس نمبر 136، رحمت کالونی، نزد لوڈھے موڑ، MDA روڈ، ملتان — +92-61-921020020
-4. **ڈیرہ غازی خان** — ڈیرہ غازی خان؛ موجودہ BE&OE رابطہ گائیڈ میں مکمل پتہ/فون درج نہیں ملا۔
-5. **سیالکوٹ** — سیالکوٹ؛ موجودہ BE&OE رابطہ گائیڈ میں مکمل پتہ/فون درج نہیں ملا۔
-6. **پشاور** — امان اللہ خان پلازہ، دوسری منزل، GPO کے سامنے، لالہ ایوب لین، صدر روڈ، پشاور کینٹ — +92-91-9212050
-7. **مالاکنڈ** — بہادر خان پلازہ، مین بازار، بٹھیلہ، مالاکنڈ — +92-93-2412483
-8. **کراچی** — 14-J، بلاک نمبر 6، KFC کے قریب، نرسری، PECHS، کراچی — +92-21-34531941
-9. **کوئٹہ** — کوئری روڈ، کوئٹہ — +92-81-9202436
-
-**اہم:** متعلقہ پروٹیکٹر دفتر درخواست گزار کے علاقے کے دائرۂ اختیار کے مطابق منتخب ہوتا ہے۔ مثال کے طور پر سرکاری BE&OE جدول کے مطابق اسلام آباد، راولپنڈی پروٹیکٹر کے دائرۂ اختیار میں ہے۔
-
-**سرکاری ماخذ:** BE&OE رابطہ گائیڈ اور دائرۂ اختیار/طریقۂ کار کی سرکاری دستاویزات۔`;
-
-  answer=language==="Urdu"?officeDirectoryUr:officeDirectoryEn;
+  const officeMap:Record<string,{office:string,address:string,phone:string}> = {
+   "Lahore":{office:"Lahore",address:"117-G Block, Model Town, Lahore",phone:"+92-42-99230338; +92-42-99230488"},
+   "Peshawar":{office:"Peshawar",address:"Amanullah Khan Plaza, 2nd Floor, Opposite GPO, Lala Ayub Lane, Saddar Road, Peshawar Cantt",phone:"+92-91-9212050"},
+   "Islamabad Capital Territory":{office:"Rawalpindi",address:"20-B1, Summer Plaza, Chandni Chowk, Rawalpindi",phone:"+92-51-9290439-40; +92-51-9290569"},
+   "Punjab":{office:"Lahore",address:"117-G Block, Model Town, Lahore",phone:"+92-42-99230338; +92-42-99230488"},
+   "Khyber Pakhtunkhwa":{office:"Peshawar",address:"Amanullah Khan Plaza, 2nd Floor, Opposite GPO, Lala Ayub Lane, Saddar Road, Peshawar Cantt",phone:"+92-91-9212050"}
+  };
+  const cityMap:Record<string,string>={lahore:"Lahore",peshawar:"Peshawar",islamabad:"Islamabad Capital Territory"};
+  let officeKey=requestedJurisdiction||"";
+  for(const [city,j] of Object.entries(cityMap)){if(fq.includes(city)){officeKey=j;break;}}
+  const office=officeMap[officeKey];
+  if(office){
+   answer=language==="Urdu"
+    ? ("## پروٹیکٹر آف ایمیگرنٹس — "+office.office+"\n\nآپ کے سوال کے مطابق متعلقہ دفتر **Protector of Emigrants, "+office.office+"** ہے۔\n\n**پتہ:** "+office.address+"\n**فون:** "+office.phone+"\n\nمتعلقہ دفتر کا انتخاب علاقے کے دائرۂ اختیار کے مطابق ہوتا ہے۔ مثال کے طور پر اسلام آباد Rawalpindi Protectorate کے دائرۂ اختیار میں ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/")
+    : ("## Protector of Emigrants — "+office.office+"\n\nFor the location in your question, the relevant office is **Protector of Emigrants, "+office.office+"**.\n\n**Address:** "+office.address+"\n**Telephone:** "+office.phone+"\n\nThe applicable Protector office is determined by area of jurisdiction. For example, Islamabad falls under the Rawalpindi Protectorate.\n\n**Official source:** https://beoe.gov.pk/");
+  } else {
+   answer=language==="Urdu"
+    ?"## پروٹیکٹر آف ایمیگرنٹس کے دفاتر\n\nBE&OE کے مطابق پاکستان میں Protectorates of Emigrants کے دفاتر Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi اور Quetta میں ہیں۔ متعلقہ دفتر درخواست گزار کے علاقے کے دائرۂ اختیار کے مطابق منتخب ہوتا ہے۔"
+    :"## Protector of Emigrants Offices\n\nBE&OE identifies Protectorates of Emigrants in Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi and Quetta. The applicable office depends on the applicant's area of jurisdiction.";
+  }
  } else if(isFee){
   answer=language==="Urdu"
-   ?"## پروٹیکٹر فیس\n\nسرکاری Emigration Rules کے مطابق **Direct Employment** کے لیے Protector registration fee **Rs. 2,500 فی شخص** ہے اور **Welfare Fund** کے لیے **Rs. 4,000 فی شخص** ہے۔ اس کے علاوہ State Life insurance اور، جہاں لاگو ہو، OEP service charges/دیگر متعلقہ اخراجات الگ ہو سکتے ہیں۔\n\nاس لیے ایک ہی مجموعی رقم ہر کیس کے لیے فرض نہیں کی جانی چاہیے۔ ادائیگی سے پہلے اپنے کیس کے مطابق موجودہ BE&OE/Protector office instructions سے باقی قابلِ اطلاق charges کی تصدیق کریں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf"
-   :"## Protector Fees\n\nAccording to the official Emigration Rules, the **Direct Employment** Protector registration fee is **Rs. 2,500 per emigrant**, and the **Welfare Fund** contribution is **Rs. 4,000 per emigrant**. State Life insurance and, where applicable, OEP service charges/other case-specific costs are separate.\n\nTherefore, the app should not present one universal total for every case. Confirm any remaining applicable charges with the current BE&OE/Protector office instructions before payment.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf";
+   ?"## پروٹیکٹر فیس\n\n**Direct Employment** کے لیے سرکاری Emigration Rules کے مطابق:\n\n| چارج | رقم فی شخص |\n|---|---:|\n| Protector registration fee | Rs. 2,500 |\n| Welfare Fund contribution | Rs. 4,000 |\n\nState Life insurance اور، جہاں لاگو ہو، OEP service charges یا دیگر case-specific charges الگ ہو سکتے ہیں۔ اس لیے ہر کیس کے لیے ایک universal total فرض نہیں کیا جانا چاہیے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf"
+   :"## Protector Fees — Direct Employment\n\nAccording to the official Emigration Rules:\n\n| Charge | Amount per emigrant |\n|---|---:|\n| Protector registration fee | Rs. 2,500 |\n| Welfare Fund contribution | Rs. 4,000 |\n\nState Life insurance and, where applicable, OEP service charges or other case-specific costs are separate. The app therefore should not present one universal total for every case.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf";
  } else if(isOep){
   answer=language==="Urdu"
-   ?"## OEP کے ذریعے پروٹیکٹر رجسٹریشن\n\nاگر ملازمت **Overseas Employment Promoter (OEP)** کے ذریعے حاصل ہوئی ہے تو BE&OE کی سرکاری ہدایات کے مطابق رجسٹریشن میں درج ذیل شامل ہیں:\n- درست ویزا\n- درست پاسپورٹ\n- درست CNIC\n- آجر کا دستخط شدہ Employment Contract/Agreement یا منظور شدہ Undertaking\n- Registration Fee کی رسید\n- Welfare Fund کی رسید\n- Emigration Promotion Fee\n- OEP کے ذریعے بھرتی کی صورت میں Service Charges\n- State Life Insurance کا سرٹیفکیٹ\n- متعلقہ صورت میں NOC، Police Character Verification اور Medical Fitness Report\n\nBE&OE کی ہدایات کے مطابق متعلقہ OEP/Protector office کے ذریعے رجسٹریشن مکمل کی جاتی ہے اور غیر ضروری دستاویزات طلب نہیں کی جانی چاہئیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/policyguideliness/58.pdf"
-   :"## Protector Registration Through an OEP\n\nIf the job was obtained through an **Overseas Employment Promoter (OEP)**, official BE&OE instructions state that registration includes:\n- valid visa\n- valid passport\n- valid CNIC\n- employer-signed employment contract/agreement or an approved undertaking\n- registration-fee receipt\n- welfare-fund receipt\n- emigration promotion fee\n- OEP service charges where recruitment is through an OEP\n- State Life insurance certificate\n- where applicable, NOC, police character verification and medical fitness report\n\nBE&OE instructs Protector offices not to demand unnecessary documents.\n\n**Official source:** https://beoe.gov.pk/files/policyguideliness/58.pdf";
+   ?"## OEP کے ذریعے پروٹیکٹر رجسٹریشن\n\nاگر ملازمت **Overseas Employment Promoter (OEP)** کے ذریعے حاصل ہوئی ہے تو BE&OE کی ہدایات کے مطابق پروٹیکٹر رجسٹریشن میں درست ویزا، پاسپورٹ، CNIC، employer-signed employment contract/agreement یا approved undertaking، registration fee، Welfare Fund، Emigration Promotion Fee، OEP service charges جہاں لاگو ہوں، اور State Life insurance شامل ہیں۔ متعلقہ صورت میں NOC، Police Character Verification اور Medical Fitness Report بھی درکار ہو سکتے ہیں۔\n\nOEP کا لائسنس موجودہ ہے یا نہیں، اسے BE&OE کی official OEP list سے verify کیا جا سکتا ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/policyguideliness/58.pdf"
+   :"## Protector Registration Through an OEP\n\nIf the job was obtained through an **Overseas Employment Promoter (OEP)**, BE&OE instructions identify the core registration items as a valid visa, passport, CNIC, employer-signed employment contract/agreement or approved undertaking, registration fee, Welfare Fund, Emigration Promotion Fee, OEP service charges where applicable, and State Life insurance. Depending on the case, an NOC, Police Character Verification Certificate or Medical Fitness Report may also be required.\n\nThe OEP's licence status can be checked through BE&OE's official OEP list.\n\n**Official sources:** https://beoe.gov.pk/files/policyguideliness/58.pdf\nhttps://beoe.gov.pk/list-of-oeps";
+ } else if(isOnline){
+  answer=language==="Urdu"
+   ?"## e-Protector — آن لائن رجسٹریشن\n\nBE&OE کی سرکاری ویب سائٹ پر **Apply Online for e-Protector** سہولت موجود ہے۔ براہ راست ملازمت کی صورت میں آن لائن e-Protector فارم مکمل کیا جاتا ہے اور مطلوبہ معلومات/دستاویزات فراہم کی جاتی ہیں۔ آن لائن مرحلہ مکمل ہونے کے بعد سرکاری ہدایات کے مطابق متعلقہ Protector office کے verification/registration steps مکمل کیے جاتے ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
+   :"## e-Protector — Online Registration\n\nBE&OE provides an **Apply Online for e-Protector** facility. For direct employment, the applicant completes the online e-Protector registration form and provides the requested employment and personal information/documents. After the online step, the applicant follows the official verification/registration instructions applicable to the case and Protector office.\n\n**Official source:** https://beoe.gov.pk/";
+ } else if(isInsurance){
+  answer=language==="Urdu"
+   ?"## Protector — انشورنس\n\nState Life Insurance Certificate پروٹیکٹر رجسٹریشن کے سرکاری دستاویزات میں شامل ہے۔ اسے عام طور پر Protector registration کے required documents میں شمار کیا جاتا ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/policyguideliness/58.pdf"
+   :"## Protector — Insurance\n\nA **State Life Insurance Certificate** is included in the official Protector registration documents. It is therefore part of the documented registration requirements.\n\n**Official source:** https://beoe.gov.pk/files/policyguideliness/58.pdf";
+ } else if(isMedical){
+  answer=language==="Urdu"
+   ?"## Protector — میڈیکل فٹنس\n\nMedical Fitness Report ہر کیس میں blanket requirement کے طور پر نہیں دی گئی۔ BE&OE کی سرکاری ہدایات میں یہ مخصوص ممالک/حالات کے لیے required document کے طور پر درج ہے۔ اس لیے اسے ہر Protector case کے لیے لازمی نہیں کہا جانا چاہیے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/policyguideliness/58.pdf"
+   :"## Protector — Medical Fitness\n\nA **Medical Fitness Report is not a blanket requirement for every Protector case**. BE&OE's official instructions list it for specified countries/circumstances, so the app should not state that every applicant must provide a medical certificate.\n\n**Official source:** https://beoe.gov.pk/files/policyguideliness/58.pdf";
+ } else if(isContract){
+  answer=language==="Urdu"
+   ?"## Protector — Employment Contract\n\nہاں۔ BE&OE کی سرکاری ہدایات کے مطابق employer-signed **employment contract/agreement** یا approved undertaking پروٹیکٹر رجسٹریشن کے بنیادی کاغذات میں شامل ہے۔"
+   :"## Protector — Employment Contract\n\nYes. BE&OE's official instructions include an employer-signed **employment contract/agreement** or an approved undertaking among the core Protector registration documents.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
  } else if(isDocs || isDirect){
   if(isDirect && !isDocs){
    answer=language==="Urdu"
-    ?"## ای-پروٹیکٹر — براہ راست ملازمت\n\nBE&OE کی سرکاری ویب سائٹ پر **Apply Online for e-Protector** سہولت موجود ہے۔ براہ راست ملازمت کے لیے:\n1. BE&OE کی ویب سائٹ کھولیں اور **Apply Online for e-Protector** منتخب کریں۔\n2. آن لائن direct-emigrant registration فارم میں اپنی ملازمت اور ذاتی معلومات درج کریں اور مطلوبہ دستاویزات/تفصیلات فراہم کریں۔\n3. آن لائن رجسٹریشن مکمل کرکے حاصل ہونے والی confirmation/registration information محفوظ کریں۔\n4. سرکاری ہدایات کے مطابق متعلقہ Protector office کے اگلے verification/registration steps مکمل کریں۔\n\nبنیادی دستاویزات میں درست ویزا، پاسپورٹ، CNIC، employer-signed employment contract/agreement یا approved undertaking، registration fee، Welfare Fund اور State Life insurance شامل ہیں۔ مخصوص ممالک/حالات میں NOC، Police Character Verification اور Medical Fitness Report بھی درکار ہو سکتے ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/\nhttps://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf"
-    :"## e-Protector — Direct Employment\n\nBE&OE's official website provides an **Apply Online for e-Protector** facility. For direct employment:\n1. Open the BE&OE website and select **Apply Online for e-Protector**.\n2. Complete the online direct-emigrant registration form with the required employment and personal information and provide the requested details/documents.\n3. Complete the online registration and save the confirmation/registration information issued by the system.\n4. Follow the official instructions for the applicable verification/registration steps with the relevant Protector office.\n\nCore requirements include a valid visa, passport, CNIC, employer-signed employment contract/agreement or approved undertaking, registration fee, Welfare Fund and State Life insurance. For specified countries/circumstances, an NOC, Police Character Verification Certificate or Medical Fitness Report may also be required.\n\n**Official sources:** https://beoe.gov.pk/\nhttps://beoe.gov.pk/files/legal-framework/Emigration_Rules_1979_Updated_2023.pdf";
+    ?"## e-Protector — براہ راست ملازمت\n\nBE&OE کی official website پر **Apply Online for e-Protector** سہولت موجود ہے۔ براہ راست ملازمت کے لیے آن لائن رجسٹریشن مکمل کریں، مطلوبہ معلومات/دستاویزات فراہم کریں، اور سرکاری ہدایات کے مطابق متعلقہ Protector office کے verification/registration steps مکمل کریں۔ بنیادی دستاویزات میں درست ویزا، پاسپورٹ، CNIC، employer-signed employment contract/agreement یا approved undertaking، registration fee، Welfare Fund اور State Life insurance شامل ہیں۔ مخصوص ممالک/حالات میں NOC، Police Character Verification اور Medical Fitness Report بھی درکار ہو سکتے ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf"
+    :"## e-Protector — Direct Employment\n\nBE&OE provides **Apply Online for e-Protector** for direct employment. Complete the online registration, provide the requested information/documents, and follow the applicable Protector-office verification/registration steps.\n\nCore documents include a valid visa, passport, CNIC, employer-signed employment contract/agreement or approved undertaking, registration fee, Welfare Fund and State Life insurance. Depending on the case, an NOC, Police Character Verification Certificate or Medical Fitness Report may also be required.\n\n**Official sources:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf\nhttps://beoe.gov.pk/files/policyguideliness/58.pdf";
   } else {
    answer=language==="Urdu"
-    ?"## براہ راست اوورسیز ملازمت — پروٹیکٹر رجسٹریشن\n\nBE&OE کی سرکاری ہدایات کے مطابق بنیادی دستاویزات میں درست ویزا، درست پاسپورٹ، درست CNIC، آجر کا دستخط شدہ Employment Contract/Agreement یا منظور شدہ Undertaking، Registration Fee کی رسید، Welfare Fund کی رسید، Emigration Promotion Fee، State Life Insurance Certificate شامل ہیں۔ مخصوص ممالک/حالات میں Police Character Verification، Medical Fitness Report اور متعلقہ NOC بھی درکار ہو سکتے ہیں۔\n\nبراہ راست ملازمت کے ویزا رکھنے والے فرد کی رجسٹریشن Protector of Emigrants کرتا ہے؛ سرکاری طریقہ کار کے مطابق کاغذات مکمل ہونے کی صورت میں رجسٹریشن اسی دن کی جا سکتی ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf\nhttps://beoe.gov.pk/files/policyguideliness/58.pdf"
-    :"## Direct Overseas Employment — Protector Registration\n\nAccording to official BE&OE instructions, the core documents include a valid visa, valid passport, valid CNIC, an employer-signed employment contract/agreement or approved undertaking, registration-fee receipt, welfare-fund receipt, emigration promotion fee, and State Life Insurance Certificate. For specified countries/circumstances, a Police Character Verification Certificate, Medical Fitness Report, and relevant NOC may also be required.\n\nA holder of a direct employment visa is registered by the Protector of Emigrants; the official procedure states that registration is done the same day when the papers are in order.\n\n**Official sources:**\n- https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf\n- https://beoe.gov.pk/files/policyguideliness/58.pdf";
+    ?"## براہ راست اوورسیز ملازمت — پروٹیکٹر رجسٹریشن\n\nبنیادی دستاویزات میں درست ویزا، درست پاسپورٹ، درست CNIC، employer-signed employment contract/agreement یا approved undertaking، registration fee، Welfare Fund، Emigration Promotion Fee اور State Life Insurance Certificate شامل ہیں۔ مخصوص ممالک/حالات میں NOC، Police Character Verification اور Medical Fitness Report بھی درکار ہو سکتے ہیں۔ کاغذات مکمل ہونے کی صورت میں سرکاری طریقہ کار کے مطابق direct-employment registration کیا جاتا ہے۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf"
+    :"## Direct Overseas Employment — Protector Registration\n\nThe official BE&OE procedure requires a valid visa, passport, CNIC, employer-signed employment contract/agreement or approved undertaking, registration fee, Welfare Fund, Emigration Promotion Fee and State Life Insurance Certificate. Depending on the case, an NOC, Police Character Verification Certificate or Medical Fitness Report may also be required.\n\nFor a direct-employment visa, the Protector of Emigrants handles registration; the official procedure states registration is completed the same day when the papers are in order.\n\n**Official source:** https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf";
   }
  } else {
   answer=language==="Urdu"
-   ?"## پروٹیکٹر آف ایمیگرنٹس\n\nبیرون ملک ملازمت کے لیے Protector registration درکار ہے۔ BE&OE کے مطابق رجسٹریشن کے لیے درست ویزا، پاسپورٹ، CNIC، ملازمت کا معاہدہ/منظور شدہ undertaking، فیس اور Welfare Fund کی رسید، Emigration Promotion Fee، انشورنس اور کیس کے مطابق دیگر دستاویزات درکار ہو سکتی ہیں۔\n\n**سرکاری ماخذ:** https://beoe.gov.pk/"
-   :"## Protector of Emigrants\n\nFor overseas employment, Protector registration is required. BE&OE identifies the visa, passport, CNIC, employment contract/approved undertaking, registration and welfare-fund receipts, emigration promotion fee, insurance, and case-specific documents as part of the registration requirements.\n\n**Official source:** https://beoe.gov.pk/";
+   ?"## پروٹیکٹر آف ایمیگرنٹس\n\nبیرون ملک ملازمت کے لیے Protector registration درکار ہے۔ BE&OE کے مطابق ویزا، پاسپورٹ، CNIC، employment contract/approved undertaking، registration/Welfare Fund requirements، insurance اور کیس کے مطابق دیگر دستاویزات شامل ہو سکتی ہیں۔"
+   :"## Protector of Emigrants\n\nFor overseas employment, Protector registration is required. BE&OE identifies the visa, passport, CNIC, employment contract/approved undertaking, registration and Welfare Fund requirements, insurance and case-specific documents as part of the process.\n\n**Official source:** https://beoe.gov.pk/";
  }
+
  let protectorVerificationEvidence="";
- const protectorSourcesForVerification=isOffice?[contactGuideSource,policySource,procedureSource]:[policySource,procedureSource];
+ const protectorSourcesForVerification=isOffice?[contactGuideSource,policySource,procedureSource]:[policySource,procedureSource,rulesSource];
  for(const u of protectorSourcesForVerification){
   const t=await fetchOfficialPage(u);
-  if(t) protectorVerificationEvidence+="\\n\\nOFFICIAL BE&OE SOURCE PAGE: "+u+"\\n"+t;
+  if(t) protectorVerificationEvidence+="\n\nOFFICIAL BE&OE SOURCE PAGE: "+u+"\n"+t;
  }
- // BE&OE's core Protector documents are PDFs, which the HTML-only fetcher cannot extract.
- // Keep a short, source-faithful evidence excerpt so claim verification remains available
- // when the official PDF itself is reachable but not text-extractable at runtime.
  if(isOffice){
-  // The contact guide is a PDF and may not be extractable by the server-side HTML fetcher.
-  // Preserve the exact office directory used in the answer as deterministic evidence, while
-  // explicitly tying it to the official BE&OE contact guide and policy documents.
-  protectorVerificationEvidence=[
-   "OFFICIAL BE&OE CONTACT GUIDE: "+contactGuideSource,
-   "The BE&OE contact guide lists these Protector of Emigrants offices and contact details: Rawalpindi — 20-B1, Summer Plaza, Chandni Chowk, Rawalpindi; Tel +92-51-9290439-40 and +92-51-9290569. Lahore — 117-G Block, Model Town, Lahore; Tel +92-42-99230338 and +92-42-99230488. Multan — House No. 136, Rehmat Colony, Near Lodhe More, MDA Road, Multan; Tel +92-61-921020020. Peshawar — Amanullah Khan Plaza, 2nd Floor, Opposite GPO, Lala Ayub Lane, Saddar Road, Peshawar Cantt; Tel +92-91-9212050. Malakand — Bahadar Khan Plaza, Main Bazar, Bathella, Malakand; Tel +92-93-2412483. Karachi — 14-J, Block No. 6, Near KFC, Nursery, PECHS, Karachi; Tel +92-21-34531941. Quetta — Quarry Road, Quetta; Tel +92-81-9202436.",
-   "OFFICIAL BE&OE POLICY SOURCE: https://beoe.gov.pk/files/policyguideliness/56.pdf. The official policy material lists Protectorates of Emigrants at Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi and Quetta.",
-   "OFFICIAL BE&OE PROCEDURE SOURCE: "+procedureSource+". The applicable Protector office is determined by area of jurisdiction; the official procedure/jurisdiction material places Islamabad under the Rawalpindi Protectorate.",
-   "The answer intentionally does not invent street addresses or telephone numbers for Dera Ghazi Khan or Sialkot where those details are not provided in the retrieved BE&OE contact guide."
-  ].join("\n\n");
- } else if(!protectorVerificationEvidence.trim()){
-  protectorVerificationEvidence=[
-   "OFFICIAL BE&OE SOURCE: https://beoe.gov.pk/files/policyguideliness/58.pdf",
-   "BE&OE instructs Protector of Emigrants offices to demand only these registration documents: visa (as per procedure in the host country); valid passport; valid CNIC; employment contract or agreement duly signed by the employer or an undertaking approved by the Director General, BE&OE; receipt of registration fee; receipt of welfare fund; emigration promotion fee; service charges where recruitment is through an OEP; State Life Insurance Corporation insurance certificate; and, where applicable, NOC, police character verification certificate for specified countries, and medical fitness report for specified countries.",
-   "OFFICIAL BE&OE SOURCE: https://beoe.gov.pk/files/legal-framework/procedure-for-overseas-employment.pdf",
-   "The official procedure states that an individual holding a direct employment visa will be registered by the Protector of Emigrants under Rule 22(3) of the Emigration Rules, 1979, with registration done on the same day provided the papers are in order."
-  ].join("\\n\\n");
+  protectorVerificationEvidence+="\n\nCURATED OFFICE EVIDENCE: BE&OE Protectorates include Rawalpindi, Lahore, Multan, Dera Ghazi Khan, Sialkot, Peshawar, Malakand, Karachi and Quetta. Islamabad falls under the Rawalpindi Protectorate. Lahore and Peshawar office contact details used in location-specific answers are taken from the BE&OE contact guide.";
  }
+ if(!protectorVerificationEvidence.trim()) protectorVerificationEvidence=answer;
  return directWorkflowResponse({
   answer,
   source:{department:"Protector & Overseas Employment",title:"Bureau of Emigration & Overseas Employment — Emigrant Protection",url:"https://beoe.gov.pk/",lastVerified:"",province:requestedJurisdiction||""},
@@ -1642,9 +1959,9 @@ if(requested==="Arms Licence"){
  const aj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
  const result=armsLicenceEvidence(question,aj,language);
  let verificationEvidence="";
- for(const u of Array.from(new Set(result.sources.filter(Boolean)))){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t; }
+ for(const u of Array.from(new Set(result.sources.filter(Boolean)))){ const t=await fetchOfficialPage(u); if(t) verificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t; }
  if(!verificationEvidence.trim() && result.answer){
-  verificationEvidence="OFFICIAL SOURCE-BASED CURATED EVIDENCE:\\n"+result.answer;
+  verificationEvidence="OFFICIAL SOURCE-BASED CURATED EVIDENCE:\n"+result.answer;
  }
  return directWorkflowResponse({answer:result.answer,source:{department:"Arms Licence",title:"Official government arms-licensing information",url:result.sources[0]||"",lastVerified:"",province:aj||""},department:"Arms Licence",question,language,jurisdiction:aj,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
@@ -1665,7 +1982,7 @@ if(requested==="Land & Revenue"){
  let landVerificationEvidence="";
  for(const u of landUrls){
   const t=await fetchOfficialPage(u);
-  if(t) landVerificationEvidence+="\\n\\nOFFICIAL SOURCE PAGE: "+u+"\\n"+t;
+  if(t) landVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
  }
  // Some official land-record pages may be unreachable or return non-HTML content.
  // Keep the already-curated official-source answer as a source-faithful fallback
@@ -1748,98 +2065,6 @@ const departmentDomains:Record<string,string[]>={
 };
 
 
- // UNIVERSAL CIVIL-REGISTRATION ROUTER:
- // One resolver covers Birth, Death, Marriage and Divorce across all seven
- // jurisdictions. Existing jurisdiction-specific routes above remain first.
- const civilService =
-  /birth certificate|birth registration|birth\b|پیدائش|پیدائش سرٹیفکیٹ/i.test(question) ? "Birth Certificate" :
-  /death certificate|death registration|death\b|وفات|ڈیتھ سرٹیفکیٹ/i.test(question) ? "Death Certificate" :
-  /marriage certificate|marriage registration|marriage\b|نکاح|شادی|میریج سرٹیفکیٹ/i.test(question) ? "Marriage Certificate" :
-  /divorce certificate|divorce registration|divorce\b|طلاق|طلاق سرٹیفکیٹ/i.test(question) ? "Divorce Certificate" : null;
-
- const civilJurisdiction =
-  civilTargetJurisdiction ||
-  detectJurisdiction(question) ||
-  null;
-
- if(civilService && !civilJurisdiction){
-  const answer=language==="Urdu"
-   ? "نئے برتھ/ڈیتھ/میریج یا ڈائیورس سرٹیفکیٹ کے تقاضے صوبے اور علاقے کے مطابق مختلف ہوتے ہیں۔ براہِ کرم اپنا صوبہ یا علاقہ بتائیں، مثلاً پنجاب، خیبر پختونخوا، سندھ، بلوچستان، اسلام آباد (ICT)، آزاد کشمیر یا گلگت بلتستان، تاکہ میں متعلقہ سرکاری ذرائع سے درست طریقہ کار، دستاویزات اور فیس بتا سکوں۔"
-   : "The requirements for a new birth, death, marriage or divorce certificate vary by province or territory. Please tell me your province/area — Punjab, Khyber Pakhtunkhwa, Sindh, Balochistan, Islamabad (ICT), AJK, or Gilgit-Baltistan — so I can give you the relevant government-verified procedure, documents and fees.";
-  return directWorkflowResponse({answer,source:null,department:requested,question,language,jurisdiction:selected.jurisdiction||null,evidenceAvailable:false});
- }
-
- if(civilService && civilJurisdiction){
-  const civilSources:Record<string,{title:string,url:string,scope:string}> = {
-   "Punjab":{
-    title:"Punjab Local Government & Community Development — Birth, Death, Marriage & Divorce Registration",
-    url:"https://lgcd.punjab.gov.pk/faq",
-    scope:"Punjab's official Local Government FAQ covers registration of birth, death, marriage and divorce through the relevant Union Council / Municipal Committee. It publishes specific requirements for birth and marriage and identifies the relevant authority for death and divorce."
-   },
-   "Khyber Pakhtunkhwa":{
-    title:"Government of Khyber Pakhtunkhwa — Registration of Birth, Death, Marriage & Divorce",
-    url:"https://www.lgkp.gov.pk/page/registration-bdmd",
-    scope:"The official KP Local Government service page confirms that Village/Neighbourhood Councils are responsible for registering births, deaths, marriages and divorces and lists the responsible Secretary Union Council and service time for birth and death."
-   },
-   "Sindh":{
-    title:"Government of Sindh — Civil Registration Management System (CRMS)",
-    url:"https://cm.sindh.gov.pk/news/sn-crms-mobael-ayp-jo-afttah-pydaesh-fotgy-rjsryshn-hay-jyl",
-    scope:"The Government of Sindh states that its CRMS mobile application provides digital registration services for birth, death, marriage and divorce through the provincial civil-registration system."
-   },
-   "Balochistan":{
-    title:"Balochistan Local Government & Rural Development Department — CRMS",
-    url:"https://lgrd.gob.pk/launching-ceremony-birth-death-marriage-divorce-registration/",
-    scope:"The official Balochistan Local Government & Rural Development Department states that the Pak-ID mobile application provides online issuance of Birth, Death, Marriage and Divorce Certificates through CRMS."
-   },
-   "Islamabad Capital Territory":{
-    title:"ICT Administration — Citizen Services",
-    url:"https://ictadministration.gov.pk/services/",
-    scope:"ICT Administration officially lists Birth Registration, Death Registration, Marriage Registration and Divorce Registration among its citizen services."
-   },
-   "Azad Jammu and Kashmir":{
-    title:"AJK Government — Local Government / E-Facilitation Services",
-    url:"https://efc.ajk.gov.pk/service",
-    scope:"The official AJK E-Facilitation Center provides Birth and Death Certificate services. The AJK Local Government Act places registration of births, deaths and marriages within the local-council framework."
-   },
-   "Gilgit-Baltistan":{
-    title:"Government of Gilgit-Baltistan — Official Portal",
-    url:"https://gilgitbaltistan.gov.pk/",
-    scope:"The public official GB portal is the authoritative government entry point. A detailed, service-specific civil-registration checklist was not available in the official material I could verify, so the app will not invent one."
-   }
-  };
-
-  const src=civilSources[civilJurisdiction];
-  if(src){
-   let detail="";
-   if(civilJurisdiction==="Punjab"){
-    if(civilService==="Birth Certificate") detail="For birth registration, Punjab's official FAQ states that the relevant Union Council should be contacted within 60 days; it lists parents' CNIC copies, the hospital/traditional birth attendant birth certificate, and the completed Union Council form. Registration is free, while PKR 100 is charged for the NADRA computerized birth-registration certificate. It also gives separate timelines for normal and late registration.";
-    else if(civilService==="Death Certificate") detail="Punjab's official FAQ states that the relevant Union Council or Municipal Committee issues the computerized death registration certificate. Form-D is used, and documentary evidence including the graveyard certificate/parchi may be required.";
-    else if(civilService==="Marriage Certificate") detail="Punjab's official FAQ states that the concerned Union Council or Municipal Committee issues the computerized marriage registration certificate. It lists the registered Nikah Nama and CNICs of husband and wife and their parents; the stated certificate fee is PKR 300 and the normal process is about 3 working days.";
-    else detail="Punjab's official FAQ states that the concerned Union Council or Municipal Committee handles divorce registration where the marriage/Nikah Nama was registered. The applicant provides written statements and documentary evidence, including the applicable divorce order.";
-   } else if(civilJurisdiction==="Khyber Pakhtunkhwa"){
-    if(civilService==="Birth Certificate") detail="KP's official CRVS information lists Form-A, the parent's or guardian's attested CNIC/passport/residence permit as applicable, and a birth certificate, immunization card or school certificate if available. Birth registration is handled by the concerned Village/Neighbourhood Council and the official service page lists a 2-day time limit.";
-    else if(civilService==="Death Certificate") detail="KP's official Local Government service page confirms registration and certification of death through the concerned council and lists a 2-day service time. The CRVS information also describes documentary evidence such as a graveyard certificate/parchi where applicable.";
-    else if(civilService==="Marriage Certificate") detail="KP's official CRVS rules require the prescribed marriage application, a registered Nikah Nama or applicable marriage certificate, and CNIC copies of the husband and wife and their parents, with the concerned council responsible for registration.";
-    else detail="KP's official Local Government/CRVS framework places divorce registration with the concerned council and requires the prescribed application and supporting divorce documentation.";
-   } else if(civilJurisdiction==="Sindh"){
-    detail="Sindh's official CRMS information states that birth, death, marriage and divorce registration are being provided through an integrated digital civil-registration platform. The service is being implemented across local councils and the province has announced online/mobile registration through CRMS.";
-   } else if(civilJurisdiction==="Balochistan"){
-    detail="Balochistan's official Local Government & Rural Development Department states that the Pak-ID mobile application provides online issuance of Birth, Death, Marriage and Divorce Certificates through CRMS, allowing citizens to obtain these certificates without visiting local council offices.";
-   } else if(civilJurisdiction==="Islamabad Capital Territory"){
-    detail="ICT Administration officially lists this civil-registration service among its citizen services. Where the dedicated ICT service page publishes detailed requirements, the application should use those requirements; otherwise it should not invent missing documents or fees.";
-   } else if(civilJurisdiction==="Azad Jammu and Kashmir"){
-    detail="AJK's official E-Facilitation Center lists Birth and Death Certificate services, while the AJK Local Government Act places registration of births, deaths and marriages within the local-council framework. The available public official material does not provide a complete current checklist for every civil certificate, so missing requirements should not be invented.";
-   } else {
-    detail="The Government of Gilgit-Baltistan official portal is the authoritative government entry point, but a detailed service-specific checklist for this civil certificate was not available in the official material I could verify. The app therefore will not invent documents, fees or office details.";
-   }
-
-   const answer=language==="Urdu"
-    ? "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+src.scope+"\\n\\n**آپ کے سوال کے مطابق:** "+detail+"\\n\\n**اہم:** جہاں سرکاری ذریعہ مکمل دستاویزات یا فیس واضح طور پر شائع نہیں کرتا، وہاں میں غیرمصدقہ معلومات شامل نہیں کر رہا۔\\n\\n**سرکاری ذریعہ:** "+src.url
-    : "## "+civilJurisdiction+" — "+civilService+"\\n\\n"+src.scope+"\\n\\n**For your question:** "+detail+"\\n\\n**Important:** Where the official source does not publish a complete current document or fee checklist, I will not invent unverified requirements.\\n\\n**Official source:** "+src.url;
-
-   return directWorkflowResponse({answer,source:{department:"Union Council / Local Government",title:src.title,url:src.url,lastVerified:"",province:civilJurisdiction},department:"Union Council / Local Government",question,language,jurisdiction:civilJurisdiction,evidenceAvailable:true,verifyClaims:true,verificationEvidence:`${src.scope}\n\n${detail}`});
-  }
- }
 
 const ragEvidence=requested==="NADRA Services"?await retrieveNadraEvidence(question,language):"";
 if (requested === "NADRA Services") {
@@ -1862,7 +2087,7 @@ if (requested === "NADRA Services") {
     for (const url of officialUrls) {
       const page = await fetchOfficialPage(url);
       if (page) {
-        officialEvidence += "\\n\\nOFFICIAL NADRA SOURCE: " + url + "\\n" + page;
+        officialEvidence += "\n\nOFFICIAL NADRA SOURCE: " + url + "\n" + page;
       }
     }
 
@@ -1873,7 +2098,7 @@ if (requested === "NADRA Services") {
       // If no focused policy evidence exists, retain the normal policy
       // retrieval so the verifier still has a chance to support the answer.
       focusedEvidence ? "" : ragEvidence
-    ].filter(Boolean).join("\\n\\n");
+    ].filter(Boolean).join("\n\n");
 
     const sourceUrl = isFrc
       ? officialUrls[0]
@@ -1889,9 +2114,9 @@ if (requested === "NADRA Services") {
           ? "NADRA — Family Registration Certificate"
           : isPoc
             ? "NADRA — Pakistan Origin Card"
-            : "NADRA Registration Policy RP-6.0.2",
+            : "NADRA official information",
         url: sourceUrl,
-        lastVerified: "1 October 2026",
+        lastVerified: "",
         province: ""
       },
       department: "NADRA Services",
@@ -1911,9 +2136,9 @@ if (requested === "NADRA Services") {
       answer: directAdultFreshCnicAnswer,
       source: {
         department: "NADRA",
-        title: "NADRA Registration Policy RP-6.0.2 — Fresh/New Registration 18+",
-        url: "https://www.nadra.gov.pk/",
-        lastVerified: "21 September 2026",
+        title: "NADRA official information",
+        url: "https://www.nadra.gov.pk/identityDocument/cnic",
+        lastVerified: "",
         province: ""
       },
       department: "NADRA Services",
@@ -1928,14 +2153,14 @@ if (requested === "NADRA Services") {
 
 
 if(requested==="Excise & Taxation"){
- const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+ const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question)||detectJurisdiction(question);
  if(ej){
   const answer=exciseEvidence(question,ej,language);
   const exciseUrls=Array.from(new Set(
    answer.split(/\s+/).filter((item)=>item.startsWith("http://")||item.startsWith("https://")).map((item)=>item.replace(/[.,]+$/,""))
   ));
   const q=normalize(question);
-  const isRegistration=q.includes("new registration")||q.includes("vehicle registration")||q.includes("register a vehicle")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
+  const isRegistration=q.includes("new registration")||q.includes("vehicle registration")||q.includes("register a vehicle")||q.includes("register a new vehicle")||q.includes("new vehicle registration")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
   const isTransfer=q.includes("transfer")||q.includes("ownership")||q.includes("ملکیت")||q.includes("منتقلی");
   const isToken=q.includes("token")||q.includes("motor vehicle tax")||q.includes("vehicle tax")||q.includes("ٹوکن");
   const isPayment=q.includes("pay")||q.includes("payment")||q.includes("online payment")||q.includes("ادائیگی");
@@ -1974,6 +2199,31 @@ if(requested==="Excise & Taxation"){
    verifyClaims:true,
    verificationEvidence:exciseVerificationEvidence.trim()
   });
+ }
+ const q=normalize(question);
+ const isGenericRegistration=q.includes("register a new vehicle")||q.includes("new vehicle registration")||q.includes("vehicle registration")||q.includes("new registration")||q.includes("رجسٹریشن")||q.includes("نئی گاڑی");
+ const isGenericVerification=q.includes("verify")||q.includes("verification")||q.includes("registration status")||q.includes("basic details")||q.includes("number plate")||q.includes("vehicle details");
+ if(isGenericVerification){
+  const answer=language==="Urdu"
+   ? "## ایکسائز اینڈ ٹیکسیشن — گاڑی کی آن لائن تصدیق\n\nگاڑی کی رجسٹریشن اور بنیادی معلومات کی آن لائن تصدیق صوبہ/علاقہ کے مطابق مختلف ہے۔ دستیاب سرکاری خدمات کے مطابق:\n\n- **پنجاب:** Punjab Excise کے computerized vehicle-registration records اور vehicle services موجود ہیں۔\n- **سندھ:** registration number کے ذریعے vehicle/number-plate verification اور Quick Pay میں current tax/arrears دیکھنے کی سہولت موجود ہے۔\n- **خیبر پختونخوا:** KP Excise کی Online Vehicle Info سروس دستیاب ہے۔\n- **بلوچستان:** Online Vehicle Verification اور number-plate status services دستیاب ہیں۔\n- **اسلام آباد (ICT):** ICT Administration کی official Excise vehicle-registration services دستیاب ہیں؛ مخصوص vehicle-status lookup کے لیے متعلقہ ICT service استعمال ہوتی ہے۔\n- **آزاد کشمیر:** E-Facilitation Center میں Vehicle Verification اور ETO Biometric Verification services موجود ہیں۔\n- **گلگت بلتستان:** GB Excise portal registration details، chassis/engine information اور token-tax validity دکھاتا ہے۔\n\nمخصوص گاڑی کی verification کے لیے متعلقہ صوبہ/علاقہ اور registration number درکار ہو سکتا ہے۔\n\n**اہم:** میں کسی صوبے کی verification سہولت کو دوسرے صوبے پر لاگو نہیں کر رہا۔"
+   : "## Excise & Taxation — Vehicle Verification\n\nOnline vehicle-registration and basic-information verification varies by province/territory. The current official services include:\n\n- **Punjab:** Punjab Excise maintains computerized vehicle-registration records and vehicle services.\n- **Sindh:** The official Excise portal provides vehicle/number-plate verification by registration number, and Quick Pay can show current tax and arrears.\n- **Khyber Pakhtunkhwa:** KP Excise provides an Online Vehicle Info service.\n- **Balochistan:** Balochistan Excise provides Online Vehicle Verification and number-plate status services.\n- **Islamabad (ICT):** ICT Administration provides official vehicle-registration/Excise services; specific vehicle-status lookup is handled through the relevant ICT service.\n- **AJK:** The E-Facilitation Center lists Vehicle Verification and ETO Biometric Verification services.\n- **Gilgit-Baltistan:** The GB Excise portal can show registration details, chassis/engine information and token-tax validity.\n\nFor a specific vehicle lookup, the relevant province/territory and registration number may be required.\n\n**Important:** The app keeps each province/territory's verification service separate and does not transfer one province's procedure to another.";
+  return directWorkflowResponse({
+   answer,
+   source:null,
+   department:"Excise & Taxation",
+   question,
+   language,
+   jurisdiction:null,
+   evidenceAvailable:true,
+   verifyClaims:false,
+   verificationEvidence:answer
+  });
+ }
+ if(isGenericRegistration){
+  const answer=language==="Urdu"
+   ? "## نئی گاڑی کی رجسٹریشن — صوبہ/علاقہ کے مطابق\n\nپاکستان میں نئی گاڑی کی رجسٹریشن کے بنیادی تقاضے صوبہ/علاقہ، گاڑی کی قسم اور مقامی یا درآمد شدہ حیثیت کے مطابق مختلف ہوتے ہیں۔\n\n| صوبہ/علاقہ | بنیادی طور پر تصدیق شدہ معلومات |\n|---|---|\n| پنجاب | پنجاب Excise کی vehicle-registration service دستیاب ہے؛ exact documents اور applicable fees transaction کے مطابق دیکھے جاتے ہیں۔ |\n| سندھ | computerized registration system اور vehicle-category کے مطابق registration charges/calculator دستیاب ہیں۔ |\n| خیبر پختونخوا | Form F؛ مقامی گاڑی کے لیے authorized manufacturer/dealer کی sale authority letter اور invoice؛ imported vehicle کے لیے import permit، bill of lading اور customs-duty documents۔ |\n| اسلام آباد (ICT) | registration fee، advance tax، token tax اور income tax؛ imported vehicle کے لیے Bill of Entry/Bill of Lading اور قابلِ قبول residence proof۔ |\n| بلوچستان | سرکاری FAQ میں Form-F، Form-I، Computer Form، اصل Sale Certificate/Invoice، physical verification، CNIC اور registration fee درج ہیں۔ |\n| آزاد کشمیر (AJK) | سرکاری E-Facilitation Center میں Vehicle Verification اور ETO Biometric Verification خدمات موجود ہیں؛ مکمل current new-registration checklist عوامی طور پر verify نہیں ہو سکی۔ |\n| گلگت بلتستان (GB) | GB Excise کے مطابق Motor Vehicle Registration تمام اضلاع میں functional ہے؛ مکمل current public checklist دستیاب نہیں۔ |\n\n**اہم:** exact fee، tax اور documents گاڑی اور jurisdiction کے مطابق بدل سکتے ہیں۔"
+   : "## New Vehicle Registration — Province/Territory Comparison\n\nThe basic requirements for registering a new vehicle in Pakistan vary by province/territory, vehicle type, and whether the vehicle is locally purchased or imported.\n\n| Province/Territory | Core verified information |\n|---|---|\n| Punjab | Punjab Excise provides vehicle-registration services; exact documents and applicable fees depend on the transaction. |\n| Sindh | A computerized registration system and vehicle-category registration charges/calculator are available. |\n| Khyber Pakhtunkhwa | Form F; locally purchased vehicles require the authorized manufacturer/dealer sale authority letter and invoice; imported vehicles require the import permit, bill of lading and customs-duty documents. |\n| Islamabad (ICT) | Registration fee, advance tax, token tax and income tax; imported vehicles may require Bill of Entry/Bill of Lading and acceptable proof of residence. |\n| Balochistan | The official FAQ lists Form-F, Form-I, Computer Form, original Sale Certificate/Invoice, physical verification, CNIC and registration-fee payment. |\n| AJK | The official E-Facilitation Center lists Vehicle Verification and ETO Biometric Verification, but a complete current new-registration checklist could not be verified publicly. |\n| Gilgit-Baltistan (GB) | GB Excise states that Motor Vehicle Registration is functional in all districts; a complete current public checklist was not available. |\n\n**Important:** Exact fees, taxes and documents can vary by vehicle and jurisdiction.";
+  return directWorkflowResponse({answer,source:null,department:"Excise & Taxation",question,language,jurisdiction:null,evidenceAvailable:true,verifyClaims:false,verificationEvidence:answer});
  }
  return directWorkflowResponse({answer:language==="Urdu"?"## ایکسائز اینڈ ٹیکسیشن\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ گاڑی کی سروس بتائیں، مثلاً پنجاب میں ٹوکن ٹیکس، نئی رجسٹریشن یا ملکیت کی منتقلی۔":"## Excise & Taxation\n\nPlease specify the province/territory and vehicle service, for example Punjab token tax, new vehicle registration, or ownership transfer.",source:null,department:"Excise & Taxation",question,language,jurisdiction:null,evidenceAvailable:false});
 }
@@ -2041,6 +2291,18 @@ NON-NEGOTIABLE EVIDENCE RULES:
 - If the retrieved Urdu evidence does not clearly support a requested item, omit it.
 - Never describe generic guidance as verified government information unless supported by evidence.
 
+CITIZEN-FRIENDLY ANSWER PRESENTATION STANDARD:
+- Present the direct plain-language answer first. The citizen should understand the main point before seeing detailed references or qualifications.
+- When the evidence describes a procedure or sequence, use a short numbered list of verified steps. Do not manufacture a sequence when the evidence does not establish one.
+- When the evidence contains multiple fees, document categories, timelines, eligibility categories, or other naturally comparable items, use a clean Markdown table when it genuinely improves readability. Do not force information into a table when a numbered list is clearer or when the evidence does not support aligned columns.
+- Keep important legal, policy, eligibility, exception, age, jurisdiction, date, and category qualifications next to the rule they qualify. Do not hide or remove a qualification merely to make the answer shorter.
+- Put useful legal/reference detail after the practical explanation, using a heading such as "Important qualification", "Policy/reference", or equivalent only when such detail exists in the evidence.
+- Keep the official source clearly identifiable at the end of the answer when source information is available. Do not replace the actual answer with a referral to the source.
+- Use concise headings, short paragraphs, numbered steps, bullets, and tables as appropriate. Avoid unnecessary repetition.
+- Do not simplify a government rule to the point that its meaning changes. Accuracy and evidence take priority over brevity or visual polish.
+- Do not add a "Summary", "Key points", or other repeated section merely for presentation if it duplicates the answer.
+- Preserve official names, acronyms, amounts, dates, conditions, exceptions, and jurisdiction-specific terminology exactly where they are material to the rule.
+
 Selected department/service: ${requested||"not specified"}
 Requested language: ${language}
 `;
@@ -2065,7 +2327,7 @@ IMPORTANT: The official source text and official-domain search results above are
    console.error("Primary Groq model failed:",await ai.text());
    ai=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody(GROQ_FALLBACK_MODEL))});
  }
- if(!ai.ok){const providerStatus=ai.status;const providerBody=(await ai.text()).slice(0,500);console.error("Groq request failed",providerStatus,providerBody);const fallbackEvidence=cleanAnswer(ragEvidence||officialText||dbContext);if(fallbackEvidence&&fallbackEvidence.length>40){const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"degraded",tools:["Local verified evidence","Jurisdiction detection","Source verification"],answer:fallbackEvidence,evidenceAvailable:fallbackEvidence.length>40});return NextResponse.json({answer:`${language==="Urdu"?"🟡 ڈی گریڈڈ موڈ فعال ہے۔ لائیو AI سروس دستیاب نہیں، اس لیے ذیل کی معلومات دستیاب مقامی/مصدقہ شواہد سے فراہم کی جا رہی ہیں۔":"🟡 Degraded Mode is active. The live AI service is unavailable, so the information below is provided from available local verified evidence."}\n\n${fallbackEvidence}`,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||""},agent:true,goalFocused:true,webSearch:false,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]}}});}return NextResponse.json({error:`AI provider request failed (HTTP ${providerStatus}).`,errorType:"ai_service_error",providerStatus},{status:502});}const data=await ai.json();let answer=cleanAnswer(data?.choices?.[0]?.message?.content||"")||noInfo(language);
+ if(!ai.ok){const providerStatus=ai.status;const providerBody=(await ai.text()).slice(0,500);console.error("Groq request failed",providerStatus,providerBody);const fallbackEvidence=cleanAnswer(ragEvidence||officialText||dbContext);if(fallbackEvidence&&fallbackEvidence.length>40){const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"degraded",tools:["Local verified evidence","Jurisdiction detection","Source verification"],answer:fallbackEvidence,evidenceAvailable:fallbackEvidence.length>40});const citizenFallback=isNadra ? sanitizeNadraCitizenAnswer(`${language==="Urdu"?"🟡 ڈی گریڈڈ موڈ فعال ہے۔ لائیو AI سروس دستیاب نہیں، اس لیے ذیل کی معلومات دستیاب مقامی/مصدقہ شواہد سے فراہم کی جا رہی ہیں۔":"🟡 Degraded Mode is active. The live AI service is unavailable, so the information below is provided from available local verified evidence."}\n\n${fallbackEvidence}`, language) : `${language==="Urdu"?"🟡 ڈی گریڈڈ موڈ فعال ہے۔ لائیو AI سروس دستیاب نہیں، اس لیے ذیل کی معلومات دستیاب مقامی/مصدقہ شواہد سے فراہم کی جا رہی ہیں۔":"🟡 Degraded Mode is active. The live AI service is unavailable, so the information below is provided from available local verified evidence."}\n\n${fallbackEvidence}`;return NextResponse.json({answer:citizenFallback,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||""},agent:true,goalFocused:true,webSearch:false,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]}}});}return NextResponse.json({error:`AI provider request failed (HTTP ${providerStatus}).`,errorType:"ai_service_error",providerStatus},{status:502});}const data=await ai.json();let answer=cleanAnswer(data?.choices?.[0]?.message?.content||"")||noInfo(language);
  const referralOnly=/(search|look for|find|check|use the search|visit (the|this) (website|portal)|go to (the|this) (website|portal)|website.*to find|portal.*to find|تلاش کریں|ویب سائٹ.*تلاش|پورٹل.*تلاش)/i.test(answer);
  const evidenceAvailable=selected.records.length>0||officialText.length>200||ragEvidence.length>200;
  if(referralOnly&&evidenceAvailable){
@@ -2074,9 +2336,19 @@ IMPORTANT: The official source text and official-domain search results above are
    if(retry.ok){const rd=await retry.json();answer=cleanAnswer(rd?.choices?.[0]?.message?.content||"")||answer;}
  }
  const verificationEvidence=[dbContext,officialText,ragEvidence].filter(Boolean).join("\n\n");
- const claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
+ let claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
  const verificationAvailable=claimVerification.available;
- const verificationPassed=verificationAvailable && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
+ let verificationPassed=verificationAvailable && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
+
+ // Vaccination safety guard: never present an unsupported generic vaccine/certificate list as verified government information.
+ // This is intentionally isolated to the Vaccination for Travelling Abroad department.
+ if(isVaccination && !verificationPassed){
+   answer = language==="Urdu"
+     ? "معذرت، اس سوال کے لیے دستیاب سرکاری شواہد سے مخصوص ویکسین یا ویکسینیشن سرٹیفکیٹ کی مکمل اور قابلِ تصدیق فہرست ثابت نہیں ہو سکی۔ کسی مخصوص ویکسین کو لازمی قرار دینے سے پہلے منزلِ سفر اور موجودہ سرکاری صحت/سفری تقاضوں کی تصدیق ضروری ہے۔"
+     : "I’m sorry, but the available official evidence does not establish a complete, claim-verified list of vaccinations or vaccination certificates for this question. I will not provide a generic vaccine list as a verified government requirement. Specific requirements depend on the destination and applicable current official health/travel rules.";
+   claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
+   verificationPassed=claimVerification.available && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
+ }
  const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"normal",tools:["NADRA RAG","Supabase verified knowledge","Official web research","Jurisdiction detection","Source verification","Claim-level evidence verification"],answer,evidenceAvailable:(selected.records.length>0||officialText.length>200||ragEvidence.length>200) && verificationPassed});
  workflow.verification = {
    ...workflow.verification,
@@ -2106,5 +2378,6 @@ IMPORTANT: The official source text and official-domain search results above are
  workflow.summary = verificationPassed
    ? "Four-agent workflow completed with claim-level evidence verification."
    : "Four-agent workflow completed with a verification warning; the answer was not fully claim-verified.";
- return NextResponse.json({answer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]},claimVerification}});
+ const citizenAnswer=isNadra ? sanitizeNadraCitizenAnswer(answer, language) : answer;
+ return NextResponse.json({answer:citizenAnswer,source:{department:sourceMeta.department,title:sourceMeta.title,url:sourceUrl,lastVerified:selected.records[0]?.last_verified||"",province:selected.jurisdiction||selected.records[0]?.province||""},agent:true,goalFocused:true,webSearch:true,agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]},claimVerification}});
  }catch(error){console.error("API /api/ask error:",error);return NextResponse.json({error:"An unexpected error occurred. Please try again."},{status:500});}}

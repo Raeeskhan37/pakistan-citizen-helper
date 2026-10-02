@@ -25,7 +25,7 @@ const departments: Department[] = [
   { id: "driving-licence", name: "Driving Licence", urdu: "ڈرائیونگ لائسنس", icon: "🚗", description: "Driving licence, learner permit, renewal and testing", services: [
     { id: "learner", name: "Learner Licence", icon: "📝", description: "Apply for a learner licence", question: "How can I apply for a learner driving licence?" }, { id: "permanent", name: "Permanent Driving Licence", icon: "🚗", description: "Apply for a permanent driving licence", question: "How can I apply for a permanent driving licence?" }, { id: "renewal", name: "Licence Renewal", icon: "🔄", description: "Renew a driving licence", question: "How can I renew my driving licence?" }, { id: "duplicate", name: "Duplicate / Lost Licence", icon: "♻️", description: "Replace a lost or damaged licence", question: "How can I get a duplicate driving licence if my licence is lost?" }, { id: "documents", name: "Required Documents", icon: "📄", description: "Documents for driving licence services", question: "What documents are required for a driving licence?" }, { id: "fee", name: "Driving Licence Fee", icon: "💰", description: "Current licence fees", question: "What is the current driving licence fee?" }, { id: "test", name: "Driving Test", icon: "🛣️", description: "Driving test information", question: "What is the driving test procedure for a driving licence?" }, { id: "online", name: "Online Application", icon: "💻", description: "Online driving licence services", question: "How can I apply for driving licence services online?" }, { id: "status", name: "Application / Licence Status", icon: "📊", description: "Check licence application or status", question: "How can I check my driving licence application status?" },
   ]},
-  { id: "arms-licence", name: "Arms Licence", urdu: "اسلحہ لائسنس", icon: "🔐", description: "Arms licence application, renewal and government procedures", services: [
+  { id: "arms-licence", name: "Arms Licence", urdu: "اسلحہ لائسنس", icon: "🔫", description: "Arms licence application, renewal and government procedures", services: [
     { id: "application", name: "Arms Licence Application", icon: "📝", description: "Arms licence application information", question: "How can I apply for an arms licence?" }, { id: "renewal", name: "Arms Licence Renewal", icon: "🔄", description: "Arms licence renewal information", question: "How can I renew an arms licence?" }, { id: "documents", name: "Required Documents", icon: "📄", description: "Documents required for an arms licence", question: "What documents are required for an arms licence?" }, { id: "procedure", name: "Procedure", icon: "📋", description: "Arms licence application procedure", question: "What is the procedure for obtaining an arms licence?" },
   ]},
   { id: "protector", name: "Protector & Overseas Employment", urdu: "پروٹیکٹر اور بیرون ملک ملازمت", icon: "✈️", description: "Overseas employment services", services: [
@@ -43,7 +43,7 @@ const departments: Department[] = [
   { id: "police", name: "Police Services", urdu: "پولیس کی خدمات", icon: "👮", description: "Verification and police facilitation", services: [
     { id: "clearance", name: "Police Clearance Certificate", icon: "📜", description: "Police clearance", question: "How can I obtain a Police Clearance Certificate?" }, { id: "character", name: "Police Character Certificate", icon: "📄", description: "Character certificate", question: "How can I obtain a Police Character Certificate?" }, { id: "verification", name: "Police Verification", icon: "🔎", description: "Police verification", question: "How can I apply for police verification?" }, { id: "tenant", name: "Tenant Verification", icon: "🏠", description: "Tenant verification", question: "How can I get tenant verification?" }, { id: "employee", name: "Employee Verification", icon: "👤", description: "Employee verification", question: "How can I apply for employee verification?" }, { id: "fir", name: "FIR / Police Complaint", icon: "🚨", description: "Complaint and FIR information", question: "How can I register a police complaint or FIR?" },
   ]},
-  { id: "excise", name: "Excise & Taxation", urdu: "ایکسائز اینڈ ٹیکسیشن", icon: "🚗", description: "Vehicle registration and taxation", services: [
+  { id: "excise", name: "Excise & Taxation", urdu: "ایکسائز اینڈ ٹیکسیشن", icon: "🏷️", description: "Vehicle registration and taxation", services: [
     { id: "registration", name: "Motor Vehicle Registration", icon: "🚗", description: "Register a vehicle", question: "How can I register a motor vehicle?" }, { id: "transfer", name: "Vehicle Ownership Transfer", icon: "🔁", description: "Transfer ownership", question: "How can I transfer vehicle ownership?" }, { id: "token", name: "Vehicle Token Tax", icon: "💰", description: "Vehicle tax payment", question: "How can I pay vehicle token tax?" }, { id: "verification", name: "Vehicle Verification", icon: "🔎", description: "Verify vehicle information", question: "How can I verify a vehicle?" }, { id: "renewal", name: "Vehicle Registration Renewal", icon: "🔄", description: "Renew registration", question: "How can I renew vehicle registration?" }, { id: "plate", name: "Number Plate", icon: "🔢", description: "Number plate information", question: "How can I obtain or replace a number plate?" },
   ]},
   { id: "education", name: "Education & Scholarships", urdu: "تعلیم اور وظائف", icon: "🎓", description: "Scholarships and education", services: [
@@ -306,20 +306,20 @@ return (
         <div className="topbar-inner">
           <button className="brand" onClick={goHome} aria-label="Home">
             <span className="brand-mark">🇵🇰</span>
-            <span><strong>Pakistan Citizen Helper</strong><small>{isUrdu ? "مصدقہ سرکاری معلومات" : "Verified Government Information Portal"}</small></span>
+            <span><strong>Pakistan Citizen Helper</strong><small>{isUrdu ? "آزاد شہری معلوماتی منصوبہ" : "Independent Citizen Information Project"}</small></span>
           </button>
-          <div className="top-actions"><span className="secure-pill">✓ {isUrdu ? "مصدقہ معلومات" : "Verified"}</span><button className={`lang ${!isUrdu ? "active" : ""}`} onClick={() => setLanguage("English")}>English</button><button className={`lang ${isUrdu ? "active" : ""}`} onClick={() => setLanguage("Urdu")}>اردو</button></div>
+          <div className="top-actions"><span className="secure-pill">✓ {isUrdu ? "آزاد منصوبہ • سرکاری ذرائع" : "Independent project • Official sources"}</span><button className={`lang ${!isUrdu ? "active" : ""}`} onClick={() => setLanguage("English")}>English</button><button className={`lang ${isUrdu ? "active" : ""}`} onClick={() => setLanguage("Urdu")}>اردو</button></div>
         </div>
       </header>
 
       <section className="content">
         {!department && <>
           <section className="hero">
-            <div className="hero-copy"><span className="hero-kicker">🇵🇰 {isUrdu ? "پاکستانی شہریوں کے لیے" : "FOR CITIZENS OF PAKISTAN"}</span><h1>{isUrdu ? "سرکاری خدمات، آسان اور قابلِ اعتماد" : "Government services, made simple and trustworthy."}</h1><p>{isUrdu ? "مصدقہ سرکاری معلومات تلاش کریں، سوال پوچھیں اور متعلقہ سرکاری ذریعہ براہِ راست دیکھیں۔" : "Find verified government information, ask a question, and access the relevant official source."}</p><div className="hero-trust"><span>✓ {isUrdu ? "سرکاری ذرائع" : "Official sources"}</span><span>✓ {isUrdu ? "مصدقہ معلومات" : "Verified information"}</span><span>✓ {isUrdu ? "مفت رسائی" : "Free access"}</span></div></div>
+            <div className="hero-copy"><span className="hero-kicker">🇵🇰 {isUrdu ? "پاکستانی شہریوں کے لیے" : "FOR CITIZENS OF PAKISTAN"}</span><h1>{isUrdu ? "سرکاری معلومات، آسان اور قابلِ رسائی" : "Government information, made simple and accessible."}</h1><p>{isUrdu ? "سرکاری خدمات کے بارے میں معلومات تلاش کریں، سوال پوچھیں اور متعلقہ سرکاری ذریعہ براہِ راست دیکھیں۔" : "Find information about government services, ask a question, and access the relevant official source."}</p><div className="hero-trust"><span>✓ {isUrdu ? "سرکاری ذرائع" : "Official sources"}</span><span>✓ {isUrdu ? "سرکاری ذرائع سے معلومات" : "Source-based information"}</span><span>✓ {isUrdu ? "مفت رسائی" : "Free access"}</span></div></div>
             <div className="hero-seal"><span>🇵🇰</span><small>PAKISTAN<br/>CITIZEN<br/>HELPER</small></div>
           </section>
-          <section className="welcome"><div><span className="eyebrow">{isUrdu ? "خوش آمدید" : "WELCOME"}</span><h2>{isUrdu ? "آپ کو کس سرکاری سروس کی معلومات چاہیے؟" : "What government service do you need?"}</h2><p>{isUrdu ? "شروع کرنے کے لیے ایک محکمہ منتخب کریں۔" : "Select a department below to get started."}</p></div><div className="trust-badge"><span>✓</span><small>{isUrdu ? "مصدقہ" : "Verified"}<br/>{isUrdu ? "معلومات" : "Information"}</small></div></section>
-          <section className="trust-strip"><div><strong>01</strong><span>{isUrdu ? "محکمہ منتخب کریں" : "Choose a department"}</span></div><div><strong>02</strong><span>{isUrdu ? "سوال پوچھیں" : "Ask your question"}</span></div><div><strong>03</strong><span>{isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified guidance"}</span></div></section>
+          <section className="welcome"><div><span className="eyebrow">{isUrdu ? "خوش آمدید" : "WELCOME"}</span><h2>{isUrdu ? "آپ کو کس سرکاری سروس کی معلومات چاہیے؟" : "What government service do you need?"}</h2><p>{isUrdu ? "شروع کرنے کے لیے ایک محکمہ منتخب کریں۔" : "Select a department below to get started."}</p></div><div className="trust-badge"><span>✓</span><small>{isUrdu ? "سرکاری ذرائع" : "Official sources"}<br/>{isUrdu ? "استعمال شدہ" : "Used"}</small></div></section>
+          <section className="trust-strip"><div><strong>01</strong><span>{isUrdu ? "محکمہ منتخب کریں" : "Choose a department"}</span></div><div><strong>02</strong><span>{isUrdu ? "سوال پوچھیں" : "Ask your question"}</span></div><div><strong>03</strong><span>{isUrdu ? "سرکاری ذرائع پر مبنی رہنمائی حاصل کریں" : "Get source-based guidance"}</span></div></section>
           <div className="section-head"><div><span className="eyebrow">{isUrdu ? "خدمات" : "SERVICES"}</span><h2>{isUrdu ? "سرکاری محکمے" : "Government departments"}</h2><p>{isUrdu ? "اپنی مطلوبہ سروس تلاش کرنے کے لیے محکمہ منتخب کریں" : "Choose a department to find the service you need."}</p></div><span className="count">{visibleDepartments.length}<small>/ {departments.length}</small></span></div>
           <div className="department-search"><span>⌕</span><input value={search} onChange={e => setSearch(e.target.value)} placeholder={isUrdu ? "محکمے تلاش کریں..." : "Search departments..."} aria-label="Search departments" />{search && <button onClick={() => setSearch("")} aria-label="Clear search">×</button>}</div>
           <div className="department-grid">{visibleDepartments.map((d, i) => <button key={d.id} className={`department-card ${i === 0 ? "featured" : ""}`} onClick={() => setDepartment(d)}><span className="card-number">{String(i + 1).padStart(2, "0")}</span><span className="card-icon">{d.icon}</span><span className="card-text"><strong>{isUrdu ? d.urdu : d.name}</strong><small>{d.description}</small></span><span className="arrow">→</span></button>)}</div>
@@ -360,184 +360,115 @@ return (
               {agentActivity.claimVerification && <div className="agent-summary"><strong>Claim verification</strong><small>{agentActivity.claimVerification.available ? `${agentActivity.claimVerification.supportedCount ?? agentActivity.claimVerification.supportedClaims ?? 0}/${agentActivity.claimVerification.totalClaims ?? 0} claims supported${typeof agentActivity.claimVerification.score === "number" ? " · " + agentActivity.claimVerification.score + "%" : ""}` : (agentActivity.claimVerification.reason || "Verification unavailable.")}</small></div>}
             </div>
           )}
-          {!answer && <><div className="question-card"><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "آپ اس محکمے کی کسی بھی سروس کے بارے میں سوال پوچھ سکتے ہیں۔" : "Ask anything about this department. You do not need to select a specific service."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? `مثلاً: ${department?.name} سے متعلق کوئی سوال پوچھیں` : `For example: What is the fee? What documents are required?`} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
+          {!answer && <><div className="question-card"><div className="sensitive-data-warning"><span className="sensitive-data-icon">!</span><span>{isUrdu ? "حساس ذاتی معلومات، CNIC نمبر، پاس ورڈ یا OTP درج نہ کریں۔" : "Do not enter sensitive personal information, CNIC numbers, passwords or OTPs."}</span></div><div className="question-heading"><span className="question-mark">?</span><div><label>{isUrdu ? "اپنا سوال لکھیں" : "What would you like to know?"}</label><small>{isUrdu ? "آپ اس محکمے کی کسی بھی سروس کے بارے میں سوال پوچھ سکتے ہیں۔" : "Ask anything about this department. You do not need to select a specific service."}</small></div></div><textarea value={question} onChange={e => setQuestion(e.target.value)} placeholder={isUrdu ? `مثلاً: ${department?.name} سے متعلق کوئی سوال پوچھیں` : `For example: What is the fee? What documents are required?`} rows={5} /><button className="primary" onClick={ask} disabled={loading || !question.trim()}><span>{loading ? "Checking verified information…" : isUrdu ? "مصدقہ جواب حاصل کریں" : "Get verified answer"}</span><span>→</span></button></div><div className="suggestions"><span>{isUrdu ? "عام سوالات" : "COMMON QUESTIONS"}</span>{suggestions.map((q,i) => <button key={i} onClick={() => setQuestion(q)}>{q}</button>)}</div></>}
           
-          {answer && <div className="answer-area"><div className={`answer-card ${answer.error ? "is-warning" : ""}`}>{answer.error ? <><div className="status-icon warning">!</div><div className="verified-label">{isUrdu ? "معلومات دستیاب نہیں" : "INFORMATION UNAVAILABLE"}</div><h2>{isUrdu ? "مصدقہ معلومات نہیں مل سکیں" : "Verified information is unavailable"}</h2><p>{answer.error}</p></> : <><div className="answer-top"><div className="status-icon">{answer.agentActivity?.claimVerification?.available && answer.agentActivity.claimVerification.passed === true ? "✓" : "i"}</div><div><div className="verified-label">{answer.agentActivity?.claimVerification?.available && answer.agentActivity.claimVerification.passed === true ? (isUrdu ? "مصدقہ سرکاری معلومات" : "VERIFIED GOVERNMENT INFORMATION") : (isUrdu ? "سرکاری معلومات" : "OFFICIAL GOVERNMENT INFORMATION")}</div><small>{answer.agentActivity?.claimVerification?.available ? (isUrdu ? "دعویٰ کی تصدیق دستیاب شواہد کے خلاف کی گئی" : "Claims checked against the available evidence") : (isUrdu ? "دستیاب سرکاری ذرائع کی بنیاد پر؛ دعویٰ کی تصدیق دستیاب نہیں" : "Based on available official sources; claim verification unavailable")}</small></div></div><div className="answer-text">{answer.answer}</div><button className="copy-button" onClick={copyAnswer}>{copied ? "✓ Copied" : "⧉ Copy answer"}</button></>}</div>{answer.source && <div className="source-card"><div className="source-main"><span className="source-icon">↗</span><div><span className="source-label">{isUrdu ? "سرکاری ذریعہ" : "OFFICIAL SOURCE"}</span><strong>{answer.source.title || "Official government source"}</strong><small>{answer.source.department || department.name}{answer.source.lastVerified ? ` · Verified ${answer.source.lastVerified}` : ""}</small></div></div>{answer.source.url && <a href={answer.source.url} target="_blank" rel="noreferrer">{isUrdu ? "سرکاری ویب سائٹ کھولیں" : "Visit official source"} ↗</a>}</div>}
+          {answer && <div className="answer-area">
+            <div className={`answer-card ${answer.error ? "is-warning" : ""}`}>
+              {answer.error ? (
+                <>
+                  <div className="status-icon warning">!</div>
+                  <div className="verified-label">{isUrdu ? "معلومات دستیاب نہیں" : "INFORMATION UNAVAILABLE"}</div>
+                  <h2>{isUrdu ? "مصدقہ معلومات نہیں مل سکیں" : "Verified information is unavailable"}</h2>
+                  <p>{answer.error}</p>
+                </>
+              ) : (
+                <>
+                  <div className="answer-top">
+                    <div className="status-icon">{answer.agentActivity?.claimVerification?.available && answer.agentActivity.claimVerification.passed === true ? "✓" : "i"}</div>
+                    <div>
+                      <div className="verified-label">{isUrdu ? "سرکاری ذرائع سے حاصل کردہ معلومات" : "INFORMATION FROM OFFICIAL GOVERNMENT SOURCES"}</div>
+                      <small>{answer.agentActivity?.claimVerification?.available ? (isUrdu ? "دعویٰ کی تصدیق دستیاب شواہد کے خلاف کی گئی" : "Claims checked against the available evidence") : (isUrdu ? "دستیاب سرکاری ذرائع کی بنیاد پر؛ دعویٰ کی تصدیق دستیاب نہیں" : "Based on available official sources; claim verification unavailable")}</small>
+                    </div>
+                  </div>
+                  <div className="answer-text">{answer.answer}</div>
+                  <button className="copy-button" onClick={copyAnswer}>{copied ? "✓ Copied" : "⧉ Copy answer"}</button>
+                </>
+              )}
+            </div>
 
+            {answer.source && <div className="source-card">
+              <div className="source-main">
+                <span className="source-icon">↗</span>
+                <div>
+                  <span className="source-label">{isUrdu ? "سرکاری ذریعہ" : "OFFICIAL SOURCE"}</span>
+                  <strong>{answer.source.title || "Official government source"}</strong>
+                  <small>{answer.source.department || department.name}</small>
+                </div>
+              </div>
+              {answer.source.url && <a href={answer.source.url} target="_blank" rel="noreferrer">{isUrdu ? "سرکاری ویب سائٹ کھولیں" : "Visit official source"} ↗</a>}
+            </div>}
 
+            <div className="feedback-suggestion-row">
+              <div className="end-user-feedback">
+                <div className="feedback-card">
+                {feedbackSubmitted ? (
+                  <div className="feedback-success">✓ {isUrdu ? "آپ کے تاثرات کا شکریہ!" : "Thank you for your feedback!"}</div>
+                ) : (
+                  <>
+                    <div className="feedback-heading">
+                      <strong>{isUrdu ? "کیا یہ جواب مددگار تھا؟" : "Was this answer helpful?"}</strong>
+                      <small>{isUrdu ? "اپنی رائے ہمارے ساتھ شیئر کریں۔" : "Help us improve the service."}</small>
+                    </div>
+                    <div className="feedback-rating">
+                      <button type="button" className={feedbackRating === "positive" ? "feedback-choice selected" : "feedback-choice"} onClick={() => setFeedbackRating("positive")}>👍 {isUrdu ? "مددگار" : "Helpful"}</button>
+                      <button type="button" className={feedbackRating === "negative" ? "feedback-choice selected" : "feedback-choice"} onClick={() => setFeedbackRating("negative")}>👎 {isUrdu ? "مددگار نہیں" : "Not helpful"}</button>
+                    </div>
+                    <textarea value={feedbackComment} onChange={e => setFeedbackComment(e.target.value)} placeholder={isUrdu ? "اختیاری تبصرہ..." : "Tell us more (optional)..."} rows={2} maxLength={2000} />
+                    <button type="button" className="secondary" onClick={submitFeedback} disabled={!feedbackRating || feedbackSubmitting}>
+                      {feedbackSubmitting ? (isUrdu ? "جمع ہو رہا ہے…" : "Submitting…") : (isUrdu ? "رائے جمع کریں" : "Submit Feedback")}
+                    </button>
+                  </>
+                )}
+                </div>
+              </div>
 
-<button
-  className="secondary"
-  onClick={() => {
-    setAnswer(null);
-    setQuestion("");
-  }}
->
-  ↻ {isUrdu ? "دوسرا سوال پوچھیں" : "Ask another question"}
-</button></div>}
+              <div className="end-user-feedback suggestion-only">
+                <div className="suggestion-card">
+                {suggestionSubmitted ? (
+                  <div className="suggestion-success">✓ {isUrdu ? "آپ کی تجویز کا شکریہ!" : "Thank you for your suggestion!"}</div>
+                ) : (
+                  <>
+                    <div className="suggestion-heading">
+                      <strong>{isUrdu ? "ہمیں اپنی تجویز دیں" : "Have a suggestion?"}</strong>
+                      <small>{isUrdu ? "اپنی رائے سے پاکستان سٹیزن ہیلپر کو بہتر بنانے میں مدد کریں۔" : "Help us improve Pakistan Citizen Helper."}</small>
+                    </div>
+                    <select value={suggestionType} onChange={e => setSuggestionType(e.target.value)}>
+                      <option value="">{isUrdu ? "تجویز کی قسم منتخب کریں" : "Select suggestion type"}</option>
+                      <option value="Service Improvement">{isUrdu ? "سروس میں بہتری" : "Service Improvement"}</option>
+                      <option value="New Service">{isUrdu ? "نئی سروس" : "New Service"}</option>
+                      <option value="Content Improvement">{isUrdu ? "معلومات میں بہتری" : "Content Improvement"}</option>
+                      <option value="Other">{isUrdu ? "دیگر" : "Other"}</option>
+                    </select>
+                    <textarea value={suggestionText} onChange={e => setSuggestionText(e.target.value)} placeholder={isUrdu ? "اپنی تجویز یہاں لکھیں..." : "Write your suggestion here..."} rows={3} maxLength={2000} />
+                    <button type="button" className="secondary" onClick={submitSuggestion} disabled={!suggestionType || !suggestionText.trim() || suggestionSubmitting}>
+                      {suggestionSubmitting ? (isUrdu ? "جمع ہو رہا ہے…" : "Submitting…") : (isUrdu ? "تجویز جمع کریں" : "Submit Suggestion")}
+                    </button>
+                  </>
+                )}
+                </div>
+              </div>
+            </div>
+          </div>}
         </section>}
-
-      <div className="end-user-feedback">
-        <div className="feedback-card">
-          {feedbackSubmitted ? (
-            <div className="feedback-success">
-              ✓ {isUrdu ? "آپ کے تاثرات کا شکریہ!" : "Thank you for your feedback!"}
-            </div>
-          ) : (
-            <>
-              <div className="feedback-heading">
-                <strong>
-                  {isUrdu ? "کیا یہ جواب مددگار تھا؟" : "Was this answer helpful?"}
-                </strong>
-                <small>
-                  {isUrdu
-                    ? "اپنی رائے ہمارے ساتھ شیئر کریں۔"
-                    : "Help us improve the service."}
-                </small>
-              </div>
-        
-              <div className="feedback-rating">
-                <button
-                  type="button"
-                  className={feedbackRating === "positive" ? "feedback-choice selected" : "feedback-choice"}
-                  onClick={() => setFeedbackRating("positive")}
-                >
-                  👍 {isUrdu ? "مددگار" : "Helpful"}
-                </button>
-        
-                <button
-                  type="button"
-                  className={feedbackRating === "negative" ? "feedback-choice selected" : "feedback-choice"}
-                  onClick={() => setFeedbackRating("negative")}
-                >
-                  👎 {isUrdu ? "مددگار نہیں" : "Not helpful"}
-                </button>
-              </div>
-        
-              <textarea
-                value={feedbackComment}
-                onChange={e => setFeedbackComment(e.target.value)}
-                placeholder={
-                  isUrdu
-                    ? "اختیاری تبصرہ..."
-                    : "Tell us more (optional)..."
-                }
-                rows={3}
-                maxLength={2000}
-              />
-        
-              <button
-                type="button"
-                className="secondary"
-                onClick={submitFeedback}
-                disabled={!feedbackRating || feedbackSubmitting}
-              >
-                {feedbackSubmitting
-                  ? isUrdu
-                    ? "جمع ہو رہا ہے…"
-                    : "Submitting…"
-                  : isUrdu
-                    ? "رائے جمع کریں"
-                    : "Submit Feedback"}
-              </button>
-            </>
-          )}
-        </div>
-
-        <div className="suggestion-card">
-          {suggestionSubmitted ? (
-            <div className="suggestion-success">
-              ✓ {isUrdu ? "آپ کی تجویز کا شکریہ!" : "Thank you for your suggestion!"}
-            </div>
-          ) : (
-            <>
-              <div className="suggestion-heading">
-                <strong>
-                  {isUrdu ? "ہمیں اپنی تجویز دیں" : "Have a suggestion?"}
-                </strong>
-                <small>
-                  {isUrdu
-                    ? "اپنی رائے سے پاکستان سٹیزن ہیلپر کو بہتر بنانے میں مدد کریں۔"
-                    : "Help us improve Pakistan Citizen Helper."}
-                </small>
-              </div>
-        
-              <select
-                value={suggestionType}
-                onChange={e => setSuggestionType(e.target.value)}
-              >
-                <option value="">
-                  {isUrdu ? "تجویز کی قسم منتخب کریں" : "Select suggestion type"}
-                </option>
-                <option value="Service Improvement">
-                  {isUrdu ? "سروس میں بہتری" : "Service Improvement"}
-                </option>
-                <option value="New Service">
-                  {isUrdu ? "نئی سروس" : "New Service"}
-                </option>
-                <option value="Content Improvement">
-                  {isUrdu ? "معلومات میں بہتری" : "Content Improvement"}
-                </option>
-                <option value="Other">
-                  {isUrdu ? "دیگر" : "Other"}
-                </option>
-              </select>
-        
-              <textarea
-                value={suggestionText}
-                onChange={e => setSuggestionText(e.target.value)}
-                placeholder={
-                  isUrdu
-                    ? "اپنی تجویز یہاں لکھیں..."
-                    : "Write your suggestion here..."
-                }
-                rows={4}
-                maxLength={2000}
-              />
-        
-              <button
-                type="button"
-                className="secondary"
-                onClick={submitSuggestion}
-                disabled={
-                  !suggestionType ||
-                  !suggestionText.trim() ||
-                  suggestionSubmitting
-                }
-              >
-                {suggestionSubmitting
-                  ? isUrdu
-                    ? "جمع ہو رہا ہے…"
-                    : "Submitting…"
-                  : isUrdu
-                    ? "تجویز جمع کریں"
-                    : "Submit Suggestion"}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
       </section>
-      
 
 <footer>
   <div>
     <strong>Pakistan Citizen Helper</strong>
     <span>•</span>
     <span>
-      {isUrdu ? "مصدقہ سرکاری معلومات" : "Verified Government Information"}
+      {isUrdu ? "آزاد منصوبہ — سرکاری ویب سائٹ نہیں" : "Independent project — not an official government website"}
     </span>
   </div>
 
   <div className="footer-note">
     {isUrdu
-      ? "حساس ذاتی معلومات، CNIC نمبر، پاس ورڈ یا OTP درج نہ کریں۔"
-      : "Do not enter sensitive personal information, CNIC numbers, passwords or OTPs."}
+      ? "یہ ایک آزاد شہری معلوماتی منصوبہ ہے، سرکاری ویب سائٹ نہیں۔ معلومات سرکاری ذرائع سے مرتب کی گئی ہیں۔"
+      : "This is an independent citizen information project, not an official government website. Information is compiled from official government sources."}
   </div>
 
   <p>
-    Developed by <strong>Raees Khan</strong> · Assistant Director, NADRA
+    Developed by <strong>Raees Khan &amp; Team</strong>
   </p>
 </footer>
 </main>

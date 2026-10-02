@@ -272,10 +272,48 @@ export async function getDirectNadraAnswer(question: string, language: "English"
   const isCancel = /cancel|cancellation|surrender|renounce|renunciation|death|وفات|منسوخ|منسوخی|سرنڈر|دستبردار|شہریت ترک|قومیت/.test(q);
   const isConversion = /convert|conversion|from crc|crc to|juvenile card|conversion.*juvenile|تبدیل.*جووینائل|تبدیلی.*جووینائل/.test(q);
 
+  // Internal policy metadata is evidence for the agent, not a public citation.
+  // Citizen-facing answers should not expose internal policy identifiers, dates,
+  // pages, chunks, or sections. The public NADRA website is the displayed source.
   const out = (title: string, body: string) =>
     language === "Urdu"
-      ? "## " + title + "\n\n" + body + "\n\n**پالیسی:** NADRA Registration Policy RP-6.0.2 — مؤثر 21 ستمبر 2026۔"
-      : "## " + title + "\n\n" + body + "\n\n**Policy:** NADRA Registration Policy RP-6.0.2 — effective 21 September 2026.";
+      ? "## " + title + "\n\n" + body
+      : "## " + title + "\n\n" + body;
+
+  // Definition questions must not fall into application/document branches.
+  // Keep this separate from the existing CRC application/correction logic.
+  // Simple identity-document definition questions should not trigger application checklists.
+  const isDefinitionQuestion = /what is|what does .* mean|define|meaning|explain|کیا ہے|مطلب|تعریف|سمجھائیں/.test(q)
+    && !isApply && !isDocs && !isModify && !isDuplicate && !isCancel && !isConversion;
+
+  if (isDefinitionQuestion && hasCnic && !hasCrc && !hasNicop && !hasPoc) {
+    const body = language === "Urdu"
+      ? "CNIC سے مراد **Computerized National Identity Card** ہے۔ یہ NADRA کی طرف سے پاکستانی شہریوں کے لیے جاری کیا جانے والا شناختی کارڈ ہے۔ بالغ شہری کے لیے پہلی مرتبہ رجسٹریشن پر CNIC یا Smart CNIC جاری کیا جا سکتا ہے۔"
+      : "CNIC stands for **Computerized National Identity Card**. It is the identity card issued by NADRA to Pakistani citizens. For an adult citizen, a CNIC or Smart CNIC can be issued through fresh registration.";
+    return out(language === "Urdu" ? "NADRA — CNIC" : "NADRA — CNIC", body);
+  }
+
+  if (isDefinitionQuestion && hasNicop) {
+    const body = language === "Urdu"
+      ? "NICOP سے مراد **National Identity Card for Overseas Pakistanis** ہے۔ یہ بیرونِ ملک رہنے والے پاکستانی شہریوں کے لیے NADRA کا شناختی کارڈ ہے۔"
+      : "NICOP stands for **National Identity Card for Overseas Pakistanis**. It is NADRA's identity card for Pakistani citizens living overseas.";
+    return out(language === "Urdu" ? "NADRA — NICOP" : "NADRA — NICOP", body);
+  }
+
+  if (isDefinitionQuestion && hasPoc) {
+    const body = language === "Urdu"
+      ? "POC سے مراد **Pakistan Origin Card** ہے۔ یہ NADRA کا کارڈ ہے جو اہل غیر ملکی شہریوں یا پاکستانی نژاد افراد کے لیے جاری کیا جاتا ہے۔"
+      : "POC stands for **Pakistan Origin Card**. It is a NADRA card for eligible foreign nationals of Pakistani origin.";
+    return out(language === "Urdu" ? "NADRA — POC" : "NADRA — POC", body);
+  }
+
+  if (hasCrc && /what is|what does .* mean|define|meaning|explain|کیا ہے|مطلب|تعریف|سمجھائیں/.test(q)
+      && !isApply && !isDocs && !isModify && !isDuplicate && !isCancel && !isConversion) {
+    const body = language === "Urdu"
+      ? "CRC سے مراد **Child Registration Certificate** ہے، جسے عام طور پر **B-Form** بھی کہا جاتا ہے۔ یہ NADRA کا بچوں کے لیے رجسٹریشن سرٹیفکیٹ ہے جس میں بچے کی شناخت اور والدین سے متعلق رجسٹریشن معلومات ریکارڈ ہوتی ہیں۔\n\nاگر آپ چاہیں تو میں اگلا بتا سکتا ہوں کہ CRC/B-Form **کیسے بنوانا ہے، کن documents کی ضرورت ہے، یا اس میں correction کیسے کرانی ہے**۔"
+      : "CRC stands for **Child Registration Certificate**, commonly known as **B-Form**. It is NADRA's registration certificate for children and records the child's identity and registration information linked to the parents.\n\nIf you want, I can also explain **how to obtain a CRC/B-Form, which documents are required, or how to correct it**.";
+    return out(language === "Urdu" ? "NADRA — چائلڈ رجسٹریشن سرٹیفکیٹ (CRC / B-Form)" : "NADRA — Child Registration Certificate (CRC / B-Form)", body);
+  }
 
   try {
     const chunks = await getEnglishChunks();
@@ -300,7 +338,7 @@ export async function getDirectNadraAnswer(question: string, language: "English"
       if (surrender) {
         const body = language === "Urdu"
           ? "### پاکستانی شہریت ترک کرنے کی وجہ سے NICOP cancellation\n\n1. Applicant کی application۔\n2. Original CNIC / NICOP / CRC، اگر دستیاب ہو؛ اگر original available نہ ہو تو surrender/lost proof فراہم کیا جا سکتا ہے۔\n3. اگر applicant نے کسی **single-nationality country** کی nationality حاصل کی ہے تو متعلقہ foreign passport اور applicable **Undertaking D** یا verified Renunciation Certificate policy کے مطابق درکار ہے۔\n4. **Dual-national country** کی صورت میں foreign passport کے ساتھ verified Renunciation Certificate یا applicable Undertaking D policy کے مطابق استعمال ہو سکتا ہے۔\n5. **Attestation required نہیں ہے۔**\n\nRP-6.0.2 میں Undertaking D خاص طور پر اس صورت کے لیے موجود ہے جب foreign passport رکھنے والا applicant CNIC/NICOP cancel کرکے POC رکھنا/حاصل کرنا چاہتا ہے۔"
-          : "### NICOP cancellation due to surrender of Pakistani nationality\n\n1. Application by the applicant.\n2. Original CNIC / NICOP / CRC, if available; if the original is unavailable, the policy provides for proof of surrendering or a lost performa.\n3. If the applicant acquired nationality of a **single-nationality country**, the applicable foreign passport and **Undertaking D** or a verified Renunciation Certificate are used according to the policy.\n4. For a **dual-nationality country**, the foreign passport with a verified Renunciation Certificate or applicable Undertaking D is used according to the policy.\n5. **No attestation is required.**\n\nRP-6.0.2 also contains Undertaking D for a foreign-passport holder who wants to cancel CNIC/NICOP in connection with keeping or obtaining a POC.";
+          : "### NICOP cancellation due to surrender of Pakistani nationality\n\n1. Application by the applicant.\n2. Original CNIC / NICOP / CRC, if available; if the original is unavailable, the policy provides for proof of surrendering or a lost performa.\n3. If the applicant acquired nationality of a **single-nationality country**, the applicable foreign passport and **Undertaking D** or a verified Renunciation Certificate are used according to NADRA requirements.\n4. For a **dual-nationality country**, the foreign passport with a verified Renunciation Certificate or applicable Undertaking D is used according to NADRA requirements.\n5. **No attestation is required.**\n\nRP-6.0.2 also contains Undertaking D for a foreign-passport holder who wants to cancel CNIC/NICOP in connection with keeping or obtaining a POC.";
         return out("NICOP — Cancellation due to Nationality Surrender", body);
       }
 
@@ -359,7 +397,7 @@ export async function getDirectNadraAnswer(question: string, language: "English"
     // does not fall into the slow generic web-search path.
     // ------------------------------------------------------------
     if (/\bfrc\b|family registration certificate|family registration/.test(q) &&
-        /difference|different|by birth|by marriage|by adoption|by all|فرق|مختلف|پیدائش|شادی|گود/.test(q)) {
+        /how many|types?|categories?|difference|different|by birth|by marriage|by adoption|by all|فرق|مختلف|اقسام|قسم|پیدائش|شادی|گود/.test(q)) {
       const body = language === "Urdu"
         ? `### FRC کی اقسام
 
@@ -396,6 +434,15 @@ NADRA describes the FRC as a certificate that reflects, verifies and records a r
     // as an FRC application or parent-information correction.
     // ------------------------------------------------------------
     if (/\bfrc\b|family registration certificate|family registration|family information|family record|خاندانی رجسٹریشن|خاندانی معلومات|فیملی رجسٹریشن/.test(q)) {
+      // Definition questions should explain FRC itself, not expose application requirements.
+      const isDefinition = /what is|what does .* mean|define|meaning|explain|کیا ہے|مطلب|تعریف|سمجھائیں/.test(q)
+        && !isApply && !isDocs;
+      if (isDefinition) {
+        const body = language === "Urdu"
+          ? "FRC سے مراد **Family Registration Certificate** ہے۔ یہ NADRA کا سرکاری certificate ہے جو NADRA کے ریکارڈ میں موجود خاندان کی composition کو ظاہر کرتا ہے۔ FRC کی عام categories **By Birth، By Marriage، By Adoption، اور By All** ہیں۔\\n\\nاگر آپ چاہیں تو میں اگلا بتا سکتا ہوں کہ FRC **کیسے حاصل کرنا ہے** یا **FRC کی verification کیسے ہوتی ہے**۔"
+          : "FRC stands for **Family Registration Certificate**. It is an official NADRA certificate that reflects the family-composition information recorded with NADRA. Common FRC categories are **By Birth, By Marriage, By Adoption, and By All**.\\n\\nIf you want, I can also explain **how to obtain an FRC** or **how FRC verification works**.";
+        return out(language === "Urdu" ? "NADRA — فیملی رجسٹریشن سرٹیفکیٹ (FRC)" : "NADRA — Family Registration Certificate (FRC)", body);
+      }
       if (/correct|correction|change|wrong|incorrect|update|درست|تصحیح|تبدیل|غلط|ترمیم/.test(q) && !/\bfrc\b|family registration certificate/.test(q)) {
         return out(
           language === "Urdu" ? "NADRA — Family Information Correction" : "NADRA — Family Information Correction",
@@ -420,6 +467,17 @@ NADRA describes the FRC as a certificate that reflects, verifies and records a r
     // 3. CRC -> JUVENILE CARD / OTHER ID CONVERSION.
     // Must precede the generic CRC application branch.
     // ------------------------------------------------------------
+    // A minor who already has a CRC and asks for a new Smart/Juvenile Card
+    // is asking for the application/conversion process, not a CRC definition.
+    if (hasCrc && /minor|child|under 18|below 18|18 years|نابالغ|بچہ|18 سال سے کم/.test(q) &&
+        /smart|juvenile|جووینائل|اسمارٹ/.test(q) &&
+        /process|how|apply|obtain|get|new|بنوانے|حاصل|طریقہ|عمل/.test(q)) {
+      const body = language === "Urdu"
+        ? "### CRC والے نابالغ کے لیے Juvenile / Smart Card\n\nاگر بچے کے پاس پہلے سے CRC/B-Form موجود ہے تو 18 سال سے کم عمر بچے کے لیے Juvenile Card کے عمل کے ذریعے شناختی کارڈ حاصل کیا جا سکتا ہے۔\n\n1. موجودہ CRC/B-Form کی معلومات استعمال کی جاتی ہیں۔\n2. بچہ primary applicant ہوتا ہے۔\n3. والدین، سرپرست یا قابلِ اطلاق بالغ شناختی گواہ کی biometric verification درکار ہو سکتی ہے۔\n4. بچے کی تصویر اور بایومیٹرکس متعلقہ عمل کے دوران لیے یا update کیے جاتے ہیں۔\n\nیہ adult CNIC بنانے کا عمل نہیں ہے؛ 18 سال سے کم عمر کے لیے Juvenile Card کا عمل استعمال ہوتا ہے۔"
+        : "### Juvenile / Smart Card for a Minor with CRC\n\nIf a child under 18 already has a CRC/B-Form, the child can use the Juvenile Card process to obtain a minor identity card.\n\n1. The existing CRC/B-Form information is used.\n2. The minor is the primary applicant.\n3. Biometric verification by a parent, guardian or other applicable adult identity holder may be required.\n4. The child's photograph and biometrics are captured or updated as part of the process.\n\nThis is not an adult CNIC application; the Juvenile Card process is used for a person under 18.";
+      return out(language === "Urdu" ? "NADRA — نابالغ کے لیے Juvenile / Smart Card" : "NADRA — Juvenile / Smart Card for a Minor", body);
+    }
+
     // Eligibility questions must be answered directly, before the
     // conversion workflow. Example: "Can a child under 18 get a
     // Smart/Juvenile Card?" is not asking how to convert a CRC.
@@ -523,9 +581,8 @@ NADRA describes the FRC as a certificate that reflects, verifies and records a r
 - NADRA policy میں minor کے لیے CRC یا Juvenile Card کا الگ process ہے؛ adult CNIC پہلے بنوانا ضروری نہیں۔
 - Juvenile Card کے لیے minor primary applicant ہوتا ہے اور parent/guardian کی identity information اور applicable biometric verification درکار ہوتی ہے۔
 
-**اہم:** 18+ fresh registration میں blood-relative اور no-blood-relative cases کے تقاضے مختلف ہیں۔ درست case کے مطابق documents اور verification requirements لاگو ہوں گی۔
+**اہم:** 18+ fresh registration میں blood-relative اور no-blood-relative cases کے تقاضے مختلف ہیں۔ درست case کے مطابق documents اور verification requirements لاگو ہوں گی۔`
 
-**پالیسی:** NADRA Registration Policy RP-6.0.2 — مؤثر 21 ستمبر 2026۔`
         : `### New CNIC / Smart CNIC — Fresh Registration
 
 **If the applicant is 18 or above:**
@@ -534,12 +591,11 @@ NADRA describes the FRC as a certificate that reflects, verifies and records a r
 - Where no blood relative is available: verified Birth Certificate/citizenship document, biometric witness by two ID holders above 18 with Affidavit “B”, and CNICF attestation. Such cases may require additional verification/scrutiny.
 
 **If the applicant is under 18:**
-- NADRA policy provides a separate CRC/Juvenile Card process for minors; an adult CNIC does not have to be obtained first.
+- NADRA provides a separate CRC/Juvenile Card process for minors; an adult CNIC does not have to be obtained first.
 - For a Juvenile Card, the minor is the primary applicant and parent/guardian identity information and applicable biometric verification are required.
 
-**Important:** The requirements differ between 18+ fresh registration with a blood relative and a no-blood-relative case. The applicable documents and verification requirements depend on the applicant's circumstances.
+**Important:** The requirements differ between 18+ fresh registration with a blood relative and a no-blood-relative case. The applicable documents and verification requirements depend on the applicant's circumstances.`
 
-**Policy:** NADRA Registration Policy RP-6.0.2 — effective 21 September 2026.`;
 
       return out(language === "Urdu" ? "NADRA — نیا شناختی کارڈ" : "NADRA — New CNIC / Smart CNIC", body);
     }
@@ -612,9 +668,8 @@ CRC/B-Form میں جائے پیدائش کی تبدیلی **Change / Correction 
 1. **Birth Certificate یا کوئی دوسرا متعلقہ documentary evidence** درکار ہوگا۔
 2. اگر Birth Certificate پہلے سے NADRA یا CRMS میں موجود ہے تو پہلے **اسی UC سے جاری Birth Certificate** میں تبدیلی/درستگی کرانی ہوگی، پھر NADRA record میں correction کیا جائے گا۔
 3. Change case میں **attestation required نہیں ہے**۔
-4. اصل document دیکھا اور scan کیا جائے گا۔
+4. اصل document دیکھا اور scan کیا جائے گا۔`
 
-**Policy:** NADRA Registration Policy RP-6.0.2، Rule 13(1)، Change / Correction in Card / Certificate — Place of Birth requirements (Page 16).`
           : `### CRC / B-Form — Change / Correction of Place of Birth
 
 Changing the place of birth on a CRC/B-Form is handled under **Change / Correction in Card / Certificate**.
@@ -622,9 +677,8 @@ Changing the place of birth on a CRC/B-Form is handled under **Change / Correcti
 1. A **Birth Certificate or other relevant documentary evidence** is required.
 2. If the Birth Certificate already exists in NADRA or CRMS records, the Birth Certificate must first be corrected/changed by the **same Union Council (UC)** before the NADRA record is changed.
 3. **No attestation is required** in a change case.
-4. The original document must be seen and scanned.
+4. The original document must be seen and scanned.`
 
-**Policy:** NADRA Registration Policy RP-6.0.2, Rule 13(1), Change / Correction in Card / Certificate — Place of Birth requirements (Page 16).`;
         return out(language === "Urdu" ? "CRC / B-Form — جائے پیدائش کی تبدیلی / درستگی" : "CRC / B-Form — Change / Correction of Place of Birth", body);
       }
 
@@ -639,9 +693,8 @@ CRC/B-Form میں پتے کی تبدیلی **Change / Correction in Card / Certi
 
 **مستقل پتہ:** spouse کا identity document with same address؛ computerized utility bill؛ applicant/parent/spouse کی residential property document؛ verified Local/Domicile/PRC؛ Society/Government allotment letter (کم از کم 3 سال پہلے allotted)؛ یا house owner کا ID card اور original property document کے ساتھ affidavit۔
 
-Non-resident applicants کے لیے متعلقہ passport/residence/work/travel document یا Undertaking A کی شرط policy میں دی گئی ہے۔ **Foreign address change کے لیے کوئی document required نہیں ہے۔**
+Non-resident applicants کے لیے متعلقہ passport/residence/work/travel document یا Undertaking A کی شرط policy میں دی گئی ہے۔ **Foreign address change کے لیے کوئی document required نہیں ہے۔**`
 
-**Policy:** NADRA Registration Policy RP-6.0.2، Change / Correction in Card / Certificate — Address requirements (Pages 15–16).`
           : `### CRC / B-Form — Change / Correction of Address
 
 Changing the address on a CRC/B-Form is handled under **Change / Correction in Card / Certificate**.
@@ -650,9 +703,8 @@ Changing the address on a CRC/B-Form is handled under **Change / Correction in C
 
 **Permanent address:** The policy lists a spouse's identity document with the same address; computerized utility bill; residential property document of applicant/parent/spouse; verified Local/Domicile/PRC; Society/Government allotment letter (allotted at least 3 years earlier); or an affidavit with the house owner's ID card and original property document.
 
-For non-resident citizens, the policy lists the applicable passport/residence/work/travel document or Undertaking A. **No document is required for a change of foreign address.**
+For non-resident citizens, the policy lists the applicable passport/residence/work/travel document or Undertaking A. **No document is required for a change of foreign address.**`
 
-**Policy:** NADRA Registration Policy RP-6.0.2, Change / Correction in Card / Certificate — Address requirements (Pages 15–16).`;
         return out(language === "Urdu" ? "CRC / B-Form — پتے کی تبدیلی" : "CRC / B-Form — Change / Correction of Address", body);
       }
 
@@ -677,8 +729,8 @@ For non-resident citizens, the policy lists the applicable passport/residence/wo
     // question, not a Union Council birth-certificate request.
     if (hasCnic && isModify && nadraQ(question, [/place of birth|birthplace|مقام پیدائش/])) {
       const body = language === "Urdu"
-        ? `### CNIC — جائے پیدائش کی تبدیلی / درستگی\n\n1. **درخواست:** CNIC میں جائے پیدائش کی تبدیلی/درستگی کے لیے NADRA identity-document modification process استعمال ہوتا ہے۔\n2. **دستاویز:** Birth Certificate یا کوئی دوسرا متعلقہ documentary evidence درکار ہے۔\n3. اگر Birth Certificate پہلے سے NADRA یا CRMS record میں موجود ہے تو CNIC record میں change/correction صرف اسی صورت میں کیا جائے گا جب پہلے اسی UC سے جاری Birth Certificate میں correction/change کیا گیا ہو۔\n4. Change cases میں **attestation required نہیں ہے**۔\n5. اصل document دیکھا اور scan کیا جائے گا؛ NADRA کے اپنے جاری کردہ identity/vital-event documents کو scan کرنا لازم نہیں۔\n6. Original identity document جمع کرایا جائے گا؛ اگر اصل ID card دستیاب نہ ہو تو system-generated undertaking دستخط کے ساتھ جمع کرانی ہوگی۔\n7. بعض exceptional cases کو Zonal/Regional board یا متعلقہ approval کے لیے refer کیا جا سکتا ہے۔\n\n**Policy:** NADRA Registration Policy RP-6.0.2 — Change / Correction of Identity Documents, Various Fields Requirements, page 16.`
-        : `### CNIC — Change / Correction of Place of Birth\n\n1. **Application:** Use the NADRA identity-document modification/correction process for changing or correcting the place of birth on the CNIC.\n2. **Evidence required:** A Birth Certificate or other relevant documentary evidence is required.\n3. If a Birth Certificate already exists in NADRA or CRMS records, the CNIC change/correction can only be made after the Birth Certificate is corrected/changed by the same Union Council (UC).\n4. **No attestation is required** in change cases.\n5. The original document must be seen and scanned; NADRA-issued identity/vital-event documents do not need to be scanned.\n6. The previously issued original identity document is to be submitted; if the original ID card is unavailable, a system-generated undertaking with signature is required.\n7. Exceptions may be referred for Zonal/Regional board or relevant approval according to the policy.\n\n**Policy:** NADRA Registration Policy RP-6.0.2 — Change / Correction of Identity Documents, Various Fields Requirements, page 16.`;
+        ? "### CNIC — جائے پیدائش کی تبدیلی / درستگی\n\n1. جائے پیدائش کی تبدیلی **Change / Correction in Card / Certificate** کے تحت آتی ہے۔\n2. متعلقہ Birth Certificate یا قابلِ قبول documentary evidence درکار ہوگا۔\n3. اگر Birth Certificate NADRA/CRMS میں موجود ہے تو پہلے اسی Birth Certificate میں correction ضروری ہے۔\n4. اصل document دیکھا اور scan کیا جائے گا۔"
+        : "### CNIC — Change / Correction of Place of Birth\n\n1. Changing the place of birth is handled under **Change / Correction in Card / Certificate**.\n2. The relevant Birth Certificate or acceptable documentary evidence is required.\n3. If the Birth Certificate already exists in NADRA/CRMS, it must be corrected first.\n4. The original document must be seen and scanned.";
       return out(language === "Urdu" ? "CNIC — جائے پیدائش کی تبدیلی / درستگی" : "CNIC — Change / Correction of Place of Birth", body);
     }
 
@@ -708,7 +760,7 @@ For non-resident citizens, the policy lists the applicable passport/residence/wo
 3. **For a change of more than 5 years:** one of the documentary proofs above plus approval from DG Ops / HOD IOOD or the Regional DG.
 4. If a Birth Certificate already exists in NADRA/CRMS, the Birth Certificate must first be corrected before the DOB is changed in the identity record.
 5. An **age change of 10 years or more** is treated as an unrealistic age-change case requiring DG approval with reasoning/justification/documents.
-6. If a previously used age-proof document contains a different DOB, it must be corrected or cancelled according to the policy, except for a Manual Pakistani Passport / MNIC.
+6. If a previously used age-proof document contains a different DOB, it must be corrected or cancelled according to NADRA requirements, except for a Manual Pakistani Passport / MNIC.
 7. If the applicant is matriculate and another non-birth-certificate document has a different DOB, the policy gives preference to the Matric certificate.
 
 **Important:** The exact approval path depends on the size of the DOB change and the birth evidence already held in NADRA/CRMS.`;
@@ -752,34 +804,35 @@ export async function getDirectAdultFreshCnicAnswer(
   if (!isAdultFreshCnicQuestion(question)) return null;
 
   try {
+    // Retrieve the targeted internal RAG chunks to ensure this specialized
+    // answer is only used when the current NADRA evidence supports the topic.
+    // The internal policy itself is never exposed in the citizen-facing text.
     if (language === "English") {
       const chunks = await getEnglishChunks();
       const targeted = getTargetedEnglishAdultCnicChunks(chunks);
-      const main = targeted[0]?.text || "";
-      if (!main) return null;
+      if (!targeted[0]?.text) return null;
 
       return [
         "## New CNIC / Smart CNIC — Fresh Registration (Age 18+)",
         "",
-        "According to NADRA Registration Policy RP-6.0.2, the requirements differ depending on whether the resident citizen has a blood relative.",
+        "For a first-time CNIC or Smart CNIC, the requirements depend mainly on whether you have a blood relative whose identity can be verified.",
         "",
-        "### Resident citizen — having a blood relative",
-        "1. Application by the applicant.",
-        "2. Identity card number of the parent(s) or blood relative(s).",
-        "3. A verified computerized birth certificate issued by the Union Council, Municipal Committee or Cantonment, **or** the applicable foreign detailed birth certificate / S1 form issued by a Pakistan Embassy or Mission, **or** a Citizenship / Naturalization Certificate.",
-        "4. Biometric verification by a parent or sibling (above 18), **or** attestation of the CNICF in accordance with NADRA Regulation 9 (a–h).",
+        "### If you have a blood relative",
+        "1. Your application.",
+        "2. CNIC/identity-card number of a parent or blood relative.",
+        "3. A verified computerized Birth Certificate, or the applicable citizenship/naturalization document.",
+        "4. Biometric verification by a parent or sibling aged 18+, **or** the applicable CNICF attestation.",
         "",
-        "### Resident citizen — having no blood relative",
-        "1. Application by the applicant.",
-        "2. A verified computerized birth certificate issued by the Union Council, Municipal Committee or Cantonment, **or** a Citizenship / Naturalization Certificate.",
-        "3. Biometric witness by two ID holders above 18, together with Affidavit “B” (as per the prescribed format).",
-        "4. Attestation of the CNICF in accordance with NADRA Regulation 9 (a–h).",
-        "5. Any other document, if applicable.",
+        "### If you do not have a blood relative",
+        "1. Your application.",
+        "2. A verified computerized Birth Certificate or applicable citizenship/naturalization document.",
+        "3. Biometric witnesses from two ID holders aged 18+, with the required Affidavit “B”.",
+        "4. The applicable CNICF attestation.",
+        "5. NADRA may ask for additional documents or verification.",
         "",
-        "**Important:** The no-blood-relative case may require additional verification/scrutiny and more processing time. The policy also specifies a priority order for witnesses.",
+        "**Simple summary:** If a blood relative is available, their identity/biometric verification can support the application. If no blood relative is available, the case requires two adult ID-holder witnesses and additional verification.",
         "",
-        "**Policy:** NADRA Registration Policy RP-6.0.2 — issued 18 September 2026; effective 21 September 2026.",
-        "**Evidence:** Fresh / New Registration of 18 years or above (CNIC or SMART CNIC), page 10, CHUNK-0015."
+        "**Official source:** NADRA — https://www.nadra.gov.pk/identityDocument/cnic"
       ].join("\n");
     }
 
@@ -787,68 +840,148 @@ export async function getDirectAdultFreshCnicAnswer(
     if (!targeted) return null;
 
     return [
-      "## نیا شناختی کارڈ / اسمارٹ شناختی کارڈ — 18 سال یا اس سے زائد عمر",
+      "## نیا CNIC / Smart CNIC — پہلی مرتبہ رجسٹریشن (عمر 18 سال یا اس سے زیادہ)",
       "",
-      "نادرا رجسٹریشن پالیسی RP-6.0.2 کے مطابق اندرونِ ملک مقیم شہری کے لیے تقاضے اس بات کے مطابق مختلف ہیں کہ خون کا رشتہ دار موجود ہے یا نہیں۔",
+      "پہلی مرتبہ CNIC یا Smart CNIC بنوانے کے تقاضے اس بات پر منحصر ہیں کہ آپ کا کوئی خون کا رشتہ دار موجود ہے یا نہیں جس کی شناخت کی تصدیق کی جا سکے۔",
       "",
-      "### خون کے رشتے دار کے ساتھ",
-      "1. درخواست گزار کی جانب سے درخواست۔",
-      "2. والدین یا خون کے رشتے دار کا شناختی کارڈ نمبر۔",
-      "3. یونین کونسل، میونسپل کمیٹی یا کنٹونمنٹ بورڈ سے جاری کردہ تصدیق شدہ کمپیوٹرائزڈ پیدائشی سرٹیفکیٹ، **یا** قابلِ اطلاق غیر ملکی تفصیلی پیدائشی سرٹیفکیٹ / پاکستان سفارت خانہ یا مشن سے جاری کردہ S1 فارم، **یا** شہریت / Naturalization Certificate۔",
-      "4. والدین یا 18 سال سے زائد عمر کے بہن/بھائی کی جانب سے بایومیٹرک تصدیق، **یا** نادرا ریگولیشن 9 (A-H) کے مطابق تصدیق کنندہ سے درخواست فارم کی تصدیق۔",
+      "### اگر خون کا رشتہ دار موجود ہو",
+      "1. درخواست گزار کی درخواست۔",
+      "2. والدین یا کسی خون کے رشتہ دار کا شناختی کارڈ نمبر۔",
+      "3. تصدیق شدہ کمپیوٹرائزڈ Birth Certificate، یا قابلِ اطلاق شہریت / Naturalization Certificate۔",
+      "4. 18 سال یا اس سے زیادہ عمر کے والدین یا بہن/بھائی کی بائیومیٹرک تصدیق، یا قابلِ اطلاق CNICF تصدیق۔",
       "",
-      "### خون کے رشتے دار کے بغیر",
-      "1. درخواست گزار کی جانب سے درخواست۔",
-      "2. یونین کونسل، میونسپل کمیٹی یا کنٹونمنٹ بورڈ سے جاری کردہ تصدیق شدہ کمپیوٹرائزڈ پیدائشی سرٹیفکیٹ، **یا** شہریت / Naturalization Certificate۔",
-      "3. دو 18 سال سے زائد عمر کے شناختی کارڈ ہولڈرز کی بایومیٹرک گواہی، حلف “B” (نادرا کے وضع کردہ مقررہ فارمیٹ) کے ساتھ۔",
-      "4. نادرا ریگولیشن 9 (A-H) کے مطابق درخواست فارم کی تصدیق۔",
-      "5. کوئی اور دستاویز، اگر ہو۔",
+      "### اگر خون کا رشتہ دار موجود نہ ہو",
+      "1. درخواست گزار کی درخواست۔",
+      "2. تصدیق شدہ کمپیوٹرائزڈ Birth Certificate یا قابلِ اطلاق شہریت / Naturalization Certificate۔",
+      "3. 18 سال یا اس سے زیادہ عمر کے دو شناختی کارڈ رکھنے والے افراد بطور گواہ، مطلوبہ Affidavit “B” کے ساتھ۔",
+      "4. قابلِ اطلاق CNICF تصدیق۔",
+      "5. NADRA مزید دستاویزات یا اضافی تصدیق طلب کر سکتا ہے۔",
       "",
-      "**اہم نوٹ:** خون کے رشتے دار کے بغیر درخواست میں اضافی تصدیق/جانچ پڑتال اور زیادہ وقت درکار ہو سکتا ہے۔ پالیسی گواہوں کی ترجیح بھی بیان کرتی ہے۔",
+      "**آسان خلاصہ:** اگر خون کا رشتہ دار موجود ہو تو اس کی شناخت اور بائیومیٹرک تصدیق درخواست میں مدد دیتی ہے۔ اگر خون کا رشتہ دار موجود نہ ہو تو دو بالغ شناختی کارڈ رکھنے والے گواہوں اور اضافی تصدیق کی ضرورت پڑ سکتی ہے۔",
       "",
-      "**پالیسی:** NADRA Registration Policy RP-6.0.2 — اجرا 18 ستمبر 2026؛ مؤثر 21 ستمبر 2026۔",
-      "**ثبوت:** 18 سال یا اس سے زائد عمر کے شہریوں کا نیا اندراج، صفحہ 11، اردو پالیسی متن۔"
+      "**سرکاری ماخذ:** NADRA — https://www.nadra.gov.pk/identityDocument/cnic"
     ].join("\n");
   } catch (error) {
-    console.error("Direct NADRA adult CNIC answer failed:", error);
-    return null;
+    console.error("Direct adult fresh CNIC resolver failed:", error);
   }
+
+  return null;
 }
 
-// Returns narrowly scoped policy evidence for the claim verifier.
-// Keeping this separate from general retrieval prevents unrelated chunks
-// from overwhelming the verifier and causing weak/invalid verification.
 export async function getDirectNadraVerificationEvidence(question: string): Promise<string> {
   try {
     const chunks = await getEnglishChunks();
     const q = normalize(question);
     const ids = new Set<string>();
 
-    if (/\bfrc\b|family registration certificate|family registration/.test(q)) ids.add("CHUNK-0035");
-    if (/date of birth|dob|birth date|age|تاریخ پیدائش|عمر/.test(q)) ids.add("CHUNK-0022");
-    if (/place of birth|birthplace|مقام پیدائش/.test(q)) { ids.add("CHUNK-0019"); ids.add("CHUNK-0029"); }
-    if (/father.?s? name|mother.?s? name|parent.?s? info|والد|والدہ/.test(q)) ids.add("CHUNK-0021");
-    if (/address|residential address|پتہ/.test(q)) { ids.add("CHUNK-0023"); ids.add("CHUNK-0024"); }
-    if (/renew|renewal|تجدید/.test(q)) ids.add("CHUNK-0032");
-    if (/crc|b-form|child registration|juvenile|under 18|minor|ب فارم|جووینائل/.test(q)) {
-      ids.add("CHUNK-0011"); ids.add("CHUNK-0012"); ids.add("CHUNK-0031");
-    }
-    if (/new|fresh|new card|fresh card|new cnic|fresh cnic|نیا کارڈ|نیا شناختی/.test(q)) {
+    // Common policy foundations.
+    ids.add("CHUNK-0001"); // breeder-document / prior birth-record correction rule
+    ids.add("CHUNK-0019"); // Rule 13(1), change/correction framework
+
+    // Intent-specific evidence. This is deliberately broader than the old
+    // seven-condition map so the verifier receives the actual policy section
+    // for the service being answered, rather than unrelated nearby chunks.
+    if (/fresh|new|registration|first[- ]?time|نیا|اندراج/.test(q)) {
       ids.add("CHUNK-0011");
       ids.add("CHUNK-0012");
       ids.add("CHUNK-0014");
       ids.add("CHUNK-0015");
+      ids.add("CHUNK-0017");
     }
 
-    const selected = chunks.filter(x => x.chunk_id && ids.has(x.chunk_id));
+    if (/crc|b-form|b form|child registration|juvenile|under 18|below 18|minor|ب فارم|جووینائل/.test(q)) {
+      ids.add("CHUNK-0011");
+      ids.add("CHUNK-0012");
+      ids.add("CHUNK-0031");
+    }
+
+    if (/date of birth|dob|birth date|age|تاریخ پیدائش|عمر/.test(q)) ids.add("CHUNK-0022");
+
+    if (/place of birth|birthplace|مقام پیدائش/.test(q)) ids.add("CHUNK-0029");
+
+    if (/address|residential address|temporary address|permanent address|foreign address|پتہ|رہائشی پتہ/.test(q)) {
+      ids.add("CHUNK-0023");
+      ids.add("CHUNK-0024");
+    }
+
+    if (/name|نام/.test(q)) {
+      ids.add("CHUNK-0020");
+      ids.add("CHUNK-0055");
+      ids.add("CHUNK-0056");
+    }
+
+    if (/father.?s? name|mother.?s? name|parent.?s? info|parent information|والد|والدہ/.test(q)) {
+      ids.add("CHUNK-0021");
+    }
+
+    if (/marital|marriage|divorce|widow|marital status|ازدواجی|شادی|طلاق|بیوہ/.test(q)) {
+      ids.add("CHUNK-0025");
+    }
+
+    if (/religion|مذہب/.test(q)) ids.add("CHUNK-0026");
+    if (/gender|جنس/.test(q)) ids.add("CHUNK-0027");
+    if (/relative|family member|add.*sibling|linkage|رشتہ دار|خاندان/.test(q)) ids.add("CHUNK-0028");
+
+    if (/renew|renewal|reprint|duplicate|lost|stolen|damaged|تجدید|ڈپلیکیٹ|گم|چوری|خراب/.test(q)) {
+      ids.add("CHUNK-0030");
+      ids.add("CHUNK-0032");
+    }
+
+    if (/frc|family registration certificate|family registration|family information|family record/.test(q)) {
+      ids.add("CHUNK-0035");
+    }
+
+    if (/poc|pakistan origin card|pakistani origin card|پاکستان اوریجن کارڈ/.test(q)) {
+      ids.add("CHUNK-0038");
+      ids.add("CHUNK-0041");
+      ids.add("CHUNK-0042");
+      ids.add("CHUNK-0043");
+      if (/renew|renewal|reprint|change|modify|correction|address|name|dob/.test(q)) ids.add("CHUNK-0046");
+      ids.add("CHUNK-0048");
+    }
+
+    if (/nicop|smart nicop/.test(q)) {
+      ids.add("CHUNK-0013");
+      ids.add("CHUNK-0016");
+      if (/cancel|cancellation|surrender|renoun|death|وفات|منسوخ/.test(q)) {
+        ids.add("CHUNK-0050");
+        ids.add("CHUNK-0051");
+        ids.add("CHUNK-0058");
+      }
+    }
+
+    if (/cancel|cancellation|surrender|renoun|death|deceased|وفات|منسوخ|شہریت ترک/.test(q)) {
+      ids.add("CHUNK-0050");
+      ids.add("CHUNK-0051");
+    }
+
+    if (/shajrah|shajra|shajra.?e.?nasab|family composition|family tree|شجرہ|خاندانی فہرست/.test(q)) {
+      // The NADRA FRC side is still supported by policy; the Revenue-side
+      // Shajra-e-Nasab evidence is supplied by the API route when needed.
+      ids.add("CHUNK-0035");
+    }
+
+    if (/effective date|effective_date|مؤثر ہونے کی تاریخ|نافذ العمل تاریخ/.test(q)) {
+      ids.add("CHUNK-0001");
+    }
+
+    const selected = chunks.filter((x) => x.chunk_id && ids.has(x.chunk_id));
+
     if (!selected.length) return "";
-    return selected.map(x => `SOURCE: NADRA Registration Policy RP-6.0.2
+
+    return selected
+      .map(
+        (x) =>
+          `SOURCE: NADRA Registration Policy RP-6.0.2
 PAGE: ${x.page || ""}
 SECTION: ${x.subsection || x.major_section || ""}
 CHUNK: ${x.chunk_id}
 EVIDENCE:
-${x.text || ""}`).join("\n\n");
-  } catch {
+${x.text || ""}`
+      )
+      .join("\n\n");
+  } catch (error) {
+    console.error("NADRA verification evidence selection failed:", error);
     return "";
   }
 }

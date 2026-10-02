@@ -2083,9 +2083,9 @@ if (requested === "NADRA Services") {
           ? "NADRA — Family Registration Certificate"
           : isPoc
             ? "NADRA — Pakistan Origin Card"
-            : "NADRA Registration Policy RP-6.0.2",
+            : "NADRA official information",
         url: sourceUrl,
-        lastVerified: "1 October 2026",
+        lastVerified: "",
         province: ""
       },
       department: "NADRA Services",

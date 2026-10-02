@@ -274,6 +274,31 @@ export async function getDirectNadraAnswer(question: string, language: "English"
 
   // Definition questions must not fall into application/document branches.
   // Keep this separate from the existing CRC application/correction logic.
+  // Simple identity-document definition questions should not trigger application checklists.
+  const isDefinitionQuestion = /what is|what does .* mean|define|meaning|explain|کیا ہے|مطلب|تعریف|سمجھائیں/.test(q)
+    && !isApply && !isDocs && !isModify && !isDuplicate && !isCancel && !isConversion;
+
+  if (isDefinitionQuestion && hasCnic && !hasCrc && !hasNicop && !hasPoc) {
+    const body = language === "Urdu"
+      ? "CNIC سے مراد **Computerized National Identity Card** ہے۔ یہ NADRA کی طرف سے پاکستانی شہریوں کے لیے جاری کیا جانے والا شناختی کارڈ ہے۔ بالغ شہری کے لیے پہلی مرتبہ رجسٹریشن پر CNIC یا Smart CNIC جاری کیا جا سکتا ہے۔"
+      : "CNIC stands for **Computerized National Identity Card**. It is the identity card issued by NADRA to Pakistani citizens. For an adult citizen, a CNIC or Smart CNIC can be issued through fresh registration.";
+    return out(language === "Urdu" ? "NADRA — CNIC" : "NADRA — CNIC", body);
+  }
+
+  if (isDefinitionQuestion && hasNicop) {
+    const body = language === "Urdu"
+      ? "NICOP سے مراد **National Identity Card for Overseas Pakistanis** ہے۔ یہ بیرونِ ملک رہنے والے پاکستانی شہریوں کے لیے NADRA کا شناختی کارڈ ہے۔"
+      : "NICOP stands for **National Identity Card for Overseas Pakistanis**. It is NADRA's identity card for Pakistani citizens living overseas.";
+    return out(language === "Urdu" ? "NADRA — NICOP" : "NADRA — NICOP", body);
+  }
+
+  if (isDefinitionQuestion && hasPoc) {
+    const body = language === "Urdu"
+      ? "POC سے مراد **Pakistan Origin Card** ہے۔ یہ NADRA کا کارڈ ہے جو اہل غیر ملکی شہریوں یا پاکستانی نژاد افراد کے لیے جاری کیا جاتا ہے۔"
+      : "POC stands for **Pakistan Origin Card**. It is a NADRA card for eligible foreign nationals of Pakistani origin.";
+    return out(language === "Urdu" ? "NADRA — POC" : "NADRA — POC", body);
+  }
+
   if (hasCrc && /what is|what does .* mean|define|meaning|explain|کیا ہے|مطلب|تعریف|سمجھائیں/.test(q)
       && !isApply && !isDocs && !isModify && !isDuplicate && !isCancel && !isConversion) {
     const body = language === "Urdu"

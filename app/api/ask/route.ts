@@ -755,6 +755,7 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  const isBalochistan=jurisdiction==="Balochistan";
  const isFard=q.includes("fard")||q.includes("فرد")||q.includes("land record")||q.includes("land records")||q.includes("زمین کا ریکارڈ")||q.includes("لینڈ ریکارڈ");
  const isGeneralFardDefinition=isFard && !jurisdiction && /^(what is|define|meaning of|what does .* mean|کیا ہے|کیا ہوتی ہے|کیا ہوتا ہے|مطلب)/i.test(q);
+ const isGeneralMutationDefinition=!jurisdiction && isMutation && /^(what is|define|meaning of|what does .* mean|کیا ہے|کیا ہوتی ہے|کیا ہوتا ہے|مطلب)/i.test(q);
  const isMutation=q.includes("mutation")||q.includes("intiqal")||q.includes("inteqal")||q.includes("intikal")||q.includes("انتقال");
  const isRegistry=q.includes("registry")||q.includes("رجسٹری")||q.includes("property registration")||q.includes("registration of property")||q.includes("register property")||q.includes("deed registration");
  const isOwnership=q.includes("ownership")||q.includes("owner")||q.includes("ملکیت");
@@ -765,6 +766,11 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  const isCorrection=/(correct|correction|incorrect|wrong|error|mistake|record correction|correct.*record|درست.*ریکارڈ|ریکارڈ.*درست|غلط.*ریکارڈ|تصحیح)/i.test(q);
  const isSDC=q.includes("service delivery centre")||q.includes("service delivery center")||q.includes("sdc")||q.includes("ایس ڈی سی")||q.includes("سروس ڈیلیوری سنٹر")||q.includes("سروس ڈیلیوری سینٹر");
  const hasLandTopic=isFard||isMutation||isRegistry||isOwnership||isSDC||q.includes("land")||q.includes("property")||q.includes("revenue")||q.includes("زمین")||q.includes("جائیداد")||q.includes("ریونیو")||q.includes("رجسٹری")||q.includes("انتقال")||q.includes("لینڈ ریکارڈ");
+ if(isGeneralMutationDefinition){
+  return language==="Urdu"
+   ? "## انتقال (Mutation / Intiqal)\n\nانتقال زمین کی ملکیت یا حق میں تبدیلی کو سرکاری لینڈ ریکارڈ میں درج کرنے کا عمل ہے۔ اس کا طریقہ کار، متعلقہ دفتر، دستاویزات اور فیس صوبے یا علاقے کے مطابق مختلف ہو سکتے ہیں۔"
+   : "## Mutation / Intiqal\n\nMutation (Intiqal) is the process of recording a change in land ownership or rights in the official land record. The procedure, authority, documents and fees vary by province or territory.";
+ }
  if(isGeneralFardDefinition){
   return language==="Urdu"
    ? "## فرد (Fard)\n\nفرد زمین کے ریکارڈ کی ایک سرکاری دستاویز ہے جس میں متعلقہ زمین کے رقبے، مقام اور ملکیت کی تفصیلات درج ہوتی ہیں۔ فرد حاصل کرنے اور اس کی فیس یا طریقۂ کار صوبے اور متعلقہ لینڈ ریکارڈ اتھارٹی کے مطابق مختلف ہو سکتے ہیں۔"

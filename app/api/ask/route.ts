@@ -1224,7 +1224,196 @@ export async function POST(request:NextRequest){try{
 
 
 
- const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,category,title,content,service_name_urdu,province,title_urdu,content_urdu,official_department,official_source_title,official_source_url,last_verified,active&active=eq.true&order=last_verified.desc`;const db=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`},cache:"no-store"});if(!db.ok){console.error(await db.text());return NextResponse.json({error:"Unable to retrieve verified information from Supabase."},{status:500});}
+ // FBR / Taxation deterministic routes run before the generic evidence pipeline.
+// This prevents valid FBR return/registration/ATL questions from falling through.
+if(requested==="FBR / Taxation"){
+ const fq=normalize(question);
+ const isReturn=fq.includes("return")||fq.includes("file return")||fq.includes("filing return")||fq.includes("file tax return")||fq.includes("filing tax return")||fq.includes("income tax return")||fq.includes("tax return")||fq.includes("ریٹرن")||fq.includes("ریٹرن فائل");
+ const isRegistration=fq.includes("ntn")||fq.includes("national tax number")||fq.includes("register")||fq.includes("registration")||fq.includes("taxpayer"); const isATL=fq.includes("active taxpayer")||fq.includes("atl")||fq.includes("filer status")||fq.includes("filer")||fq.includes("active taxpayer list");
+ if(isATL){
+  const fbrATLAnswer=language==="Urdu"
+   ? `## FBR — Active Taxpayer Status (ATL)
+**سرکاری ادارہ:** Federal Board of Revenue (FBR)
+
+اپنا **Active Taxpayer Status** FBR کے **IRIS 2.0 / Online Verification** کے ذریعے چیک کیا جا سکتا ہے۔ IRIS میں **Active Taxpayer List (Income Tax)** کی verification سروس موجود ہے، جہاں متعلقہ شناختی نمبر منتخب کر کے معلومات درج کی جاتی ہیں اور **Verify** کیا جاتا ہے۔
+
+**سرکاری ذریعہ:** https://iris.fbr.gov.pk/
+`
+   : `## FBR — Active Taxpayer Status (ATL)
+**Official authority:** Federal Board of Revenue (FBR)
+
+You can check your **Active Taxpayer Status** through FBR's **IRIS 2.0 / Online Verification** service. IRIS provides an **Active Taxpayer List (Income Tax)** verification option where you select the relevant identifier, enter the required information and use **Verify**.
+
+**Official source:** https://iris.fbr.gov.pk/
+`;
+  const atlUrls=[
+   "https://iris.fbr.gov.pk/",
+   "https://fbr.gov.pk/categ/active-taxpayer-list-income-tax/51147/30859/%2071168"
+  ];
+  let atlVerificationEvidence="";
+  for(const u of atlUrls){
+   const t=await fetchOfficialPage(u);
+   if(t) atlVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
+  }
+  // Keep a small deterministic evidence summary so verification remains available
+  // even if the live FBR page is temporarily unreachable.
+  atlVerificationEvidence += [
+   "",
+   "OFFICIAL FBR EVIDENCE SUMMARY:",
+   "FBR IRIS 2.0 provides an Online Verifications section with Active Taxpayer List (Income Tax).",
+   "The IRIS Active Taxpayer List verification form allows an identifier such as NTN, CNIC, Passport No. or Registration/Inc. No. to be selected and then verified.",
+   "FBR's Active Taxpayer List page states that the Active Taxpayer Status can also be checked through the online portal.",
+   "FBR's published ATL guidance states that an individual's status can also be checked by sending ATL followed by a space and the 13-digit CNIC number to 9966. For a company or AOP, ATL followed by a space and the 7-digit NTN can be sent to 9966."
+  ].join("\n");
+  return directWorkflowResponse({
+   answer:fbrATLAnswer,
+   source:{department:"FBR / Taxation",title:"FBR IRIS 2.0 — Active Taxpayer List Verification",url:atlUrls[0],lastVerified:"",province:""},
+   department:"FBR / Taxation",
+   question,
+   language,
+   jurisdiction:null,
+   evidenceAvailable:true,
+   verifyClaims:true,
+   verificationEvidence:atlVerificationEvidence.trim()
+  });
+ }
+
+ if(isReturn){
+  const fbrReturnAnswer=language==="Urdu"
+   ? `## FBR — انکم ٹیکس ریٹرن فائل کرنے کا طریقہ
+**سرکاری ادارہ:** Federal Board of Revenue (FBR)
+
+FBR کے مطابق انکم ٹیکس ریٹرن آن لائن **IRIS** پورٹل کے ذریعے فائل کیا جاتا ہے۔
+
+**طریقۂ کار:**
+1. **IRIS** میں اپنے NTN/Registration Number اور password سے لاگ اِن کریں۔ پہلی بار ریٹرن فائل کرنے والے شخص کے لیے پہلے FBR رجسٹریشن/e-enrollment ضروری ہے۔
+2. **Declaration** میں متعلقہ Income Tax Return کھولیں۔
+3. متعلقہ tax year منتخب کریں اور اپنی آمدن، قابلِ اطلاق tax information اور متعلقہ تفصیلات درج کریں۔
+4. Income Tax Return کے ساتھ **Wealth Statement (assets and liabilities)** بھی مکمل کریں، جہاں یہ لاگو ہو۔
+5. Wealth Statement کو reconcile کریں؛ FBR کے مطابق wealth میں تبدیلی اور income/expenses کے درمیان reconciliation ضروری ہے۔
+6. فارم مکمل کرکے submit کریں۔ FBR کے مطابق کامیاب submission اس وقت confirm ہوتی ہے جب Return of Income اور Wealth Statement دونوں **Draft** سے **Completed Task** میں منتقل ہو جائیں۔
+
+**اہم:** اگر آپ پہلی بار filer ہیں تو پہلے FBR registration/e-enrollment مکمل کرنا ہوگا۔
+
+**سرکاری ذرائع:**
+https://www.fbr.gov.pk/categ/file-income-tax-return/51147/80860/71160
+https://iris.fbr.gov.pk/`
+   : `## FBR — How to File an Income Tax Return
+**Official authority:** Federal Board of Revenue (FBR)
+
+According to FBR, an income-tax return is filed online through the **IRIS** portal.
+
+**Process:**
+1. Log in to **IRIS** using your NTN/Registration Number and password. A first-time filer must complete FBR registration/e-enrollment before filing.
+2. Open the relevant Income Tax Return from **Declaration**.
+3. Select the relevant tax year and enter the applicable income, tax and other required information.
+4. Complete the **Wealth Statement (assets and liabilities)** where applicable.
+5. Reconcile the Wealth Statement; FBR states that the wealth statement must reconcile with the change in wealth arising from income and expenses.
+6. Submit the return. FBR states that successful submission is confirmed when the Return of Income and Wealth Statement move from **Draft** to **Completed Task**.
+
+**Important:** If you are a first-time filer, complete FBR registration/e-enrollment first.
+
+**Official sources:**
+https://www.fbr.gov.pk/categ/file-income-tax-return/51147/80860/71160
+https://iris.fbr.gov.pk/`;
+  const returnUrls=[
+   "https://www.fbr.gov.pk/categ/file-income-tax-return/51147/80860/71160",
+   "https://fbr.gov.pk/categ/file-income-tax-return/51147/80860/71158",
+   "https://iris.fbr.gov.pk/"
+  ];
+  let returnVerificationEvidence="";
+  for(const u of returnUrls){
+   const t=await fetchOfficialPage(u);
+   if(t) returnVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
+  }
+  returnVerificationEvidence += [
+   "",
+   "OFFICIAL FBR EVIDENCE SUMMARY:",
+   "FBR states that Income Tax Returns are filed online through Iris.",
+   "FBR states that first-time filers must register before filing.",
+   "FBR states that the Return of Income form and Wealth Statement must be completed.",
+   "FBR states that successful submission is confirmed when both forms move from Draft to Completed Task."
+  ].join("\n");
+  return directWorkflowResponse({
+   answer:fbrReturnAnswer,
+   source:{department:"FBR / Taxation",title:"FBR — File Income Tax Return",url:returnUrls[0],lastVerified:"",province:""},
+   department:"FBR / Taxation",
+   question,
+   language,
+   jurisdiction:null,
+   evidenceAvailable:true,
+   verifyClaims:true,
+   verificationEvidence:returnVerificationEvidence.trim()
+  });
+ }
+
+ if(isRegistration){
+  const fbrAnswer=language==="Urdu"
+   ? `## FBR — انکم ٹیکس رجسٹریشن اور NTN
+**سرکاری ادارہ:** Federal Board of Revenue (FBR)
+
+FBR کے مطابق انکم ٹیکس رجسٹریشن ٹیکس ریٹرن فائل کرنے کا پہلا قدم ہے۔
+
+**فرد (Individual) کے لیے آن لائن رجسٹریشن:**
+1. FBR کے **IRIS** پورٹل پر آن لائن رجسٹریشن کی جا سکتی ہے۔
+2. آن لائن رجسٹریشن صرف **Individual** کے لیے دستیاب ہے؛ AOP یا Company کے لیے یہ آن لائن راستہ دستیاب نہیں۔
+3. اپنا CNIC والا موبائل نمبر اور ذاتی ای میل درکار ہے۔
+4. اگر کاروبار ہے تو کاروباری جگہ کی ملکیت/کرایہ داری کا ثبوت اور تین ماہ سے پرانا نہ ہونے والا paid utility bill درکار ہے۔
+5. اپنے نام کے personal bank account کی maintenance certificate کی اسکین شدہ کاپی درکار ہے۔
+
+**رجسٹریشن کے بعد:** FBR کے مطابق IRIS e-enrollment سے فرد کو اس کا National Tax Number (NTN)/Registration Number اور password ملتا ہے۔ فرد کے لیے 13 ہندسوں کا CNIC ہی NTN/Registration Number کے طور پر استعمال ہوتا ہے۔
+
+**اہم:** AOP اور Company کے لیے FBR کا Facilitation Counter/RTO والا طریقہ الگ ہے۔
+
+**سرکاری ذرائع:**
+https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150
+https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148`
+   : `## FBR — Income Tax Registration and NTN
+**Official authority:** Federal Board of Revenue (FBR)
+
+According to FBR, income-tax registration is the first step before filing an income-tax return.
+
+**For an individual, online registration:**
+1. An individual can register online through the **IRIS** portal.
+2. Online registration is available only for an **individual**, not for an Association of Persons (AOP) or company.
+3. The applicant needs a mobile SIM registered in their own CNIC and a personal email address.
+4. If the applicant has a business, FBR requires evidence of tenancy/ownership of the business premises and a paid utility bill for the business premises not older than 3 months.
+5. A scanned certificate showing maintenance of the applicant's personal bank account in their own name is required.
+
+**After registration:** FBR states that e-enrollment provides a National Tax Number (NTN) or Registration Number and password. For an individual, the 13-digit CNIC is used as the NTN/Registration Number.
+
+**Important:** AOP and company registration follows a separate Facilitation Counter/Tax House process.
+
+**Official sources:**
+https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150
+https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148`;
+  const urls=[
+   "https://www.fbr.gov.pk/categ/register-income-tax/51147/30846/%2061149",
+   "https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150",
+   "https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148"
+  ];
+  let fbrVerificationEvidence="";
+  for(const u of urls){
+   const t=await fetchOfficialPage(u);
+   if(t) fbrVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
+  }
+  return directWorkflowResponse({
+   answer:fbrAnswer,
+   source:{department:"FBR / Taxation",title:"FBR — Register for Income Tax",url:urls[0],lastVerified:"",province:""},
+   department:"FBR / Taxation",
+   question,
+   language,
+   jurisdiction:null,
+   evidenceAvailable:true,
+   verifyClaims:true,
+   verificationEvidence:fbrVerificationEvidence.trim()
+  });
+ }
+}
+
+
+
+const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,category,title,content,service_name_urdu,province,title_urdu,content_urdu,official_department,official_source_title,official_source_url,last_verified,active&active=eq.true&order=last_verified.desc`;const db=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`},cache:"no-store"});if(!db.ok){console.error(await db.text());return NextResponse.json({error:"Unable to retrieve verified information from Supabase."},{status:500});}
  const all=(await db.json()) as VerifiedRecord[];const selected=selectRecords(question,requested,all);
  const workingJurisdiction=workingDetectJurisdiction(question);
  const workingTargetJurisdiction=workingDetectTargetJurisdiction(question);
@@ -1860,191 +2049,6 @@ if(requested==="Government Jobs"){
   verifyClaims:true,
   verificationEvidence:evidence
  });
-}
-
-if(requested==="FBR / Taxation"){
- const fq=normalize(question);
- const isReturn=fq.includes("return")||fq.includes("file return")||fq.includes("filing return")||fq.includes("file tax return")||fq.includes("filing tax return")||fq.includes("income tax return")||fq.includes("tax return")||fq.includes("ریٹرن")||fq.includes("ریٹرن فائل");
- const isRegistration=fq.includes("ntn")||fq.includes("national tax number")||fq.includes("register")||fq.includes("registration")||fq.includes("taxpayer"); const isATL=fq.includes("active taxpayer")||fq.includes("atl")||fq.includes("filer status")||fq.includes("filer")||fq.includes("active taxpayer list");
- if(isATL){
-  const fbrATLAnswer=language==="Urdu"
-   ? `## FBR — Active Taxpayer Status (ATL)
-**سرکاری ادارہ:** Federal Board of Revenue (FBR)
-
-اپنا **Active Taxpayer Status** FBR کے **IRIS 2.0 / Online Verification** کے ذریعے چیک کیا جا سکتا ہے۔ IRIS میں **Active Taxpayer List (Income Tax)** کی verification سروس موجود ہے، جہاں متعلقہ شناختی نمبر منتخب کر کے معلومات درج کی جاتی ہیں اور **Verify** کیا جاتا ہے۔
-
-**سرکاری ذریعہ:** https://iris.fbr.gov.pk/
-`
-   : `## FBR — Active Taxpayer Status (ATL)
-**Official authority:** Federal Board of Revenue (FBR)
-
-You can check your **Active Taxpayer Status** through FBR's **IRIS 2.0 / Online Verification** service. IRIS provides an **Active Taxpayer List (Income Tax)** verification option where you select the relevant identifier, enter the required information and use **Verify**.
-
-**Official source:** https://iris.fbr.gov.pk/
-`;
-  const atlUrls=[
-   "https://iris.fbr.gov.pk/",
-   "https://fbr.gov.pk/categ/active-taxpayer-list-income-tax/51147/30859/%2071168"
-  ];
-  let atlVerificationEvidence="";
-  for(const u of atlUrls){
-   const t=await fetchOfficialPage(u);
-   if(t) atlVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
-  }
-  // Keep a small deterministic evidence summary so verification remains available
-  // even if the live FBR page is temporarily unreachable.
-  atlVerificationEvidence += [
-   "",
-   "OFFICIAL FBR EVIDENCE SUMMARY:",
-   "FBR IRIS 2.0 provides an Online Verifications section with Active Taxpayer List (Income Tax).",
-   "The IRIS Active Taxpayer List verification form allows an identifier such as NTN, CNIC, Passport No. or Registration/Inc. No. to be selected and then verified.",
-   "FBR's Active Taxpayer List page states that the Active Taxpayer Status can also be checked through the online portal.",
-   "FBR's published ATL guidance states that an individual's status can also be checked by sending ATL followed by a space and the 13-digit CNIC number to 9966. For a company or AOP, ATL followed by a space and the 7-digit NTN can be sent to 9966."
-  ].join("\n");
-  return directWorkflowResponse({
-   answer:fbrATLAnswer,
-   source:{department:"FBR / Taxation",title:"FBR IRIS 2.0 — Active Taxpayer List Verification",url:atlUrls[0],lastVerified:"",province:""},
-   department:"FBR / Taxation",
-   question,
-   language,
-   jurisdiction:null,
-   evidenceAvailable:true,
-   verifyClaims:true,
-   verificationEvidence:atlVerificationEvidence.trim()
-  });
- }
-
- if(isReturn){
-  const fbrReturnAnswer=language==="Urdu"
-   ? `## FBR — انکم ٹیکس ریٹرن فائل کرنے کا طریقہ
-**سرکاری ادارہ:** Federal Board of Revenue (FBR)
-
-FBR کے مطابق انکم ٹیکس ریٹرن آن لائن **IRIS** پورٹل کے ذریعے فائل کیا جاتا ہے۔
-
-**طریقۂ کار:**
-1. **IRIS** میں اپنے NTN/Registration Number اور password سے لاگ اِن کریں۔ پہلی بار ریٹرن فائل کرنے والے شخص کے لیے پہلے FBR رجسٹریشن/e-enrollment ضروری ہے۔
-2. **Declaration** میں متعلقہ Income Tax Return کھولیں۔
-3. متعلقہ tax year منتخب کریں اور اپنی آمدن، قابلِ اطلاق tax information اور متعلقہ تفصیلات درج کریں۔
-4. Income Tax Return کے ساتھ **Wealth Statement (assets and liabilities)** بھی مکمل کریں، جہاں یہ لاگو ہو۔
-5. Wealth Statement کو reconcile کریں؛ FBR کے مطابق wealth میں تبدیلی اور income/expenses کے درمیان reconciliation ضروری ہے۔
-6. فارم مکمل کرکے submit کریں۔ FBR کے مطابق کامیاب submission اس وقت confirm ہوتی ہے جب Return of Income اور Wealth Statement دونوں **Draft** سے **Completed Task** میں منتقل ہو جائیں۔
-
-**اہم:** اگر آپ پہلی بار filer ہیں تو پہلے FBR registration/e-enrollment مکمل کرنا ہوگا۔
-
-**سرکاری ذرائع:**
-https://www.fbr.gov.pk/categ/file-income-tax-return/51147/80860/71160
-https://iris.fbr.gov.pk/`
-   : `## FBR — How to File an Income Tax Return
-**Official authority:** Federal Board of Revenue (FBR)
-
-According to FBR, an income-tax return is filed online through the **IRIS** portal.
-
-**Process:**
-1. Log in to **IRIS** using your NTN/Registration Number and password. A first-time filer must complete FBR registration/e-enrollment before filing.
-2. Open the relevant Income Tax Return from **Declaration**.
-3. Select the relevant tax year and enter the applicable income, tax and other required information.
-4. Complete the **Wealth Statement (assets and liabilities)** where applicable.
-5. Reconcile the Wealth Statement; FBR states that the wealth statement must reconcile with the change in wealth arising from income and expenses.
-6. Submit the return. FBR states that successful submission is confirmed when the Return of Income and Wealth Statement move from **Draft** to **Completed Task**.
-
-**Important:** If you are a first-time filer, complete FBR registration/e-enrollment first.
-
-**Official sources:**
-https://www.fbr.gov.pk/categ/file-income-tax-return/51147/80860/71160
-https://iris.fbr.gov.pk/`;
-  const returnUrls=[
-   "https://www.fbr.gov.pk/categ/file-income-tax-return/51147/80860/71160",
-   "https://fbr.gov.pk/categ/file-income-tax-return/51147/80860/71158",
-   "https://iris.fbr.gov.pk/"
-  ];
-  let returnVerificationEvidence="";
-  for(const u of returnUrls){
-   const t=await fetchOfficialPage(u);
-   if(t) returnVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
-  }
-  returnVerificationEvidence += [
-   "",
-   "OFFICIAL FBR EVIDENCE SUMMARY:",
-   "FBR states that Income Tax Returns are filed online through Iris.",
-   "FBR states that first-time filers must register before filing.",
-   "FBR states that the Return of Income form and Wealth Statement must be completed.",
-   "FBR states that successful submission is confirmed when both forms move from Draft to Completed Task."
-  ].join("\n");
-  return directWorkflowResponse({
-   answer:fbrReturnAnswer,
-   source:{department:"FBR / Taxation",title:"FBR — File Income Tax Return",url:returnUrls[0],lastVerified:"",province:""},
-   department:"FBR / Taxation",
-   question,
-   language,
-   jurisdiction:null,
-   evidenceAvailable:true,
-   verifyClaims:true,
-   verificationEvidence:returnVerificationEvidence.trim()
-  });
- }
-
- if(isRegistration){
-  const fbrAnswer=language==="Urdu"
-   ? `## FBR — انکم ٹیکس رجسٹریشن اور NTN
-**سرکاری ادارہ:** Federal Board of Revenue (FBR)
-
-FBR کے مطابق انکم ٹیکس رجسٹریشن ٹیکس ریٹرن فائل کرنے کا پہلا قدم ہے۔
-
-**فرد (Individual) کے لیے آن لائن رجسٹریشن:**
-1. FBR کے **IRIS** پورٹل پر آن لائن رجسٹریشن کی جا سکتی ہے۔
-2. آن لائن رجسٹریشن صرف **Individual** کے لیے دستیاب ہے؛ AOP یا Company کے لیے یہ آن لائن راستہ دستیاب نہیں۔
-3. اپنا CNIC والا موبائل نمبر اور ذاتی ای میل درکار ہے۔
-4. اگر کاروبار ہے تو کاروباری جگہ کی ملکیت/کرایہ داری کا ثبوت اور تین ماہ سے پرانا نہ ہونے والا paid utility bill درکار ہے۔
-5. اپنے نام کے personal bank account کی maintenance certificate کی اسکین شدہ کاپی درکار ہے۔
-
-**رجسٹریشن کے بعد:** FBR کے مطابق IRIS e-enrollment سے فرد کو اس کا National Tax Number (NTN)/Registration Number اور password ملتا ہے۔ فرد کے لیے 13 ہندسوں کا CNIC ہی NTN/Registration Number کے طور پر استعمال ہوتا ہے۔
-
-**اہم:** AOP اور Company کے لیے FBR کا Facilitation Counter/RTO والا طریقہ الگ ہے۔
-
-**سرکاری ذرائع:**
-https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150
-https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148`
-   : `## FBR — Income Tax Registration and NTN
-**Official authority:** Federal Board of Revenue (FBR)
-
-According to FBR, income-tax registration is the first step before filing an income-tax return.
-
-**For an individual, online registration:**
-1. An individual can register online through the **IRIS** portal.
-2. Online registration is available only for an **individual**, not for an Association of Persons (AOP) or company.
-3. The applicant needs a mobile SIM registered in their own CNIC and a personal email address.
-4. If the applicant has a business, FBR requires evidence of tenancy/ownership of the business premises and a paid utility bill for the business premises not older than 3 months.
-5. A scanned certificate showing maintenance of the applicant's personal bank account in their own name is required.
-
-**After registration:** FBR states that e-enrollment provides a National Tax Number (NTN) or Registration Number and password. For an individual, the 13-digit CNIC is used as the NTN/Registration Number.
-
-**Important:** AOP and company registration follows a separate Facilitation Counter/Tax House process.
-
-**Official sources:**
-https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150
-https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148`;
-  const urls=[
-   "https://www.fbr.gov.pk/categ/register-income-tax/51147/30846/%2061149",
-   "https://www.fbr.gov.pk/categ/income-tax/51148/30846/71150",
-   "https://www.fbr.gov.pk/categ/income-tax-status/51147/30846/71148"
-  ];
-  let fbrVerificationEvidence="";
-  for(const u of urls){
-   const t=await fetchOfficialPage(u);
-   if(t) fbrVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
-  }
-  return directWorkflowResponse({
-   answer:fbrAnswer,
-   source:{department:"FBR / Taxation",title:"FBR — Register for Income Tax",url:urls[0],lastVerified:"",province:""},
-   department:"FBR / Taxation",
-   question,
-   language,
-   jurisdiction:null,
-   evidenceAvailable:true,
-   verifyClaims:true,
-   verificationEvidence:fbrVerificationEvidence.trim()
-  });
- }
 }
 
 if(requested==="Driving Licence"){

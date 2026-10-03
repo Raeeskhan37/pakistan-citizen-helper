@@ -445,7 +445,7 @@ function belongsToDepartment(service:string,department:string):boolean{
 }
 
 const SERVICES:Record<string,string[]>={
- "CNIC / NADRA":["cnic","nic","smart nic","smart nic card","smart card","smart identity card","snic","identity card","nadra","شناختی کارڈ","نادرا"],"Passport":["passport","پاسپورٹ"],"Driving Licence":["driving licence","driving license","driving","driving test","learner","learner licence","learner license","ltv","ltv licence","ltv license","htv","htv licence","htv license","renew driving licence","duplicate driving licence","international driving licence","ڈرائیونگ لائسنس","ڈرائیونگ"],"Arms Licence":["arm licence","arm license","arms licence","arms license","weapon licence","weapon license","gun licence","gun license","اسلحہ لائسنس","اسلحہ لائسنس","ہتھیار لائسنس"],"Domicile":["domicile","ڈومیسائل"],"Scholarships":["scholarship","scholarships","stipend","financial aid","وظیفہ","اسکالرشپ"],"Protector of Emigrants":["protector","protector of emigrants","emigration","emigrant","overseas employment","work visa","employment visa","پروٹیکٹر","ایمیگریشن","بیرون ملک ملازمت"],"Vaccination for Travelling Abroad":["vaccination","vaccine","immunization","immunisation","vaccination for travelling abroad","travel vaccination","umrah","umra","hajj","haj","pilgrimage","polio","meningococcal","yellow fever","ویکسین","ویکسینیشن","عمرہ","حج"],"Other Services":["birth certificate","death certificate","marriage certificate","divorce certificate","police verification","vehicle registration","token tax","income tax","fbr","tax","crc","form b","fard","پیدائش","وفات","شادی","طلاق","پولیس ویریفکیشن","گاڑی رجسٹریشن","ٹیکس"],"Government Jobs":["government job","government jobs","job","jobs","career","careers","employment","سرکاری نوکری","سرکاری نوکریاں","ملازمت","روزگار"]};
+ "CNIC / NADRA":["cnic","nic","smart nic","smart nic card","smart card","smart identity card","snic","identity card","nadra","شناختی کارڈ","نادرا"],"Passport":["passport","پاسپورٹ"],"Driving Licence":["driving licence","driving license","driving","driving test","learner","learner licence","learner license","ltv","ltv licence","ltv license","htv","htv licence","htv license","renew driving licence","duplicate driving licence","international driving licence","ڈرائیونگ لائسنس","ڈرائیونگ"],"Arms Licence":["arm licence","arm license","arms licence","arms license","weapon licence","weapon license","gun licence","gun license","اسلحہ لائسنس","اسلحہ لائسنس","ہتھیار لائسنس"],"Domicile":["domicile","ڈومیسائل"],"Scholarships":["scholarship","scholarships","stipend","financial aid","وظیفہ","اسکالرشپ"],"Protector of Emigrants":["protector","protector of emigrants","emigration","emigrant","overseas employment","work visa","employment visa","پروٹیکٹر","ایمیگریشن","بیرون ملک ملازمت"],"Vaccination for Travelling Abroad":["vaccination","vaccine","immunization","immunisation","vaccination for travelling abroad","travel vaccination","umrah","umra","hajj","haj","pilgrimage","polio","meningococcal","yellow fever","ویکسین","ویکسینیشن","عمرہ","حج"],"Land & Revenue":["fard","fards","land record","land records","mutation","intiqal","registry","property record","land ownership","revenue","khewat","khasra","فرد","فردات","انتقال","رجسٹری","زمین کا ریکارڈ","ملکیت"],"Other Services":["birth certificate","death certificate","marriage certificate","divorce certificate","police verification","vehicle registration","token tax","income tax","fbr","tax","crc","form b","پیدائش","وفات","شادی","طلاق","پولیس ویریفیکیشن","گاڑی رجسٹریشن","ٹیکس"],"Government Jobs":["government job","government jobs","job","jobs","career","careers","employment","سرکاری نوکری","سرکاری نوکریاں","ملازمت","روزگار"]};
 
 const OFFICIAL_SOURCES=[
  {keys:["nadra","cnic","identity card","nic","شناختی کارڈ","نادرا"],url:"https://www.nadra.gov.pk/identityDocument/cnic",title:"NADRA CNIC Services",department:"NADRA"},
@@ -734,6 +734,7 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  const isPunjab=jurisdiction==="Punjab";
  const isKP=jurisdiction==="Khyber Pakhtunkhwa";
  const isFard=q.includes("fard")||q.includes("فرد")||q.includes("land record")||q.includes("land records")||q.includes("زمین کا ریکارڈ")||q.includes("لینڈ ریکارڈ");
+ const isGeneralFardDefinition=isFard && !jurisdiction && /^(what is|define|meaning of|what does .* mean|کیا ہے|کیا ہوتی ہے|کیا ہوتا ہے|مطلب)/i.test(q);
  const isMutation=q.includes("mutation")||q.includes("intiqal")||q.includes("انتقال");
  const isRegistry=q.includes("registry")||q.includes("رجسٹری")||q.includes("property registration")||q.includes("register property");
  const isOwnership=q.includes("ownership")||q.includes("owner")||q.includes("ملکیت");
@@ -744,6 +745,11 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  const isCorrection=/(correct|correction|incorrect|wrong|error|mistake|record correction|correct.*record|درست.*ریکارڈ|ریکارڈ.*درست|غلط.*ریکارڈ|تصحیح)/i.test(q);
  const isSDC=q.includes("service delivery centre")||q.includes("service delivery center")||q.includes("sdc")||q.includes("ایس ڈی سی")||q.includes("سروس ڈیلیوری سنٹر")||q.includes("سروس ڈیلیوری سینٹر");
  const hasLandTopic=isFard||isMutation||isRegistry||isOwnership||isSDC||q.includes("land")||q.includes("property")||q.includes("revenue")||q.includes("زمین")||q.includes("جائیداد")||q.includes("ریونیو")||q.includes("رجسٹری")||q.includes("انتقال")||q.includes("لینڈ ریکارڈ");
+ if(isGeneralFardDefinition){
+  return language==="Urdu"
+   ? "## فرد (Fard)\n\nفرد زمین کے ریکارڈ کی ایک سرکاری دستاویز ہے جس میں متعلقہ زمین کے رقبے، مقام اور ملکیت کی تفصیلات درج ہوتی ہیں۔ فرد حاصل کرنے اور اس کی فیس یا طریقۂ کار صوبے اور متعلقہ لینڈ ریکارڈ اتھارٹی کے مطابق مختلف ہو سکتے ہیں۔"
+   : "## Fard\n\nA Fard is an official land-record document containing information about a parcel of land, including its area, location and ownership details. The process, fee and issuing authority can vary by province or territory.";
+ }
  if(language==="Urdu"){
   if(isPunjab){
    if(isMutation)return "## پنجاب — انتقال (Mutation / Intiqal)\n\nPLRA کے مطابق انتقال زمین کی ملکیت میں تبدیلی کو سرکاری لینڈ ریکارڈ میں درج کرنے کا عمل ہے۔ متعلقہ Arazi Record Centre (ARC) پر CNIC کی بایومیٹرک تصدیق کے بعد ٹوکن لیا جاتا ہے، مطلوبہ دستاویزات اور جائیداد کی تفصیلات جمع کی جاتی ہیں، مقررہ فیس/ٹیکس ادا کیے جاتے ہیں، اور متعلقہ Revenue Officer کے سامنے بیان/تصدیق کے بعد انتقال منظور کیا جاتا ہے۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
@@ -2079,7 +2085,9 @@ if(requested==="Arms Licence"){
 }
 if(requested==="Land & Revenue"){
  const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
- if(!lj){
+ const qLand=normalize(question);
+ const generalFard=!lj && (qLand.includes("fard")||qLand.includes("فرد")) && /^(what is|define|meaning of|what does .* mean|کیا ہے|کیا ہوتی ہے|کیا ہوتا ہے|مطلب)/i.test(qLand);
+ if(!lj && !generalFard){
   return directWorkflowResponse({
    answer:language==="Urdu"
     ?"## لینڈ اینڈ ریونیو\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ سروس بتائیں، مثلاً پنجاب میں فرد یا انتقال، یا خیبر پختونخوا میں فرد، انتقال یا SDC سروس۔"

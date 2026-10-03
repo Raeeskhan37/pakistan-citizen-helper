@@ -1006,6 +1006,87 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
 export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
+ // UNIVERSAL OUT-OF-SCOPE GUARD:
+ // Existing cross-department routing/rejection remains unchanged. This guard only
+ // handles questions that do not match any of the 14 supported government domains.
+ async function isOutsideSupportedDepartments(questionText:string, selectedDepartment:string):Promise<boolean>{
+   const q=normalize(questionText);
+   const supportedTerms=new Set<string>();
+   for(const terms of Object.values({
+     "NADRA Services":["nadra","cnic","nicop","poc","crc","frc","b-form","pak identity","شناختی کارڈ","نادرا"],
+     "Passport Services":["passport","پاسپورٹ"],
+     "Union Council":["union council","birth certificate","birth registration","death certificate","death registration","marriage certificate","marriage registration","nikah","divorce certificate","پیدائش","وفات","شادی","طلاق"],
+     "Driving Licence":["driving licence","driving license","learner","dlims","driving test","ڈرائیونگ لائسنس"],
+     "Police Services":["police","character certificate","police verification","fir","پولیس","ایف آئی آر"],
+     "Protector & Overseas Employment":["protector","overseas employment","emigrant","emigration","beoe","پروٹیکٹر","بیرون ملک ملازمت"],
+     "Vaccination for Travelling Abroad":["vaccination","vaccine","polio","yellow fever","hajj","umrah","ویکسین","پولیو","حج","عمرہ"],
+     "Domicile":["domicile","permanent residence","residence certificate","ڈومیسائل"],
+     "Arms Licence":["arms licence","arms license","weapon licence","weapon license","gun licence","اسلحہ لائسنس"],
+     "Education & Scholarships":["scholarship","hec","education","وظیفہ","اسکالرشپ","تعلیم"],
+     "Land & Revenue":["land record","fard","property","mutation","intiqal","revenue","زمین","فرد","انتقال","جائیداد"],
+     "FBR / Taxation":["fbr","ntn","income tax","sales tax","tax return","iris","ٹیکس","ایف بی آر"],
+     "Government Jobs":["government jobs","government job","job vacancy","vacancies","njp","سرکاری نوکری","سرکاری ملازمت"],
+     "Excise & Taxation":["excise","vehicle registration","vehicle","token tax","گاڑی","ٹوکن ٹیکس","ایکسائز"]
+   })) for(const term of terms) supportedTerms.add(normalize(term));
+   for(const term of supportedTerms){
+     if(term && q.includes(term)) return false;
+   }
+
+   // A generic request such as "What documents are required?" can still be
+   // legitimate for the selected department. Let the existing model judge only
+   // the genuinely ambiguous/no-domain case; fail closed if the classifier fails.
+   if(q.length < 4) return false;
+
+   const prompt=`You are the scope gate for Pakistan Citizen Helper.
+The app supports ONLY these 14 departments:
+1 NADRA Services
+2 Passport & Immigration
+3 Union Council / Local Government
+4 Driving Licence
+5 Arms Licence
+6 Police Services
+7 Protector & Overseas Employment
+8 Vaccination for Travelling Abroad
+9 Domicile
+10 Land & Revenue
+11 FBR / Taxation
+12 Education & Scholarships
+13 Government Jobs
+14 Excise & Taxation
+
+Selected department: ${selectedDepartment}
+User question: ${questionText}
+
+Return ONLY one word:
+SUPPORTED if the question is reasonably about one of the 14 supported departments or is a generic request that clearly refers to the selected department.
+OUT_OF_SCOPE if it concerns a service/topic outside all 14 departments (for example electricity connection, BISP, telephone services, health cards, hospitals/medical treatment, judiciary/courts, public health, utilities, banking, passports outside the selected department is still supported because Passport is one of the 14).
+
+Do not answer the question. Just classify it.`;
+
+   try{
+     const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{
+       method:"POST",
+       headers:{"Content-Type":"application/json","Authorization:"Bearer "+GROQ_API_KEY},
+       body:JSON.stringify({
+         model:GROQ_MODEL,
+         temperature:0,
+         max_tokens:8,
+         messages:[
+           {role:"system",content:"You are a strict scope classifier. Output only SUPPORTED or OUT_OF_SCOPE."},
+           {role:"user",content:prompt}
+         ]
+       }),
+       cache:"no-store"
+     });
+     if(!res.ok) return true;
+     const data=await res.json();
+     const verdict=String(data?.choices?.[0]?.message?.content||"").trim().toUpperCase();
+     return verdict.includes("OUT_OF_SCOPE");
+   }catch{
+     return true;
+   }
+ }
+
  const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,category,title,content,service_name_urdu,province,title_urdu,content_urdu,official_department,official_source_title,official_source_url,last_verified,active&active=eq.true&order=last_verified.desc`;const db=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`},cache:"no-store"});if(!db.ok){console.error(await db.text());return NextResponse.json({error:"Unable to retrieve verified information from Supabase."},{status:500});}
  const all=(await db.json()) as VerifiedRecord[];const selected=selectRecords(question,requested,all);
  const workingJurisdiction=workingDetectJurisdiction(question);

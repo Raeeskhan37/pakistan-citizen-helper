@@ -1133,6 +1133,11 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
    const policeServicesQuestion=/(police|fir|first information report|police clearance|police verification|police character certificate|character certificate|police complaint|lodge.*fir|file.*fir|report.*crime|crime report|khidmat markaz|خدمت مرکز|پولیس|ایف آئی آر|ایف۔آئی۔آر|پولیس کلیئرنس|پولیس تصدیق|کریکٹر سرٹیفکیٹ)/i.test(q);
    if(policeServicesQuestion) return false;
 
+   // High-confidence Passport Services questions must not depend on the
+   // generic scope classifier. This includes Urdu passport wording.
+   const passportServicesQuestion=/(passport|passports|new passport|renew passport|passport renewal|mrp|dgip|پاسپورٹ|نیا پاسپورٹ|نئی پاسپورٹ|پاسپورٹ تجدید|پاسپورٹ بنوانا|پاسپورٹ بنوانے|پاسپورٹ حاصل|پاسپورٹ کی تجدید)/i.test(q);
+   if(passportServicesQuestion) return false;
+
    const exciseTaxationQuestion=/(excise|token tax|vehicle registration|vehicle ownership transfer|motor vehicle|vehicle transfer|number plate|vehicle tax|property tax|professional tax|motor registration|رجسٹریشن.*گاڑی|گاڑی.*رجسٹریشن|ٹوکن ٹیکس|گاڑی.*منتقلی|ایکسائز|ٹیکس)/i.test(q);
    if(exciseTaxationQuestion) return false;
 

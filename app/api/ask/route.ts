@@ -433,6 +433,18 @@ const DEPARTMENT_ALIASES:Record<string,string[]>={
  "Arms Licence":["arms licence","arms license","weapon licence","weapon license","gun licence","gun license","اسلحہ لائسنس","اسلحہ لائسنس","ہتھیار لائسنس"]
 };
 
+function detectLandRevenueJurisdiction(question:string):string|null{
+ const q=normalize(question);
+ if(/(?:^|\\s)(?:in|for|from|within|of)\\s+punjab(?:$|\\s|[,.!?])/i.test(q)||q.includes("punjab mein")||q.includes("پنجاب میں"))return "Punjab";
+ if(/(?:^|\\s)(?:in|for|from|within|of)\\s+sindh(?:$|\\s|[,.!?])/i.test(q)||q.includes("sindh mein")||q.includes("سندھ میں"))return "Sindh";
+ if(/(?:^|\\s)(?:in|for|from|within|of)\\s+(?:khyber pakhtunkhwa|kpk|kp)(?:$|\\s|[,.!?])/i.test(q)||q.includes("khyber pakhtunkhwa mein")||q.includes("خیبر پختونخوا میں")||q.includes("خیبرپختونخوا میں"))return "Khyber Pakhtunkhwa";
+ if(/(?:^|\\s)(?:in|for|from|within|of)\\s+islamabad(?:$|\\s|[,.!?])/i.test(q)||q.includes("islamabad mein")||q.includes("اسلام آباد میں")||q.includes("اسلامباد میں"))return "Islamabad Capital Territory";
+ if(/(?:^|\\s)(?:in|for|from|within|of)\\s+balochistan(?:$|\\s|[,.!?])/i.test(q)||q.includes("balochistan mein")||q.includes("بلوچستان میں"))return "Balochistan";
+ if(/(?:^|\\s)(?:in|for|from|within|of)\\s+(?:ajk|azad kashmir)(?:$|\\s|[,.!?])/i.test(q)||q.includes("ajk mein")||q.includes("آزاد کشمیر میں"))return "Azad Jammu and Kashmir";
+ if(/(?:^|\\s)(?:in|for|from|within|of)\\s+(?:gilgit baltistan|gilgit-baltistan|gb)(?:$|\\s|[,.!?])/i.test(q)||q.includes("gilgit baltistan mein")||q.includes("گلگت بلتستان میں"))return "Gilgit-Baltistan";
+ return null;
+}
+
 function isLandRevenueIntentQuestion(question:string):boolean{
  const q=normalize(question);
  return /(fard|fards|land record|land records|mutation|intiqal|inteqal|intikal|khewat|khasra|jamabandi|land ownership|property record|property transfer|plot transfer|transfer of plot|transfer property|transfer ownership|land transfer|purchase of land|sale of land|plot purchase|plot sale|registry|registration of property|service delivery centre|service delivery center|sdc|فرد|انتقال|انتقال زمین|جمعبندی|کھاتہ|کھاتونی|خسرا|زمین کا ریکارڈ|ملکیت|پلاٹ|جائیداد)/i.test(q);
@@ -1167,7 +1179,7 @@ Do not answer the question. Just classify it.`;
 export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
- const outsideSupportedDepartments=await isOutsideSupportedDepartments(question,requested);
+ const landIntentForRequest=requested==="Land & Revenue" && isLandRevenueIntentQuestion(question);\n const outsideSupportedDepartments=landIntentForRequest ? false : await isOutsideSupportedDepartments(question,requested);
  if(outsideSupportedDepartments){
    const answer=language==="Urdu"
      ? `معذرت، یہ سوال پاکستان سٹیزن ہیلپر کے دستیاب 14 سرکاری شعبوں میں شامل نہیں ہے۔ براہِ کرم ${requested} سے متعلق سوال پوچھیں۔`
@@ -2146,7 +2158,7 @@ if(requested==="Arms Licence"){
  return directWorkflowResponse({answer:result.answer,source:{department:"Arms Licence",title:"Official government arms-licensing information",url:result.sources[0]||"",lastVerified:"",province:aj||""},department:"Arms Licence",question,language,jurisdiction:aj,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
 if(requested==="Land & Revenue"){
- const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question)||detectTargetJurisdiction(question)||detectJurisdiction(question);
+ const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question)||detectLandRevenueJurisdiction(question)||detectTargetJurisdiction(question)||detectJurisdiction(question);
  const qLand=normalize(question);
  const generalFard=!lj && (qLand.includes("fard")||qLand.includes("فرد")) && /^(what is|define|meaning of|what does .* mean|کیا ہے|کیا ہوتی ہے|کیا ہوتا ہے|مطلب)/i.test(qLand);
  if(!lj && !generalFard && !isLandRevenueIntentQuestion(question)){

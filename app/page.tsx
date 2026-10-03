@@ -319,7 +319,7 @@ return (
         <div className="topbar-inner">
           <button className="brand" onClick={goHome} aria-label="Home">
             <span className="brand-mark">🇵🇰</span>
-            <span><strong>Pakistan Citizen Helper</strong><small>{isUrdu ? "آزاد شہری معلوماتی منصوبہ" : "Independent Citizen Information Project"}</small></span>
+            <span><strong>Pakistan Citizen Helper</strong><small>{isUrdu ? "آزاد شہری معلوماتی منصوبہ" : "Independent Citizen Information Project"}<br />Developed by Raees Khan &amp; Team</small></span>
           </button>
           <div className="top-actions"><span className="secure-pill">✓ {isUrdu ? "آزاد منصوبہ • سرکاری ذرائع" : "Independent project • Official sources"}</span><button className={`lang ${!isUrdu ? "active" : ""}`} onClick={() => setLanguage("English")}>English</button><button className={`lang ${isUrdu ? "active" : ""}`} onClick={() => setLanguage("Urdu")}>اردو</button></div>
         </div>
@@ -485,9 +485,6 @@ return (
       : "This is an independent citizen information project, not an official government website. Information is compiled from official government sources."}
   </div>
 
-  <p>
-    Developed by <strong>Raees Khan &amp; Team</strong>
-  </p>
 </footer>
 </main>
   );

@@ -445,7 +445,7 @@ function belongsToDepartment(service:string,department:string):boolean{
 }
 
 const SERVICES:Record<string,string[]>={
- "CNIC / NADRA":["cnic","nic","smart nic","smart nic card","smart card","smart identity card","snic","identity card","nadra","شناختی کارڈ","نادرا"],"Passport":["passport","پاسپورٹ"],"Driving Licence":["driving licence","driving license","driving","driving test","learner","learner licence","learner license","ltv","ltv licence","ltv license","htv","htv licence","htv license","renew driving licence","duplicate driving licence","international driving licence","ڈرائیونگ لائسنس","ڈرائیونگ"],"Arms Licence":["arm licence","arm license","arms licence","arms license","weapon licence","weapon license","gun licence","gun license","اسلحہ لائسنس","اسلحہ لائسنس","ہتھیار لائسنس"],"Domicile":["domicile","ڈومیسائل"],"Scholarships":["scholarship","scholarships","stipend","financial aid","وظیفہ","اسکالرشپ"],"Protector of Emigrants":["protector","protector of emigrants","emigration","emigrant","overseas employment","work visa","employment visa","پروٹیکٹر","ایمیگریشن","بیرون ملک ملازمت"],"Other Services":["birth certificate","death certificate","marriage certificate","divorce certificate","police verification","vehicle registration","token tax","income tax","fbr","tax","crc","form b","fard","پیدائش","وفات","شادی","طلاق","پولیس ویریفکیشن","گاڑی رجسٹریشن","ٹیکس"],"Government Jobs":["government job","government jobs","job","jobs","career","careers","employment","سرکاری نوکری","سرکاری نوکریاں","ملازمت","روزگار"]};
+ "CNIC / NADRA":["cnic","nic","smart nic","smart nic card","smart card","smart identity card","snic","identity card","nadra","شناختی کارڈ","نادرا"],"Passport":["passport","پاسپورٹ"],"Driving Licence":["driving licence","driving license","driving","driving test","learner","learner licence","learner license","ltv","ltv licence","ltv license","htv","htv licence","htv license","renew driving licence","duplicate driving licence","international driving licence","ڈرائیونگ لائسنس","ڈرائیونگ"],"Arms Licence":["arm licence","arm license","arms licence","arms license","weapon licence","weapon license","gun licence","gun license","اسلحہ لائسنس","اسلحہ لائسنس","ہتھیار لائسنس"],"Domicile":["domicile","ڈومیسائل"],"Scholarships":["scholarship","scholarships","stipend","financial aid","وظیفہ","اسکالرشپ"],"Protector of Emigrants":["protector","protector of emigrants","emigration","emigrant","overseas employment","work visa","employment visa","پروٹیکٹر","ایمیگریشن","بیرون ملک ملازمت"],"Vaccination for Travelling Abroad":["vaccination","vaccine","immunization","immunisation","vaccination for travelling abroad","travel vaccination","umrah","umra","hajj","haj","pilgrimage","polio","meningococcal","yellow fever","ویکسین","ویکسینیشن","عمرہ","حج"],"Other Services":["birth certificate","death certificate","marriage certificate","divorce certificate","police verification","vehicle registration","token tax","income tax","fbr","tax","crc","form b","fard","پیدائش","وفات","شادی","طلاق","پولیس ویریفکیشن","گاڑی رجسٹریشن","ٹیکس"],"Government Jobs":["government job","government jobs","job","jobs","career","careers","employment","سرکاری نوکری","سرکاری نوکریاں","ملازمت","روزگار"]};
 
 const OFFICIAL_SOURCES=[
  {keys:["nadra","cnic","identity card","nic","شناختی کارڈ","نادرا"],url:"https://www.nadra.gov.pk/identityDocument/cnic",title:"NADRA CNIC Services",department:"NADRA"},
@@ -1031,6 +1031,14 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
      const term=normalize(outsideTerms[i]);
      if(term && q.includes(term)) return true;
    }
+
+   // High-confidence vaccination/travel questions are supported by this app.
+   // Keep this narrow so ordinary health questions still go through the strict
+   // scope classifier, while Umrah/Hajj/travel/work-visa vaccination queries
+   // cannot be mistaken for unsupported general healthcare questions.
+   const vaccinationTravelQuestion=/(vaccin|immuniz|immunis|ویکسین|umrah|umra|عمرہ|hajj|haj|حج|pilgrimage|polio|meningococcal|yellow fever)/i.test(q)
+     && /(travel|travelling|traveler|traveller|visa|work visa|employment|umrah|umra|عمرہ|hajj|haj|حج|pilgrimage|saudi|saudia|saudi arabia|پاکستان|pakistan|abroad|بیرون ملک)/i.test(q);
+   if(vaccinationTravelQuestion) return false;
 
    // A generic request such as "What documents are required?" can still be
    // legitimate for the selected department. For an ambiguous/no-domain case,

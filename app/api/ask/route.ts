@@ -1127,6 +1127,21 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
    const landRevenueQuestion=/(fard|fards|land record|land records|mutation|intiqal|inteqal|intikal|khewat|khasra|jamabandi|land ownership|property record|property transfer|plot transfer|transfer of plot|transfer property|transfer ownership|land transfer|registry|registration of property|فرد|انتقال|انتقال زمین|جمعبندی|کھاتہ|کھاتونی|خسرا|زمین کا ریکارڈ|ملکیت|پلاٹ|جائیداد)/i.test(q);
    if(landRevenueQuestion) return false;
 
+   // High-confidence service-intent rules for the remaining departments.
+   // These run before the generic scope classifier so valid department questions
+   // are not rejected before they reach the API handlers.
+   const policeServicesQuestion=/(police|fir|first information report|police clearance|police verification|police character certificate|character certificate|police complaint|lodge.*fir|file.*fir|report.*crime|crime report|khidmat markaz|خدمت مرکز|پولیس|ایف آئی آر|ایف۔آئی۔آر|پولیس کلیئرنس|پولیس تصدیق|کریکٹر سرٹیفکیٹ)/i.test(q);
+   if(policeServicesQuestion) return false;
+
+   const exciseTaxationQuestion=/(excise|token tax|vehicle registration|vehicle ownership transfer|motor vehicle|vehicle transfer|number plate|vehicle tax|property tax|professional tax|motor registration|رجسٹریشن.*گاڑی|گاڑی.*رجسٹریشن|ٹوکن ٹیکس|گاڑی.*منتقلی|ایکسائز|ٹیکس)/i.test(q);
+   if(exciseTaxationQuestion) return false;
+
+   const educationScholarshipsQuestion=/(education|scholarship|scholarships|student scholarship|hec|higher education commission|university admission|college admission|student loan|education stipend|degree attestation|educational certificate|تعلیم|وظیفہ|اسکالرشپ|ہائر ایجوکیشن|طالب علم|یونیورسٹی|کالج)/i.test(q);
+   if(educationScholarshipsQuestion) return false;
+
+   const governmentJobsQuestion=/(government job|government jobs|govt job|govt jobs|government vacancy|government vacancies|government recruitment|public sector job|national jobs portal|njp|job vacancy|job vacancies|job application|apply.*government job|apply.*job|government employment|سرکاری نوکری|سرکاری ملازمت|سرکاری بھرتی|ملازمت|نوکری|نیشنل جابز پورٹل)/i.test(q);
+   if(governmentJobsQuestion) return false;
+
    // High-confidence FBR / Taxation questions must bypass the generic
    // scope classifier. This prevents valid FBR questions containing
    // unfamiliar tax terminology (for example STRN) from being rejected.

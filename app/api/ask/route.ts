@@ -756,25 +756,13 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  if(language==="Urdu"){
   if(isICT){
    if(isMutation||isPurchaseTransfer){
-    return "## اسلام آباد (ICT) — زمین کی منتقلی / انتقال
-
-ICT Administration کے مطابق Transfer of Land / Sanction of Mutation کے لیے متعلقہ علاقے کے Patwari سے رابطہ کیا جاتا ہے، mutation کو Inteqal Mutation Register میں درج کیا جاتا ہے، اور seller اور purchaser دونوں دو گواہوں کے ساتھ Tehsildar / Naib-Tehsildar / Circle Revenue Officer کے سامنے پیش ہوتے ہیں۔ متعلقہ dues National Bank of Pakistan میں جمع کرانے کے بعد mutation sanction کی جاتی ہے۔ سرکاری صفحے کے مطابق Fard/Mutation copy متعلقہ Patwari سے تقریباً 7 دن بعد حاصل کی جا سکتی ہے اور صفحے پر processing time ایک ماہ درج ہے۔
-
-**سرکاری ذریعہ:**\nhttps://ictadministration.gov.pk/transfer-of-land-sanction-of-mutation/";
+    return "## اسلام آباد (ICT) — زمین کی منتقلی / انتقال\n\nICT Administration کے مطابق Transfer of Land / Sanction of Mutation کے لیے متعلقہ علاقے کے Patwari سے رابطہ کیا جاتا ہے، mutation کو Inteqal Mutation Register میں درج کیا جاتا ہے، اور seller اور purchaser دونوں دو گواہوں کے ساتھ Tehsildar / Naib-Tehsildar / Circle Revenue Officer کے سامنے پیش ہوتے ہیں۔ متعلقہ dues National Bank of Pakistan میں جمع کرانے کے بعد mutation sanction کی جاتی ہے۔ سرکاری صفحے کے مطابق Fard/Mutation copy متعلقہ Patwari سے تقریباً 7 دن بعد حاصل کی جا سکتی ہے اور صفحے پر processing time ایک ماہ درج ہے۔\n\n**سرکاری ذریعہ:**\nhttps://ictadministration.gov.pk/transfer-of-land-sanction-of-mutation/";
    }
    if(isRegistry){
-    return "## اسلام آباد (ICT) — Deed Registration
-
-ICT Administration کے مطابق deed registration کے لیے deed تیار کر کے متعلقہ dues جمع کرانے اور Sub-Registrar, F-8 Markaz, Islamabad کے سامنے seller، purchaser اور دو گواہوں کی حاضری شامل ہے۔ اصل land ownership proof اور فریقین/گواہوں کے CNIC درکار ہیں۔
-
-**سرکاری ذریعہ:**\nhttps://ictadministration.gov.pk/registration-of-deed/";
+    return "## اسلام آباد (ICT) — Deed Registration\n\nICT Administration کے مطابق deed registration کے لیے deed تیار کر کے متعلقہ dues جمع کرانے اور Sub-Registrar, F-8 Markaz, Islamabad کے سامنے seller، purchaser اور دو گواہوں کی حاضری شامل ہے۔ اصل land ownership proof اور فریقین/گواہوں کے CNIC درکار ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://ictadministration.gov.pk/registration-of-deed/";
    }
    if(isFard||isOwnership){
-    return "## اسلام آباد (ICT) — Land Record / Fard
-
-اسلام آباد میں land transfer اور mutation کی سرکاری سروس ICT Administration کے ذریعے فراہم کی جاتی ہے۔ ملکیت کی منتقلی کے لیے متعلقہ land ownership proof اور مقررہ mutation/transfer procedure استعمال ہوتا ہے۔ مخصوص property type کے مطابق متعلقہ CDA یا ICT authority بھی شامل ہو سکتی ہے۔
-
-**سرکاری ذرائع:**\nhttps://ictadministration.gov.pk/transfer-of-land-sanction-of-mutation/\nhttps://cda.gov.pk/procedures";
+    return "## اسلام آباد (ICT) — Land Record / Fard\n\nاسلام آباد میں land transfer اور mutation کی سرکاری سروس ICT Administration کے ذریعے فراہم کی جاتی ہے۔ ملکیت کی منتقلی کے لیے متعلقہ land ownership proof اور مقررہ mutation/transfer procedure استعمال ہوتا ہے۔ مخصوص property type کے مطابق متعلقہ CDA یا ICT authority بھی شامل ہو سکتی ہے۔\n\n**سرکاری ذرائع:**\nhttps://ictadministration.gov.pk/transfer-of-land-sanction-of-mutation/\nhttps://cda.gov.pk/procedures";
    }
    return "## اسلام آباد (ICT) — Land & Revenue Services\n\nICT Administration کی سرکاری services میں Transfer of Land / Sanction of Mutation شامل ہے۔";
   }

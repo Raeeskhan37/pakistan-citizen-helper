@@ -1030,9 +1030,26 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
      if(term && q.includes(term)) return false;
    }
 
+   // Explicitly reject common services that are outside all 14 supported departments.
+   // This deterministic layer runs before the model classifier so an unrelated
+   // question cannot be accepted merely because a department was selected.
+   const outsideTerms:string[]=[
+     "electricity","electricity connection","power connection","wapda","lesco","iesco","pesco","k-electric",
+     "gas connection","sngpl","ssgc","telephone connection","ptcl","mobile connection",
+     "bisp","benazir income support","ehsaas",
+     "health card","sehat card","hospital","doctor","medical treatment","clinic","health insurance",
+     "court","courts","judiciary","lawsuit","legal case","عدالت","عدالت میں مقدمہ","بجلی","گیس کنکشن",
+     "ٹیلی فون","بی آئی ایس پی","احساس","صحت کارڈ","ہسپتال","ڈاکٹر"
+   ];
+   for(let i=0;i<outsideTerms.length;i++){
+     const term=normalize(outsideTerms[i]);
+     if(term && q.includes(term)) return true;
+   }
+
    // A generic request such as "What documents are required?" can still be
-   // legitimate for the selected department. Let the existing model judge only
-   // the genuinely ambiguous/no-domain case; fail closed if the classifier fails.
+   // legitimate for the selected department. For an ambiguous/no-domain case,
+   // the classifier must not treat the selected department itself as proof that
+   // the question belongs to that department.
    if(q.length < 4) return false;
 
    const prompt=`You are the scope gate for Pakistan Citizen Helper.
@@ -1056,8 +1073,8 @@ Selected department: ${selectedDepartment}
 User question: ${questionText}
 
 Return ONLY one word:
-SUPPORTED if the question is reasonably about one of the 14 supported departments or is a generic request that clearly refers to the selected department.
-OUT_OF_SCOPE if it concerns a service/topic outside all 14 departments (for example electricity connection, BISP, telephone services, health cards, hospitals/medical treatment, judiciary/courts, public health, utilities, banking, passports outside the selected department is still supported because Passport is one of the 14).
+SUPPORTED if the question is reasonably about one of the 14 supported departments. A generic question may be SUPPORTED only when its wording can reasonably be interpreted as referring to the selected department.
+OUT_OF_SCOPE if it concerns a concrete service/topic outside all 14 departments, even when a supported department is selected (for example electricity connection, BISP, telephone services, health cards, hospitals/medical treatment, judiciary/courts, public health, utilities, or banking). A passport question is supported because Passport is one of the 14, regardless of which department is currently selected; existing cross-department routing will handle the selected-department mismatch.
 
 Do not answer the question. Just classify it.`;
 

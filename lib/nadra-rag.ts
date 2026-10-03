@@ -510,6 +510,19 @@ NADRA describes the FRC as a certificate that reflects, verifies and records a r
     }
 
     // ------------------------------------------------------------
+    // 5. LOST / STOLEN / DAMAGED CNIC REPRINT.
+    // Use NADRA's current public reprint guidance rather than the
+    // internal policy RAG. This prevents a lost-card question from
+    // falling through to the generic AI answer path.
+    // ------------------------------------------------------------
+    if (hasCnic && isDuplicate && !hasNicop && !hasPoc && !hasCrc) {
+      const body = language === "Urdu"
+        ? "### گم یا چوری شدہ CNIC — دوبارہ اشاعت\n\nاگر اصل شناختی کارڈ گم یا چوری ہو گیا ہے تو NADRA کے مطابق آپ اس کی **Reprint / Lost** سروس کے ذریعے نیا کارڈ حاصل کر سکتے ہیں۔\n\n**PakID کے ذریعے بنیادی طریقہ:**\n1. NADRA PakID موبائل ایپ کھولیں۔\n2. **ID Documents / شناختی دستاویزات** میں **ID Card / شناختی کارڈ** منتخب کریں۔\n3. گم شدہ کارڈ کے لیے **Reprint / Lost** آپشن منتخب کرکے درخواست مکمل کریں۔\n4. اپنی شناخت کی مطلوبہ verification مکمل کریں اور درخواست جمع کریں۔\n\nNADRA کی سروس چارٹر کے مطابق گم یا چوری شدہ کارڈ کی reprint کے لیے **کارڈ نمبر اور biometric authentication** استعمال ہوتی ہے اور مزید دستاویزات درکار نہیں ہوتیں۔ دوبارہ جاری ہونے والے کارڈ کی expiry date پرانے کارڈ جیسی رہتی ہے۔\n\n**سرکاری ماخذ:** NADRA — CNIC / Reprint-Lost\nhttps://www.nadra.gov.pk/identityDocument/cnic"
+        : "### Lost or Stolen CNIC — Reprint\n\nIf your original CNIC is lost or stolen, NADRA provides a **Reprint / Lost** service for obtaining a replacement card.\n\n**Basic PakID process:**\n1. Open the NADRA PakID mobile app.\n2. Under **ID Documents**, select **ID Card**.\n3. Select **Reprint / Lost** and complete the application.\n4. Complete the required identity verification and submit the application.\n\nNADRA's service charter states that for a lost or stolen ID card, reprint is processed using the **card number and biometric authentication**, and no further documentation is required. The newly issued card keeps the same expiry date as the old card.\n\n**Official source:** NADRA — CNIC / Reprint-Lost\nhttps://www.nadra.gov.pk/identityDocument/cnic";
+      return out(language === "Urdu" ? "NADRA — گم شدہ شناختی کارڈ" : "NADRA — Lost / Stolen CNIC Reprint", body);
+    }
+
+    // ------------------------------------------------------------
     // 5. SMART CNIC DUPLICATE / REPRINT.
     // ------------------------------------------------------------
     if (hasCnic && /smart cnic|smart nic|snic/.test(q) && isDuplicate) {

@@ -891,6 +891,28 @@ export async function getDirectNadraVerificationEvidence(question: string): Prom
     ids.add("CHUNK-0001"); // breeder-document / prior birth-record correction rule
     ids.add("CHUNK-0019"); // Rule 13(1), change/correction framework
 
+    // Lost/stolen CNIC verification must use the actual official lost-card
+    // evidence, not the generic RP chunks. CHUNK-0030/0032 only describe the
+    // re-print section/requirements and do not fully support the citizen-facing
+    // PakID steps or the lost-card rules. Return the authoritative NADRA
+    // Services Charter + current Reprint Guide as the verification evidence.
+    if (/reprint|duplicate|lost|stolen|damaged|ڈپلیکیٹ|دوبارہ|گم|چوری|خراب/.test(q)) {
+      return [
+        "OFFICIAL NADRA EVIDENCE — LOST / STOLEN ID CARD",
+        "Source: NADRA Services Charter",
+        "URL: https://www.nadra.gov.pk/assests/downloadsPdf/nadra-services-charter-1-0-0.pdf",
+        "Evidence: In section 8.9 LOST ID CARD, NADRA states that when an ID card is lost or stolen, the holder can get a reprint by providing the card number and biometrics for authentication. No further documentation is needed. The newly issued ID card has the same expiration date as the old one.",
+        "",
+        "Source: NADRA Reprint User Guide",
+        "URL: https://www.nadra.gov.pk/assests/downloadsPdf/reprint-guide.pdf",
+        "Evidence: The official Reprint User Guide explains that a lost or broken identity card can be reprinted through the NADRA PakID mobile app. It instructs the user to open ID Documents, select ID Card, and start the reprint process.",
+        "",
+        "Source: NADRA CNIC page",
+        "URL: https://www.nadra.gov.pk/identityDocument/cnic",
+        "Evidence: The official CNIC service page lists Reprint / Lost as a CNIC service."
+      ].join("\\n\\n");
+    }
+
     // Intent-specific evidence. This is deliberately broader than the old
     // seven-condition map so the verifier receives the actual policy section
     // for the service being answered, rather than unrelated nearby chunks.

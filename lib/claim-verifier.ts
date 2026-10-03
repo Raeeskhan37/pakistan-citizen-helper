@@ -133,6 +133,7 @@ export async function verifyAnswerClaims(args: {
     "- A claim is supported when the evidence explicitly supports it or clearly entails it, even if the answer paraphrases the wording.\n" +
     "- Treat policy tables, numbered lists, column headings, OCR-like formatting, and line-broken requirements as valid evidence; reconstruct the intended relationship from the surrounding heading/section.\n" +
     "- Treat ordinary equivalent wording as supported when the evidence clearly refers to the same requirement (for example applicant/application, parent(s)/parent, UC/Union Council, ID holder/identity-card holder, and biometric verification/biometric witness).\n" +
+    "- Answer and evidence can use different languages; compare their meaning rather than their literal wording.\n" +
     "- Do not require the answer to repeat the exact wording or order used in the evidence.\n" +
     "- A claim is unsupported when the evidence contradicts it or genuinely provides no basis for it.\n" +
     "- Use unclear when the evidence is ambiguous or insufficient to decide.\n" +

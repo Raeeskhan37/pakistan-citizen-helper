@@ -1781,10 +1781,17 @@ const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,c
        focusedNadraEvidence ? "" : nadraRag,
        focusedNadraEvidence ? "" : nadraOfficialText
      ].filter(Boolean).join("\n\n");
+     // The NADRA RAG verification evidence is maintained in English. For Urdu citizen answers,
+     // verify the equivalent English canonical answer instead of asking the claim verifier to
+     // compare Urdu claims directly against English policy text. The citizen-facing answer
+     // remains Urdu; only the internal verifier input is canonicalized.
+     const verifierAnswer = language === "Urdu"
+       ? (await getDirectNadraAnswer(question, "English")) || directNadraAnswer
+       : directNadraAnswer;
      const claimVerification=await verifyAnswerClaims({
-       answer:cleanAnswer(directNadraAnswer),
+       answer:cleanAnswer(verifierAnswer),
        evidence:verificationEvidence,
-       language
+       language:"English"
      });
      const verificationPassed=
        claimVerification.available &&

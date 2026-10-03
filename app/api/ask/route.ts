@@ -1021,9 +1021,11 @@ function sanitizeNadraCitizenAnswer(answer:string, language:"English"|"Urdu") {
     .replace(/(?:Reference|حوالہ)\s*[—-]?\s*NADRA Registration Policy[^\n]*/gi, "")
     .replace(/\*\*(?:Policy|پالیسی)\*\*\s*:\s*[^\n]*/gi, "")
     .replace(/^\s*[*#-]*\s*(?:Policy|پالیسی|Reference|حوالہ|Evidence|ثبوت)\s*:?.*$/gim, "")
-    .replace(/^.*\bNADRA Registration Policy\s*(?:RP-)?6\.0\.2.*$/gim, "")
-    .replace(/^.*\bRP-6\.0\.2\b.*$/gim, "")
+    .replace(/^.*\bNADRA Registration Policy\s*(?:RP[-\s]?)?6\.0\.2(?:\s*\([^\n]*\))?.*$/gim, "")
+    .replace(/^.*\bNADRA Registration Policy\s*(?:Urdu|English)?\s*6\.0\.2.*$/gim, "")
+    .replace(/^.*\bRP[-\s]?6\.0\.2\b.*$/gim, "")
     .replace(/^.*\bNADRA-Reg-Policy-6\.0\.2\b.*$/gim, "")
+    .replace(/^.*\bNADRA\s+(?:Registration\s+)?Policy\s+(?:document|دستاویز)[^\n]*6\.0\.2.*$/gim, "")
     .replace(/\[NADRA POLICY (?:RAG )?EVIDENCE[^\]]*\]/gi, "")
     .replace(/\bNADRA POLICY (?:RAG )?EVIDENCE\b\s*:?[ \t]*/gi, "")
     .replace(/^.*\b(?:ISSUE DATE|EFFECTIVE DATE|TOTAL PAGES|RETRIEVAL SCORE)\s*:\s*.*$/gim, "")
@@ -1779,10 +1781,17 @@ const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,c
        focusedNadraEvidence ? "" : nadraRag,
        focusedNadraEvidence ? "" : nadraOfficialText
      ].filter(Boolean).join("\n\n");
+     // The NADRA RAG verification evidence is maintained in English. For Urdu citizen answers,
+     // verify the equivalent English canonical answer instead of asking the claim verifier to
+     // compare Urdu claims directly against English policy text. The citizen-facing answer
+     // remains Urdu; only the internal verifier input is canonicalized.
+     const verifierAnswer = language === "Urdu"
+       ? (await getDirectNadraAnswer(question, "English")) || directNadraAnswer
+       : directNadraAnswer;
      const claimVerification=await verifyAnswerClaims({
-       answer:cleanAnswer(directNadraAnswer),
+       answer:cleanAnswer(verifierAnswer),
        evidence:verificationEvidence,
-       language
+       language:"English"
      });
      const verificationPassed=
        claimVerification.available &&

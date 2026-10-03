@@ -510,6 +510,19 @@ NADRA describes the FRC as a certificate that reflects, verifies and records a r
     }
 
     // ------------------------------------------------------------
+    // 5. LOST / STOLEN / DAMAGED CNIC REPRINT.
+    // Use NADRA's current public reprint guidance rather than the
+    // internal policy RAG. This prevents a lost-card question from
+    // falling through to the generic AI answer path.
+    // ------------------------------------------------------------
+    if (hasCnic && isDuplicate && !hasNicop && !hasPoc && !hasCrc) {
+      const body = language === "Urdu"
+        ? "### گم یا چوری شدہ CNIC — دوبارہ اشاعت\n\nاگر اصل شناختی کارڈ گم یا چوری ہو گیا ہے تو NADRA کے مطابق آپ اس کی **Reprint / Lost** سروس کے ذریعے نیا کارڈ حاصل کر سکتے ہیں۔\n\n**PakID کے ذریعے بنیادی طریقہ:**\n1. NADRA PakID موبائل ایپ کھولیں۔\n2. **ID Documents / شناختی دستاویزات** میں **ID Card / شناختی کارڈ** منتخب کریں۔\n3. گم شدہ کارڈ کے لیے **Reprint / Lost** آپشن منتخب کرکے درخواست مکمل کریں۔\n4. اپنی شناخت کی مطلوبہ verification مکمل کریں اور درخواست جمع کریں۔\n\nNADRA کی سروس چارٹر کے مطابق گم یا چوری شدہ کارڈ کی reprint کے لیے **کارڈ نمبر اور biometric authentication** استعمال ہوتی ہے اور مزید دستاویزات درکار نہیں ہوتیں۔ دوبارہ جاری ہونے والے کارڈ کی expiry date پرانے کارڈ جیسی رہتی ہے۔\n\n**سرکاری ماخذ:** NADRA — CNIC / Reprint-Lost\nhttps://www.nadra.gov.pk/identityDocument/cnic"
+        : "### Lost or Stolen CNIC — Reprint\n\nIf your original CNIC is lost or stolen, NADRA provides a **Reprint / Lost** service for obtaining a replacement card.\n\n**Basic PakID process:**\n1. Open the NADRA PakID mobile app.\n2. Under **ID Documents**, select **ID Card**.\n3. Select **Reprint / Lost** and complete the application.\n4. Complete the required identity verification and submit the application.\n\nNADRA's service charter states that for a lost or stolen ID card, reprint is processed using the **card number and biometric authentication**, and no further documentation is required. The newly issued card keeps the same expiry date as the old card.\n\n**Official source:** NADRA — CNIC / Reprint-Lost\nhttps://www.nadra.gov.pk/identityDocument/cnic";
+      return out(language === "Urdu" ? "NADRA — گم شدہ شناختی کارڈ" : "NADRA — Lost / Stolen CNIC Reprint", body);
+    }
+
+    // ------------------------------------------------------------
     // 5. SMART CNIC DUPLICATE / REPRINT.
     // ------------------------------------------------------------
     if (hasCnic && /smart cnic|smart nic|snic/.test(q) && isDuplicate) {
@@ -877,6 +890,28 @@ export async function getDirectNadraVerificationEvidence(question: string): Prom
     // Common policy foundations.
     ids.add("CHUNK-0001"); // breeder-document / prior birth-record correction rule
     ids.add("CHUNK-0019"); // Rule 13(1), change/correction framework
+
+    // Lost/stolen CNIC verification must use the actual official lost-card
+    // evidence, not the generic RP chunks. CHUNK-0030/0032 only describe the
+    // re-print section/requirements and do not fully support the citizen-facing
+    // PakID steps or the lost-card rules. Return the authoritative NADRA
+    // Services Charter + current Reprint Guide as the verification evidence.
+    if (/reprint|duplicate|lost|stolen|damaged|ڈپلیکیٹ|دوبارہ|گم|چوری|خراب/.test(q)) {
+      return [
+        "OFFICIAL NADRA EVIDENCE — LOST / STOLEN ID CARD",
+        "Source: NADRA Services Charter",
+        "URL: https://www.nadra.gov.pk/assests/downloadsPdf/nadra-services-charter-1-0-0.pdf",
+        "Evidence: In section 8.9 LOST ID CARD, NADRA states that when an ID card is lost or stolen, the holder can get a reprint by providing the card number and biometrics for authentication. No further documentation is needed. The newly issued ID card has the same expiration date as the old one.",
+        "",
+        "Source: NADRA Reprint User Guide",
+        "URL: https://www.nadra.gov.pk/assests/downloadsPdf/reprint-guide.pdf",
+        "Evidence: The official Reprint User Guide explains that a lost or broken identity card can be reprinted through the NADRA PakID mobile app. It instructs the user to open ID Documents, select ID Card, and start the reprint process.",
+        "",
+        "Source: NADRA CNIC page",
+        "URL: https://www.nadra.gov.pk/identityDocument/cnic",
+        "Evidence: The official CNIC service page lists Reprint / Lost as a CNIC service."
+      ].join("\\n\\n");
+    }
 
     // Intent-specific evidence. This is deliberately broader than the old
     // seven-condition map so the verifier receives the actual policy section

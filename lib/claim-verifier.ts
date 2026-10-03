@@ -133,6 +133,7 @@ export async function verifyAnswerClaims(args: {
     "- A claim is supported when the evidence explicitly supports it or clearly entails it, even if the answer paraphrases the wording.\n" +
     "- Treat policy tables, numbered lists, column headings, OCR-like formatting, and line-broken requirements as valid evidence; reconstruct the intended relationship from the surrounding heading/section.\n" +
     "- Treat ordinary equivalent wording as supported when the evidence clearly refers to the same requirement (for example applicant/application, parent(s)/parent, UC/Union Council, ID holder/identity-card holder, and biometric verification/biometric witness).\n" +
+    "- Answer and evidence can use different languages; compare their meaning rather than their literal wording.\n" +
     "- Do not require the answer to repeat the exact wording or order used in the evidence.\n" +
     "- A claim is unsupported when the evidence contradicts it or genuinely provides no basis for it.\n" +
     "- Use unclear when the evidence is ambiguous or insufficient to decide.\n" +
@@ -170,7 +171,7 @@ export async function verifyAnswerClaims(args: {
       if (!geminiKey) return null;
 
       const geminiModel =
-        process.env.GEMINI_VERIFIER_MODEL || "gemini-2.5-flash-lite";
+        process.env.GEMINI_VERIFIER_MODEL || "gemini-3.5-flash-lite";
       const geminiPrompt =
         "Return JSON only with a top-level claims array. Each claim item must contain claim, verdict (supported|unsupported|unclear), and reason.\\n\\n" +
         prompt;
@@ -190,6 +191,10 @@ export async function verifyAnswerClaims(args: {
             generationConfig: {
               temperature: 0,
               maxOutputTokens: MAX_COMPLETION_TOKENS,
+              // Keep Gemini fallback deliberately simple: request JSON mode and
+              // let our parser validate/normalize the returned claims. This avoids
+              // provider/model-specific schema validation failures while retaining
+              // deterministic structured output requirements in the prompt.
               responseMimeType: "application/json",
             },
           }),
@@ -209,6 +214,7 @@ export async function verifyAnswerClaims(args: {
       const raw = normalizeModelContent(
         data?.candidates?.[0]?.content?.parts ??
         data?.candidates?.[0]?.content ??
+        data?.candidates?.[0]?.text ??
         ""
       );
       const parsed = normalizeParsedClaims(extractJson(raw));

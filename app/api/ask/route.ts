@@ -1003,23 +1003,6 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
   agentActivity:{...workflow,memory:{shortTerm:[],longTerm:["User-controlled preferences only"]},...(claimVerification?{claimVerification}:{})}});
 }
 
-export async function POST(request:NextRequest){try{
- if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
- const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
- const outsideSupportedDepartments=await isOutsideSupportedDepartments(question,requested);
- if(outsideSupportedDepartments){
-   const answer=language==="Urdu"
-     ? `معذرت، یہ سوال پاکستان سٹیزن ہیلپر کے دستیاب 14 سرکاری شعبوں میں شامل نہیں ہے۔ براہِ کرم ${requested} سے متعلق سوال پوچھیں۔`
-     : `Sorry, this question is outside the services currently covered by Pakistan Citizen Helper. Please ask a question related to ${requested}.`;
-   return directWorkflowResponse({
-     answer,
-     source:null,
-     department:requested,
-     question,
-     language,
-     evidenceAvailable:false
-   });
- }
 
  // UNIVERSAL OUT-OF-SCOPE GUARD:
  // Existing cross-department routing/rejection remains unchanged. This guard only
@@ -1101,6 +1084,25 @@ Do not answer the question. Just classify it.`;
      return true;
    }
  }
+
+export async function POST(request:NextRequest){try{
+ if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
+ const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
+ const outsideSupportedDepartments=await isOutsideSupportedDepartments(question,requested);
+ if(outsideSupportedDepartments){
+   const answer=language==="Urdu"
+     ? `معذرت، یہ سوال پاکستان سٹیزن ہیلپر کے دستیاب 14 سرکاری شعبوں میں شامل نہیں ہے۔ براہِ کرم ${requested} سے متعلق سوال پوچھیں۔`
+     : `Sorry, this question is outside the services currently covered by Pakistan Citizen Helper. Please ask a question related to ${requested}.`;
+   return directWorkflowResponse({
+     answer,
+     source:null,
+     department:requested,
+     question,
+     language,
+     evidenceAvailable:false
+   });
+ }
+
 
  const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,category,title,content,service_name_urdu,province,title_urdu,content_urdu,official_department,official_source_title,official_source_url,last_verified,active&active=eq.true&order=last_verified.desc`;const db=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`},cache:"no-store"});if(!db.ok){console.error(await db.text());return NextResponse.json({error:"Unable to retrieve verified information from Supabase."},{status:500});}
  const all=(await db.json()) as VerifiedRecord[];const selected=selectRecords(question,requested,all);

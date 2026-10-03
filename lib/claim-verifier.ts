@@ -227,6 +227,7 @@ export async function verifyAnswerClaims(args: {
       const raw = normalizeModelContent(
         data?.candidates?.[0]?.content?.parts ??
         data?.candidates?.[0]?.content ??
+        data?.candidates?.[0]?.text ??
         ""
       );
       const parsed = normalizeParsedClaims(extractJson(raw));

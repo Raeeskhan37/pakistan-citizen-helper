@@ -1006,6 +1006,21 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
 export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
+ const outsideSupportedDepartments=await isOutsideSupportedDepartments(question,requested);
+ if(outsideSupportedDepartments){
+   const answer=language==="Urdu"
+     ? `معذرت، یہ سوال پاکستان سٹیزن ہیلپر کے دستیاب 14 سرکاری شعبوں میں شامل نہیں ہے۔ براہِ کرم ${requested} سے متعلق سوال پوچھیں۔`
+     : `Sorry, this question is outside the services currently covered by Pakistan Citizen Helper. Please ask a question related to ${requested}.`;
+   return directWorkflowResponse({
+     answer,
+     source:null,
+     department:requested,
+     question,
+     language,
+     evidenceAvailable:false
+   });
+ }
+
  // UNIVERSAL OUT-OF-SCOPE GUARD:
  // Existing cross-department routing/rejection remains unchanged. This guard only
  // handles questions that do not match any of the 14 supported government domains.

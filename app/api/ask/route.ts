@@ -433,6 +433,11 @@ const DEPARTMENT_ALIASES:Record<string,string[]>={
  "Arms Licence":["arms licence","arms license","weapon licence","weapon license","gun licence","gun license","اسلحہ لائسنس","اسلحہ لائسنس","ہتھیار لائسنس"]
 };
 
+function isLandRevenueIntentQuestion(question:string):boolean{
+ const q=normalize(question);
+ return /(fard|fards|land record|land records|mutation|intiqal|inteqal|intikal|khewat|khasra|jamabandi|land ownership|property record|property transfer|plot transfer|transfer of plot|transfer property|transfer ownership|land transfer|purchase of land|sale of land|plot purchase|plot sale|registry|registration of property|service delivery centre|service delivery center|sdc|فرد|انتقال|انتقال زمین|جمعبندی|کھاتہ|کھاتونی|خسرا|زمین کا ریکارڈ|ملکیت|پلاٹ|جائیداد)/i.test(q);
+}
+
 function belongsToDepartment(service:string,department:string):boolean{
  const s=normalize(service), d=canonicalDepartment(department);
  if(!s||!d)return true;
@@ -445,7 +450,7 @@ function belongsToDepartment(service:string,department:string):boolean{
 }
 
 const SERVICES:Record<string,string[]>={
- "CNIC / NADRA":["cnic","nic","smart nic","smart nic card","smart card","smart identity card","snic","identity card","nadra","شناختی کارڈ","نادرا"],"Passport":["passport","پاسپورٹ"],"Driving Licence":["driving licence","driving license","driving","driving test","learner","learner licence","learner license","ltv","ltv licence","ltv license","htv","htv licence","htv license","renew driving licence","duplicate driving licence","international driving licence","ڈرائیونگ لائسنس","ڈرائیونگ"],"Arms Licence":["arm licence","arm license","arms licence","arms license","weapon licence","weapon license","gun licence","gun license","اسلحہ لائسنس","اسلحہ لائسنس","ہتھیار لائسنس"],"Domicile":["domicile","ڈومیسائل"],"Scholarships":["scholarship","scholarships","stipend","financial aid","وظیفہ","اسکالرشپ"],"Protector of Emigrants":["protector","protector of emigrants","emigration","emigrant","overseas employment","work visa","employment visa","پروٹیکٹر","ایمیگریشن","بیرون ملک ملازمت"],"Vaccination for Travelling Abroad":["vaccination","vaccine","immunization","immunisation","vaccination for travelling abroad","travel vaccination","umrah","umra","hajj","haj","pilgrimage","polio","meningococcal","yellow fever","ویکسین","ویکسینیشن","عمرہ","حج"],"Land & Revenue":["fard","fards","land record","land records","mutation","intiqal","registry","property record","land ownership","revenue","khewat","khasra","فرد","فردات","انتقال","رجسٹری","زمین کا ریکارڈ","ملکیت"],"Other Services":["birth certificate","death certificate","marriage certificate","divorce certificate","police verification","vehicle registration","token tax","income tax","fbr","tax","crc","form b","پیدائش","وفات","شادی","طلاق","پولیس ویریفیکیشن","گاڑی رجسٹریشن","ٹیکس"],"Government Jobs":["government job","government jobs","job","jobs","career","careers","employment","سرکاری نوکری","سرکاری نوکریاں","ملازمت","روزگار"]};
+ "CNIC / NADRA":["cnic","nic","smart nic","smart nic card","smart card","smart identity card","snic","identity card","nadra","شناختی کارڈ","نادرا"],"Passport":["passport","پاسپورٹ"],"Driving Licence":["driving licence","driving license","driving","driving test","learner","learner licence","learner license","ltv","ltv licence","ltv license","htv","htv licence","htv license","renew driving licence","duplicate driving licence","international driving licence","ڈرائیونگ لائسنس","ڈرائیونگ"],"Arms Licence":["arm licence","arm license","arms licence","arms license","weapon licence","weapon license","gun licence","gun license","اسلحہ لائسنس","اسلحہ لائسنس","ہتھیار لائسنس"],"Domicile":["domicile","ڈومیسائل"],"Scholarships":["scholarship","scholarships","stipend","financial aid","وظیفہ","اسکالرشپ"],"Protector of Emigrants":["protector","protector of emigrants","emigration","emigrant","overseas employment","work visa","employment visa","پروٹیکٹر","ایمیگریشن","بیرون ملک ملازمت"],"Vaccination for Travelling Abroad":["vaccination","vaccine","immunization","immunisation","vaccination for travelling abroad","travel vaccination","umrah","umra","hajj","haj","pilgrimage","polio","meningococcal","yellow fever","ویکسین","ویکسینیشن","عمرہ","حج"],"Land & Revenue":["fard","fards","land record","land records","mutation","intiqal","inteqal","intikal","registry","property record","land ownership","property transfer","plot transfer","transfer of plot","transfer property","transfer ownership","land transfer","purchase of land","sale of land","plot purchase","plot sale","revenue","khewat","khasra","jamabandi","service delivery centre","service delivery center","sdc","فرد","فردات","انتقال","انتقال زمین","رجسٹری","زمین کا ریکارڈ","ملکیت","پلاٹ","جائیداد"],"Other Services":["birth certificate","death certificate","marriage certificate","divorce certificate","police verification","vehicle registration","token tax","income tax","fbr","tax","crc","form b","پیدائش","وفات","شادی","طلاق","پولیس ویریفیکیشن","گاڑی رجسٹریشن","ٹیکس"],"Government Jobs":["government job","government jobs","job","jobs","career","careers","employment","سرکاری نوکری","سرکاری نوکریاں","ملازمت","روزگار"]};
 
 const OFFICIAL_SOURCES=[
  {keys:["nadra","cnic","identity card","nic","شناختی کارڈ","نادرا"],url:"https://www.nadra.gov.pk/identityDocument/cnic",title:"NADRA CNIC Services",department:"NADRA"},
@@ -795,7 +800,16 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
   if((jurisdiction==="Azad Jammu and Kashmir"||jurisdiction==="Gilgit-Baltistan") && hasLandTopic)return language==="Urdu"
    ? "## لینڈ اینڈ ریونیو\n\nاس علاقے کے لیے مخصوص land-record procedure متعلقہ Revenue/Land Records authority کے موجودہ سرکاری طریقۂ کار کے مطابق مختلف ہو سکتا ہے۔ براہ کرم متعلقہ سرکاری land-record office/portal سے تازہ طریقۂ کار کی تصدیق کریں۔"
    : "## Land & Revenue\n\nThe land-record procedure in this territory can vary by the relevant Revenue/Land Records authority. The current territory-specific procedure should be confirmed from the relevant official land-record office or portal.";
-  if(!hasLandTopic)return "## لینڈ اینڈ ریونیو\n\nیہ سوال منتخب کردہ سرکاری شعبے سے متعلق معلوم نہیں ہوتا۔ براہ کرم لینڈ ریکارڈ، فرد، انتقال، جائیداد کی رجسٹری یا لینڈ/ریونیو سروس سے متعلق سوال کریں۔";
+  if(isMutation&&!jurisdiction){
+ return language==="Urdu" ? "## انتقال (Mutation / Intiqal)\n\nانتقال زمین کی ملکیت یا حق میں تبدیلی کو سرکاری لینڈ ریکارڈ میں درج کرنے کا عمل ہے۔ اس کا طریقہ کار، متعلقہ دفتر، دستاویزات اور فیس صوبے یا علاقے کے مطابق مختلف ہو سکتے ہیں۔" : "## Mutation / Intiqal\n\nMutation (Intiqal) is the process of recording a change in land ownership or rights in the official land record. The procedure, authority, documents and fees vary by province or territory.";
+}
+if(isRegistry&&!jurisdiction){
+ return language==="Urdu" ? "## جائیداد کی رجسٹری\n\nجائیداد کی رجسٹری deed/property registration کا سرکاری عمل ہے۔ متعلقہ دفتر، دستاویزات، فیس اور طریقہ کار صوبے یا علاقے کے مطابق مختلف ہو سکتے ہیں۔" : "## Property Registration\n\nProperty registration is the official process of registering the relevant property deed. The authority, documents, fees and procedure vary by province or territory.";
+}
+if(isPurchaseTransfer&&!jurisdiction){
+ return language==="Urdu" ? "## زمین کی ملکیت کی منتقلی\n\nزمین یا پلاٹ کی ملکیت منتقل ہونے کے بعد اسے سرکاری land record میں mutation/انتقال کے ذریعے درج کیا جاتا ہے۔ متعلقہ طریقہ کار اور authority صوبے یا علاقے کے مطابق مختلف ہو سکتے ہیں۔" : "## Land Ownership Transfer\n\nAfter a land or plot ownership transfer, the change is recorded in the official land record through mutation/Intiqal. The exact procedure and authority vary by province or territory.";
+}
+if(!hasLandTopic)return "## لینڈ اینڈ ریونیو\n\nیہ سوال منتخب کردہ سرکاری شعبے سے متعلق معلوم نہیں ہوتا۔ براہ کرم لینڈ ریکارڈ، فرد، انتقال، جائیداد کی رجسٹری یا لینڈ/ریونیو سروس سے متعلق سوال کریں۔";
   return "## لینڈ اینڈ ریونیو\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ سروس بتائیں، مثلاً پنجاب میں فرد یا انتقال، یا خیبر پختونخوا میں فرد، انتقال یا SDC سروس۔";
  }
  if(isICT){
@@ -1168,7 +1182,7 @@ export async function POST(request:NextRequest){try{
    });
  }
  const detectedQuestionService=detectService(question,"");
- if(detectedQuestionService && !belongsToDepartment(detectedQuestionService,requested)){
+ if(detectedQuestionService && !belongsToDepartment(detectedQuestionService,requested) && !(requested==="Land & Revenue" && isLandRevenueIntentQuestion(question))){
  const qn=normalize(question);
  const explicitCrossDepartmentMismatch=
    (requested==="Arms Licence" && (qn.includes("driving licence")||qn.includes("driving license")||qn.includes("learner licence")||qn.includes("learner license")||qn.includes("dlims")||qn.includes("driving test")||qn.includes("ڈرائیونگ"))) ||
@@ -2132,7 +2146,7 @@ if(requested==="Arms Licence"){
  return directWorkflowResponse({answer:result.answer,source:{department:"Arms Licence",title:"Official government arms-licensing information",url:result.sources[0]||"",lastVerified:"",province:aj||""},department:"Arms Licence",question,language,jurisdiction:aj,evidenceAvailable:true,verifyClaims:true,verificationEvidence:verificationEvidence.trim()});
 }
 if(requested==="Land & Revenue"){
- const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question);
+ const lj=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question)||detectTargetJurisdiction(question)||detectJurisdiction(question);
  const qLand=normalize(question);
  const generalFard=!lj && (qLand.includes("fard")||qLand.includes("فرد")) && /^(what is|define|meaning of|what does .* mean|کیا ہے|کیا ہوتی ہے|کیا ہوتا ہے|مطلب)/i.test(qLand);
  if(!lj && !generalFard){

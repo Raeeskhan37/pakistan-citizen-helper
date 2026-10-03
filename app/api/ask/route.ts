@@ -2450,7 +2450,30 @@ if (requested === "NADRA Services") {
 
 
 if(requested==="Excise & Taxation"){
- const ej=workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question)||detectJurisdiction(question);
+ const exciseQuestion=normalize(question);
+ const exciseJurisdictionAliases:Array<[string,string[]]>=[
+  ["Punjab",["punjab","پنجاب"]],
+  ["Sindh",["sindh","سندھ"]],
+  ["Khyber Pakhtunkhwa",["khyber pakhtunkhwa","kpk","kp","خیبر پختونخوا","خیبرپختونخوا"]],
+  ["Balochistan",["balochistan","بلوچستان"]],
+  ["Islamabad Capital Territory",["islamabad","ict","اسلام آباد","اسلامباد"]],
+  ["Azad Jammu and Kashmir",["ajk","azad kashmir","آزاد کشمیر","آزاد جموں و کشمیر"]],
+  ["Gilgit-Baltistan",["gilgit baltistan","gilgit-baltistan","gb","گلگت","گلگت بلتستان"]]
+ ];
+ let exciseJurisdiction:string|null=null;
+ for(const [name,aliases] of exciseJurisdictionAliases){
+  for(const alias of aliases){
+   const a=normalize(alias);
+   if((a==="kp"||a==="kpk"||a==="ict"||a==="ajk"||a==="gb")
+      ? new RegExp(`(?:^|\\s)${a}(?:\\s|$|[,.!?])`,"i").test(exciseQuestion)
+      : exciseQuestion.includes(a)){
+    exciseJurisdiction=name;
+    break;
+   }
+  }
+  if(exciseJurisdiction)break;
+ }
+ const ej=exciseJurisdiction||workingTargetJurisdiction||workingJurisdiction||workingDetectTargetJurisdiction(question)||detectJurisdiction(question);
  if(ej){
   const answer=exciseEvidence(question,ej,language);
   const exciseUrls=Array.from(new Set(

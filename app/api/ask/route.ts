@@ -80,7 +80,7 @@ function workingDepartmentTerms(department:string):string[] {
     "Vaccination for Travelling Abroad":["vaccination","vaccine","polio","yellow fever","hajj","umrah"],
     "Domicile":["domicile","permanent residence","residence certificate"],
     "Arms Licence":["arms licence","arms license","weapon licence","gun licence"],
-    "Education & Scholarships":["scholarship","hec","education"],"Land & Revenue":["land record","fard","property","revenue"],"Excise & Taxation":["excise","vehicle","token tax","tax"],"FBR / Taxation":["fbr","tax","ntn","iris"],"Government Jobs":["government jobs","job","vacancy","njp"]
+    "Education & Scholarships":["scholarship","hec","education"],"Land & Revenue":["land record","land records","fard","mutation","intiqal","inteqal","intikal","property","property transfer","plot transfer","land transfer","registry","revenue"],"Excise & Taxation":["excise","vehicle","token tax","tax"],"FBR / Taxation":["fbr","tax","ntn","iris"],"Government Jobs":["government jobs","job","vacancy","njp"]
   }; return map[department]||[];
 }function drivingCategories(question:string):string[]{
  const q=normalize(question);
@@ -733,14 +733,17 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  const q=normalize(question);
  const isPunjab=jurisdiction==="Punjab";
  const isKP=jurisdiction==="Khyber Pakhtunkhwa";
+ const isICT=jurisdiction==="Islamabad Capital Territory";
+ const isSindh=jurisdiction==="Sindh";
+ const isBalochistan=jurisdiction==="Balochistan";
  const isFard=q.includes("fard")||q.includes("فرد")||q.includes("land record")||q.includes("land records")||q.includes("زمین کا ریکارڈ")||q.includes("لینڈ ریکارڈ");
  const isGeneralFardDefinition=isFard && !jurisdiction && /^(what is|define|meaning of|what does .* mean|کیا ہے|کیا ہوتی ہے|کیا ہوتا ہے|مطلب)/i.test(q);
- const isMutation=q.includes("mutation")||q.includes("intiqal")||q.includes("انتقال");
- const isRegistry=q.includes("registry")||q.includes("رجسٹری")||q.includes("property registration")||q.includes("register property");
+ const isMutation=q.includes("mutation")||q.includes("intiqal")||q.includes("inteqal")||q.includes("intikal")||q.includes("انتقال");
+ const isRegistry=q.includes("registry")||q.includes("رجسٹری")||q.includes("property registration")||q.includes("registration of property")||q.includes("register property")||q.includes("deed registration");
  const isOwnership=q.includes("ownership")||q.includes("owner")||q.includes("ملکیت");
  // Keep distinct land-service intents separate: ownership information/Fard,
  // purchase transfer, inheritance, and record correction are different services.
- const isPurchaseTransfer=/(transfer ownership|ownership transfer|transfer of ownership|purchas|bought|buying|sale of land|sold land|land sale|زمین خرید|زمین کی خرید|خریدی ہوئی زمین|ملکیت منتقل)/i.test(q);
+ const isPurchaseTransfer=/(transfer ownership|ownership transfer|transfer of ownership|transfer a plot|transfer plot|transfer of plot|transfer property|transfer the property|property transfer|land transfer|put.*name|on my name|in my name|purchas|bought|buying|sale of land|sold land|land sale|plot sale|plot purchase|زمین خرید|زمین کی خرید|خریدی ہوئی زمین|ملکیت منتقل|نام پر منتقل|نام پر)/i.test(q);
  const isInheritance=/(inheritance|legal heir|legal heirs|heirs|father.*died|mother.*died|death.*father|death.*mother|وراثت|وارث|قانونی وارث|والد.*وفات|والدہ.*وفات)/i.test(q);
  const isCorrection=/(correct|correction|incorrect|wrong|error|mistake|record correction|correct.*record|درست.*ریکارڈ|ریکارڈ.*درست|غلط.*ریکارڈ|تصحیح)/i.test(q);
  const isSDC=q.includes("service delivery centre")||q.includes("service delivery center")||q.includes("sdc")||q.includes("ایس ڈی سی")||q.includes("سروس ڈیلیوری سنٹر")||q.includes("سروس ڈیلیوری سینٹر");
@@ -751,6 +754,41 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
    : "## Fard\n\nA Fard is an official land-record document containing information about a parcel of land, including its area, location and ownership details. The process, fee and issuing authority can vary by province or territory.";
  }
  if(language==="Urdu"){
+  if(isICT){
+   if(isMutation||isPurchaseTransfer){
+    return "## اسلام آباد (ICT) — زمین کی منتقلی / انتقال
+
+ICT Administration کے مطابق Transfer of Land / Sanction of Mutation کے لیے متعلقہ علاقے کے Patwari سے رابطہ کیا جاتا ہے، mutation کو Inteqal Mutation Register میں درج کیا جاتا ہے، اور seller اور purchaser دونوں دو گواہوں کے ساتھ Tehsildar / Naib-Tehsildar / Circle Revenue Officer کے سامنے پیش ہوتے ہیں۔ متعلقہ dues National Bank of Pakistan میں جمع کرانے کے بعد mutation sanction کی جاتی ہے۔ سرکاری صفحے کے مطابق Fard/Mutation copy متعلقہ Patwari سے تقریباً 7 دن بعد حاصل کی جا سکتی ہے اور صفحے پر processing time ایک ماہ درج ہے۔
+
+**سرکاری ذریعہ:**\nhttps://ictadministration.gov.pk/transfer-of-land-sanction-of-mutation/";
+   }
+   if(isRegistry){
+    return "## اسلام آباد (ICT) — Deed Registration
+
+ICT Administration کے مطابق deed registration کے لیے deed تیار کر کے متعلقہ dues جمع کرانے اور Sub-Registrar, F-8 Markaz, Islamabad کے سامنے seller، purchaser اور دو گواہوں کی حاضری شامل ہے۔ اصل land ownership proof اور فریقین/گواہوں کے CNIC درکار ہیں۔
+
+**سرکاری ذریعہ:**\nhttps://ictadministration.gov.pk/registration-of-deed/";
+   }
+   if(isFard||isOwnership){
+    return "## اسلام آباد (ICT) — Land Record / Fard
+
+اسلام آباد میں land transfer اور mutation کی سرکاری سروس ICT Administration کے ذریعے فراہم کی جاتی ہے۔ ملکیت کی منتقلی کے لیے متعلقہ land ownership proof اور مقررہ mutation/transfer procedure استعمال ہوتا ہے۔ مخصوص property type کے مطابق متعلقہ CDA یا ICT authority بھی شامل ہو سکتی ہے۔
+
+**سرکاری ذرائع:**\nhttps://ictadministration.gov.pk/transfer-of-land-sanction-of-mutation/\nhttps://cda.gov.pk/procedures";
+   }
+   return "## اسلام آباد (ICT) — Land & Revenue Services\n\nICT Administration کی سرکاری services میں Transfer of Land / Sanction of Mutation شامل ہے۔";
+  }
+  if(isSindh){
+   if(isFard||isOwnership||isMutation){
+    return "## سندھ — لینڈ ریکارڈ / انتقال\n\nBoard of Revenue Sindh کا Sindh Zameen portal land records، Village Forms 7-A/7-B، Property Registers اور registration-related services فراہم کرتا ہے۔ مکمل یا certified land-record information کے لیے متعلقہ Revenue Service Center سے رجوع کیا جا سکتا ہے۔ Property Registers ownership اور mutation record بھی رکھتے ہیں۔\n\n**سرکاری ذرائع:**\nhttps://sindhzameen.gos.pk/FAQs.aspx\nhttps://sindhzameen.gos.pk/PropertyRegister.aspx\nhttps://sindhzameen.gos.pk/";
+   }
+   if(isRegistry)return "## سندھ — Property / Registry Services\n\nBoard of Revenue Sindh کا سرکاری Sindh Zameen portal registration-related services، registry search اور registration checklist فراہم کرتا ہے۔\n\n**سرکاری ذریعہ:**\nhttps://sindhzameen.gos.pk/";
+  }
+  if(isBalochistan){
+   if(isFard||isOwnership||isMutation||isRegistry||isPurchaseTransfer){
+    return "## بلوچستان — لینڈ ریکارڈ / انتقال\n\nBoard of Revenue Balochistan کے مطابق محکمہ public land records اور land alienation کا ذمہ دار ہے، جبکہ Markaz-e-Sahooliyat کے ذریعے digital Fardat، mutations اور دیگر land-revenue services فراہم کرنے کا نظام موجود ہے۔\n\n**سرکاری ذرائع:**\nhttps://bor.balochistan.gov.pk/objectives/\nhttps://bor.balochistan.gov.pk/blrmis-project/";
+   }
+  }
   if(isPunjab){
    if(isMutation)return "## پنجاب — انتقال (Mutation / Intiqal)\n\nPLRA کے مطابق انتقال زمین کی ملکیت میں تبدیلی کو سرکاری لینڈ ریکارڈ میں درج کرنے کا عمل ہے۔ متعلقہ Arazi Record Centre (ARC) پر CNIC کی بایومیٹرک تصدیق کے بعد ٹوکن لیا جاتا ہے، مطلوبہ دستاویزات اور جائیداد کی تفصیلات جمع کی جاتی ہیں، مقررہ فیس/ٹیکس ادا کیے جاتے ہیں، اور متعلقہ Revenue Officer کے سامنے بیان/تصدیق کے بعد انتقال منظور کیا جاتا ہے۔\n\n**سرکاری ذرائع:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
    if(isCorrection)return "## پنجاب — لینڈ ریکارڈ کی تصحیح\n\nPLRA کی الگ Correction of Land Records سروس ریکارڈ میں غلطیوں یا عدم مطابقت کی تصحیح کے لیے ہے۔ متعلقہ ARC یا Dahi Markaz Mall میں درخواست، دستاویزات کی جانچ، verification/inspection، مجاز Land Records authority کی منظوری اور پھر ریکارڈ update شامل ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://www.punjab-zameen.gov.pk/correctionRecordsInfo";
@@ -766,8 +804,22 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
    if(isFard||isOwnership)return "## خیبر پختونخوا — فرد اور لینڈ ریکارڈ\n\nKP Revenue & Estate Department Online Fard اور کمپیوٹرائزڈ land-record services فراہم کرتا ہے۔ SDCs کے ذریعے فرد جاری کی جاتی ہے۔\n\n**سرکاری ذرائع:**\nhttps://revenue.kp.gov.pk/\nhttps://revenue.kp.gov.pk/sdcs/";
    return "## خیبر پختونخوا — لینڈ ریکارڈ خدمات\n\nKP Revenue & Estate Department کی سرکاری ویب سائٹ پر Online Fard، Fard/Mutation appointment، e-Registry اور Service Delivery Centres کی خدمات درج ہیں۔\n\n**سرکاری ذریعہ:**\nhttps://revenue.kp.gov.pk/";
   }
-  if(!hasLandTopic)return "## لینڈ اینڈ ریونیو\n\nیہ سوال منتخب کردہ سرکاری شعبے سے متعلق معلوم نہیں ہوتا۔ براہ کرم لینڈ ریکارڈ، فرد، انتقال، جائیداد کی رجسٹری یا لینڈ/ریونیو سروس سے متعلق سوال کریں۔";
+  if((jurisdiction==="Azad Jammu and Kashmir"||jurisdiction==="Gilgit-Baltistan") && hasLandTopic)return language==="Urdu"
+   ? "## لینڈ اینڈ ریونیو\n\nاس علاقے کے لیے مخصوص land-record procedure متعلقہ Revenue/Land Records authority کے موجودہ سرکاری طریقۂ کار کے مطابق مختلف ہو سکتا ہے۔ براہ کرم متعلقہ سرکاری land-record office/portal سے تازہ طریقۂ کار کی تصدیق کریں۔"
+   : "## Land & Revenue\n\nThe land-record procedure in this territory can vary by the relevant Revenue/Land Records authority. The current territory-specific procedure should be confirmed from the relevant official land-record office or portal.";\n  if(!hasLandTopic)return "## لینڈ اینڈ ریونیو\n\nیہ سوال منتخب کردہ سرکاری شعبے سے متعلق معلوم نہیں ہوتا۔ براہ کرم لینڈ ریکارڈ، فرد، انتقال، جائیداد کی رجسٹری یا لینڈ/ریونیو سروس سے متعلق سوال کریں۔";
   return "## لینڈ اینڈ ریونیو\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ سروس بتائیں، مثلاً پنجاب میں فرد یا انتقال، یا خیبر پختونخوا میں فرد، انتقال یا SDC سروس۔";
+ }
+ if(isICT){
+  if(isMutation||isPurchaseTransfer)return "## Islamabad (ICT) — Transfer of Land / Sanction of Mutation\n\nICT Administration states that the transfer/mutation process starts with the concerned Patwari, who enters the mutation in the Inteqal Mutation Register. The seller and purchaser appear before the Tehsildar / Naib-Tehsildar / Circle Revenue Officer with two witnesses. Dues are deposited in the National Bank of Pakistan and the mutation is then sanctioned. The official page says a Fard/Mutation copy may be collected from the concerned Patwari after 7 days and lists a processing time of one month.\n\n**Official source:**\nhttps://ictadministration.gov.pk/transfer-of-land-sanction-of-mutation/"; 
+  if(isRegistry)return "## Islamabad (ICT) — Deed Registration\n\nICT Administration states that deed registration involves preparing the deed, paying the applicable dues, and appearing before the Sub-Registrar at F-8 Markaz, Islamabad with the seller, purchaser and two witnesses. Original land-ownership proof and CNICs are listed among the required documents.\n\n**Official source:**\nhttps://ictadministration.gov.pk/registration-of-deed/";
+  if(isFard||isOwnership)return "## Islamabad (ICT) — Land Record / Fard\n\nFor Islamabad, ICT Administration provides the official Transfer of Land / Sanction of Mutation service. Depending on the property, CDA procedures may also apply to plot/property transfers.\n\n**Official sources:**\nhttps://ictadministration.gov.pk/transfer-of-land-sanction-of-mutation/\nhttps://cda.gov.pk/procedures";
+ }
+ if(isSindh){
+  if(isFard||isOwnership||isMutation)return "## Sindh — Land Record / Mutation\n\nThe Board of Revenue Sindh's official Sindh Zameen portal provides land-record services including Village Forms 7-A/7-B, Property Registers and registration-related services. Property Registers contain ownership and mutation records. For complete/certified information, the official portal directs citizens to the relevant Revenue Service Center.\n\n**Official sources:**\nhttps://sindhzameen.gos.pk/FAQs.aspx\nhttps://sindhzameen.gos.pk/PropertyRegister.aspx\nhttps://sindhzameen.gos.pk/";
+  if(isRegistry)return "## Sindh — Property / Registry Services\n\nThe Board of Revenue Sindh's official portal provides registry search and registration-related services and checklists.\n\n**Official source:**\nhttps://sindhzameen.gos.pk/";
+ }
+ if(isBalochistan){
+  if(isFard||isOwnership||isMutation||isRegistry||isPurchaseTransfer)return "## Balochistan — Land Record / Mutation\n\nThe Board of Revenue Balochistan is responsible for public land records and land administration. Its official information describes Markaz-e-Sahooliyat as a one-window mechanism for digital Fardat, mutations and other land-revenue services.\n\n**Official sources:**\nhttps://bor.balochistan.gov.pk/objectives/\nhttps://bor.balochistan.gov.pk/blrmis-project/";
  }
  if(isPunjab){
   if(isMutation)return "## Punjab — Mutation (Intiqal)\n\nThe Punjab Land Records Authority (PLRA) states that mutation records a change in land ownership in the official land record. The Punjab process includes CNIC biometric verification and a token at the concerned Arazi Record Centre, submission of required documents and property details, payment of applicable fees/taxes, and appearance before the authorized Revenue Officer with the relevant parties/witnesses. The Revenue Officer records statements and attests the mutation before the land record is updated.\n\n**Official sources:**\nhttps://www.punjab-zameen.gov.pk/mutationsInfo\nhttps://www.punjab-zameen.gov.pk/entryMutationsInfo";
@@ -784,7 +836,7 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
   if(isFard||isOwnership)return "## Khyber Pakhtunkhwa — Fard & Land Record\n\nThe KP Revenue & Estate Department provides Online Fard and computerized land-record services through Service Delivery Centres. Its official pages identify Fard issuance as an SDC service.\n\n**Official sources:**\nhttps://revenue.kp.gov.pk/\nhttps://revenue.kp.gov.pk/sdcs/";
   return "## Khyber Pakhtunkhwa — Land & Revenue Services\n\nThe KP Revenue & Estate Department currently lists Online Fard, Fard/Mutation appointment, e-Registry and Service Delivery Centres among its official online land services.\n\n**Official source:**\nhttps://revenue.kp.gov.pk/";
  }
- if(!hasLandTopic)return "## Land & Revenue\n\nThis question does not appear to belong to the selected government department. Please ask a question related to land records, Fard, mutation (Intiqal), property registration, or land/revenue services.";
+ if((jurisdiction==="Azad Jammu and Kashmir"||jurisdiction==="Gilgit-Baltistan") && hasLandTopic)return "## Land & Revenue\n\nThe land-record procedure in this territory can vary by the relevant Revenue/Land Records authority. The current territory-specific procedure should be confirmed from the relevant official land-record office or portal.";\n if(!hasLandTopic)return "## Land & Revenue\n\nThis question does not appear to belong to the selected government department. Please ask a question related to land records, Fard, mutation (Intiqal), property registration, or land/revenue services.";
  return "## Land & Revenue\n\nPlease specify the province or territory and the land service you need, such as Punjab Fard, Punjab mutation (Intiqal), or KP land-record services.";
 }
 function educationEvidence(question:string,jurisdiction:string|null,language:"English"|"Urdu"):string{
@@ -1049,7 +1101,7 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
    // High-confidence Land & Revenue questions must not depend on the
    // general-purpose LLM scope classifier. Fard/land-record wording is a
    // direct match for this department, including province-specific requests.
-   const landRevenueQuestion=/(fard|fards|land record|land records|mutation|intiqal|khewat|khasra|jamabandi|land ownership|property record|فرد|انتقال|جمعبندی|کھاتہ|کھاتونی|خسرا|زمین کا ریکارڈ|ملکیت)/i.test(q);
+   const landRevenueQuestion=/(fard|fards|land record|land records|mutation|intiqal|inteqal|intiqal|khewat|khasra|jamabandi|land ownership|property record|property transfer|plot transfer|transfer of plot|transfer property|transfer ownership|land transfer|registry|registration of property|فرد|انتقال|انتقال زمین|جمعبندی|کھاتہ|کھاتونی|خسرا|زمین کا ریکارڈ|ملکیت|پلاٹ|جائیداد)/i.test(q);
    if(landRevenueQuestion) return false;
 
    // A generic request such as "What documents are required?" can still be

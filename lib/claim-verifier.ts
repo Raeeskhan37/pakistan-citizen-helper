@@ -170,7 +170,7 @@ export async function verifyAnswerClaims(args: {
       if (!geminiKey) return null;
 
       const geminiModel =
-        process.env.GEMINI_VERIFIER_MODEL || "gemini-2.5-flash-lite";
+        process.env.GEMINI_VERIFIER_MODEL || "gemini-3.5-flash-lite";
       const geminiPrompt =
         "Return JSON only with a top-level claims array. Each claim item must contain claim, verdict (supported|unsupported|unclear), and reason.\\n\\n" +
         prompt;

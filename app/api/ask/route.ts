@@ -1142,6 +1142,15 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
    const governmentJobsQuestion=/(government job|government jobs|govt job|govt jobs|government vacancy|government vacancies|government recruitment|public sector job|national jobs portal|njp|job vacancy|job vacancies|job application|apply.*government job|apply.*job|government employment|سرکاری نوکری|سرکاری ملازمت|سرکاری بھرتی|ملازمت|نوکری|نیشنل جابز پورٹل)/i.test(q);
    if(governmentJobsQuestion) return false;
 
+   // Selected Government Jobs department: ordinary job-listing queries are
+   // valid even when the user does not repeat the word "government". This
+   // must run before the generic scope model, otherwise queries such as
+   // "jobs currently available in Lahore, Karachi and Peshawar" can be
+   // rejected before the live NJP source is reached.
+   const selectedGovernmentJobsListingQuestion=selectedDepartment==="Government Jobs" &&
+     /\b(?:jobs?|vacancies?|employment|careers?|recruitment|positions?|openings?)\b|نوکری|ملازمت|آسامیاں|بھرتی|روزگار/i.test(q);
+   if(selectedGovernmentJobsListingQuestion) return false;
+
    // High-confidence FBR / Taxation questions must bypass the generic
    // scope classifier. This prevents valid FBR questions containing
    // unfamiliar tax terminology (for example STRN) from being rejected.

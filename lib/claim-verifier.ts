@@ -190,25 +190,11 @@ export async function verifyAnswerClaims(args: {
             generationConfig: {
               temperature: 0,
               maxOutputTokens: MAX_COMPLETION_TOKENS,
+              // Keep Gemini fallback deliberately simple: request JSON mode and
+              // let our parser validate/normalize the returned claims. This avoids
+              // provider/model-specific schema validation failures while retaining
+              // deterministic structured output requirements in the prompt.
               responseMimeType: "application/json",
-              responseSchema: {
-                type: "OBJECT",
-                properties: {
-                  claims: {
-                    type: "ARRAY",
-                    items: {
-                      type: "OBJECT",
-                      properties: {
-                        claim: { type: "STRING" },
-                        verdict: { type: "STRING", enum: ["supported", "unsupported", "unclear"] },
-                        reason: { type: "STRING" },
-                      },
-                      required: ["claim", "verdict", "reason"],
-                    },
-                  },
-                },
-                required: ["claims"],
-              },
             },
           }),
         }

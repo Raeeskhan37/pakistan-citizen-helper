@@ -2715,7 +2715,8 @@ IMPORTANT: The official source text and official-domain search results above are
    claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
    verificationPassed=claimVerification.available && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
  }
- if(language==="Urdu"){ answer = await localizeUrduAnswer(answer); }\n const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"normal",tools:["NADRA RAG","Supabase verified knowledge","Official web research","Jurisdiction detection","Source verification","Claim-level evidence verification"],answer,evidenceAvailable:(selected.records.length>0||officialText.length>200||ragEvidence.length>200) && verificationPassed});
+ if(language==="Urdu"){ answer = await localizeUrduAnswer(answer); }
+ const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"normal",tools:["NADRA RAG","Supabase verified knowledge","Official web research","Jurisdiction detection","Source verification","Claim-level evidence verification"],answer,evidenceAvailable:(selected.records.length>0||officialText.length>200||ragEvidence.length>200) && verificationPassed});
  workflow.verification = {
    ...workflow.verification,
    passed: verificationPassed,

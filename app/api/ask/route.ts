@@ -1213,6 +1213,43 @@ Do not answer the question. Just classify it.`;
    }
  }
 
+
+// Central Urdu localization: translate explanatory prose while preserving official names, acronyms, URLs, numbers, and verified meaning.
+async function localizeUrduAnswer(answer:string):Promise<string>{
+  if(!answer || answer.length < 80) return answer;
+  const protectedTerms=new Set(["CNIC","FRC","CRC","NICOP","POC","NADRA","DLIMS","DLS","PLRA","FBR","NJP","HEC","DGI&P","ICT","KP","KPK","AJK","LTV","HTV","PSV","IDP","OTP","RAG","PDF","SMS","URL","Dastak"]);
+  const tokens=answer.match(/[A-Za-z][A-Za-z&.'/-]*/g)||[];
+  const proseEnglish=tokens.filter(token=>{
+    const clean=token.replace(/[^A-Za-z&]/g,"");
+    if(!clean || protectedTerms.has(clean.toUpperCase()) || protectedTerms.has(clean)) return false;
+    if(clean.length<=2) return false;
+    return !/^https?$/i.test(clean);
+  });
+  const commonEnglish=/\b(the|this|that|these|those|is|are|was|were|for|from|with|without|according|required|requirement|application|applicant|process|procedure|submit|submitted|available|must|should|provide|provided|current|official|renew|renewal|test|fee|fees|documents?|verification|record|records|applicable|details?|information)\b/i;
+  if(proseEnglish.length < 10 && !commonEnglish.test(answer)) return answer;
+  const system=`You are a careful Pakistani Urdu language editor.
+Rewrite ONLY the language of the supplied government-information answer into natural, clear Pakistani Urdu.
+Do not add, remove, invent, or change any factual claim, condition, qualification, amount, date, step, jurisdiction, or requirement.
+Preserve official names, acronyms, service names, organization names, URLs, numbers, and legally or technically necessary terms exactly when appropriate. In particular, keep terms such as CNIC, FRC, CRC, NADRA, DLIMS, PLRA, FBR, NJP and official website names in their established form.
+Translate ordinary explanatory English into natural Urdu. Do not transliterate every English word mechanically. Use simple Pakistani Urdu.
+Keep Markdown structure, headings, bullets, numbered lists, tables, and URLs intact.
+Return ONLY the rewritten answer.`;
+  try{
+    const response=await fetch("https://api.groq.com/openai/v1/chat/completions",{
+      method:"POST",
+      headers:{Authorization:`${GROQ_API_KEY}`,"Content-Type":"application/json"},
+      body:JSON.stringify({model:GROQ_MODEL,temperature:0.1,reasoning_effort:"low",include_reasoning:false,max_completion_tokens:2048,messages:[{role:"system",content:system},{role:"user",content:answer}]})
+    });
+    if(!response.ok) return answer;
+    const data=await response.json();
+    const localized=cleanAnswer(data?.choices?.[0]?.message?.content||"");
+    return localized.length>40 ? localized : answer;
+  }catch(error){
+    console.error("Urdu localization failed:",error);
+    return answer;
+  }
+}
+
 export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
@@ -2664,7 +2701,7 @@ IMPORTANT: The official source text and official-domain search results above are
    const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b",retryMessages))});
    if(retry.ok){const rd=await retry.json();answer=cleanAnswer(rd?.choices?.[0]?.message?.content||"")||answer;}
  }
- const verificationEvidence=[dbContext,officialText,ragEvidence].filter(Boolean).join("\n\n");
+ if(language==="Urdu"){ answer = await localizeUrduAnswer(answer); }\n const verificationEvidence=[dbContext,officialText,ragEvidence].filter(Boolean).join("\n\n");
  let claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
  const verificationAvailable=claimVerification.available;
  let verificationPassed=verificationAvailable && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;

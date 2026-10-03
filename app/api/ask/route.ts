@@ -435,13 +435,14 @@ const DEPARTMENT_ALIASES:Record<string,string[]>={
 
 function detectLandRevenueJurisdiction(question:string):string|null{
  const q=normalize(question);
- if(/(?:^|\\s)(?:in|for|from|within|of)\\s+punjab(?:$|\\s|[,.!?])/i.test(q)||q.includes("punjab mein")||q.includes("پنجاب میں"))return "Punjab";
- if(/(?:^|\\s)(?:in|for|from|within|of)\\s+sindh(?:$|\\s|[,.!?])/i.test(q)||q.includes("sindh mein")||q.includes("سندھ میں"))return "Sindh";
- if(/(?:^|\\s)(?:in|for|from|within|of)\\s+(?:khyber pakhtunkhwa|kpk|kp)(?:$|\\s|[,.!?])/i.test(q)||q.includes("khyber pakhtunkhwa mein")||q.includes("خیبر پختونخوا میں")||q.includes("خیبرپختونخوا میں"))return "Khyber Pakhtunkhwa";
- if(/(?:^|\\s)(?:in|for|from|within|of)\\s+islamabad(?:$|\\s|[,.!?])/i.test(q)||q.includes("islamabad mein")||q.includes("اسلام آباد میں")||q.includes("اسلامباد میں"))return "Islamabad Capital Territory";
- if(/(?:^|\\s)(?:in|for|from|within|of)\\s+balochistan(?:$|\\s|[,.!?])/i.test(q)||q.includes("balochistan mein")||q.includes("بلوچستان میں"))return "Balochistan";
- if(/(?:^|\\s)(?:in|for|from|within|of)\\s+(?:ajk|azad kashmir)(?:$|\\s|[,.!?])/i.test(q)||q.includes("ajk mein")||q.includes("آزاد کشمیر میں"))return "Azad Jammu and Kashmir";
- if(/(?:^|\\s)(?:in|for|from|within|of)\\s+(?:gilgit baltistan|gilgit-baltistan|gb)(?:$|\\s|[,.!?])/i.test(q)||q.includes("gilgit baltistan mein")||q.includes("گلگت بلتستان میں"))return "Gilgit-Baltistan";
+ const has=(terms:string[])=>terms.some(t=>q.includes(t));
+ if(has([" in punjab"," for punjab"," from punjab","within punjab","punjab mein","پنجاب میں"]))return "Punjab";
+ if(has([" in sindh"," for sindh"," from sindh","within sindh","sindh mein","سندھ میں"]))return "Sindh";
+ if(has([" in kpk"," for kpk"," from kpk","within kpk","kpk mein"," in kp"," for kp"," from kp","within kp","kp mein"," in khyber pakhtunkhwa"," for khyber pakhtunkhwa","khyber pakhtunkhwa mein","خیبر پختونخوا میں","خیبرپختونخوا میں"]))return "Khyber Pakhtunkhwa";
+ if(has([" in islamabad"," for islamabad"," from islamabad","within islamabad","islamabad mein","اسلام آباد میں","اسلامباد میں"]))return "Islamabad Capital Territory";
+ if(has([" in balochistan"," for balochistan"," from balochistan","within balochistan","balochistan mein","بلوچستان میں"]))return "Balochistan";
+ if(has([" in ajk"," for ajk"," from ajk","within ajk","ajk mein"," in azad kashmir","azad kashmir mein","آزاد کشمیر میں"]))return "Azad Jammu and Kashmir";
+ if(has([" in gilgit baltistan"," for gilgit baltistan","from gilgit baltistan","gilgit baltistan mein","گلگت بلتستان میں"," in gilgit-baltistan"," in gb","gb mein"]))return "Gilgit-Baltistan";
  return null;
 }
 

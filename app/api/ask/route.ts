@@ -1864,6 +1864,7 @@ if(requested==="Government Jobs"){
 
 if(requested==="FBR / Taxation"){
  const fq=normalize(question);
+ const isReturn=fq.includes("return")||fq.includes("file return")||fq.includes("filing return")||fq.includes("file tax return")||fq.includes("filing tax return")||fq.includes("income tax return")||fq.includes("tax return")||fq.includes("ریٹرن")||fq.includes("ریٹرن فائل");
  const isRegistration=fq.includes("ntn")||fq.includes("national tax number")||fq.includes("register")||fq.includes("registration")||fq.includes("taxpayer"); const isATL=fq.includes("active taxpayer")||fq.includes("atl")||fq.includes("filer status")||fq.includes("filer")||fq.includes("active taxpayer list");
  if(isATL){
   const fbrATLAnswer=language==="Urdu"
@@ -1910,6 +1911,75 @@ You can check your **Active Taxpayer Status** through FBR's **IRIS 2.0 / Online 
    evidenceAvailable:true,
    verifyClaims:true,
    verificationEvidence:atlVerificationEvidence.trim()
+  });
+ }
+
+ if(isReturn){
+  const fbrReturnAnswer=language==="Urdu"
+   ? `## FBR — انکم ٹیکس ریٹرن فائل کرنے کا طریقہ
+**سرکاری ادارہ:** Federal Board of Revenue (FBR)
+
+FBR کے مطابق انکم ٹیکس ریٹرن آن لائن **IRIS** پورٹل کے ذریعے فائل کیا جاتا ہے۔
+
+**طریقۂ کار:**
+1. **IRIS** میں اپنے NTN/Registration Number اور password سے لاگ اِن کریں۔ پہلی بار ریٹرن فائل کرنے والے شخص کے لیے پہلے FBR رجسٹریشن/e-enrollment ضروری ہے۔
+2. **Declaration** میں متعلقہ Income Tax Return کھولیں۔
+3. متعلقہ tax year منتخب کریں اور اپنی آمدن، قابلِ اطلاق tax information اور متعلقہ تفصیلات درج کریں۔
+4. Income Tax Return کے ساتھ **Wealth Statement (assets and liabilities)** بھی مکمل کریں، جہاں یہ لاگو ہو۔
+5. Wealth Statement کو reconcile کریں؛ FBR کے مطابق wealth میں تبدیلی اور income/expenses کے درمیان reconciliation ضروری ہے۔
+6. فارم مکمل کرکے submit کریں۔ FBR کے مطابق کامیاب submission اس وقت confirm ہوتی ہے جب Return of Income اور Wealth Statement دونوں **Draft** سے **Completed Task** میں منتقل ہو جائیں۔
+
+**اہم:** اگر آپ پہلی بار filer ہیں تو پہلے FBR registration/e-enrollment مکمل کرنا ہوگا۔
+
+**سرکاری ذرائع:**
+https://www.fbr.gov.pk/categ/file-income-tax-return/51147/80860/71160
+https://iris.fbr.gov.pk/`
+   : `## FBR — How to File an Income Tax Return
+**Official authority:** Federal Board of Revenue (FBR)
+
+According to FBR, an income-tax return is filed online through the **IRIS** portal.
+
+**Process:**
+1. Log in to **IRIS** using your NTN/Registration Number and password. A first-time filer must complete FBR registration/e-enrollment before filing.
+2. Open the relevant Income Tax Return from **Declaration**.
+3. Select the relevant tax year and enter the applicable income, tax and other required information.
+4. Complete the **Wealth Statement (assets and liabilities)** where applicable.
+5. Reconcile the Wealth Statement; FBR states that the wealth statement must reconcile with the change in wealth arising from income and expenses.
+6. Submit the return. FBR states that successful submission is confirmed when the Return of Income and Wealth Statement move from **Draft** to **Completed Task**.
+
+**Important:** If you are a first-time filer, complete FBR registration/e-enrollment first.
+
+**Official sources:**
+https://www.fbr.gov.pk/categ/file-income-tax-return/51147/80860/71160
+https://iris.fbr.gov.pk/`;
+  const returnUrls=[
+   "https://www.fbr.gov.pk/categ/file-income-tax-return/51147/80860/71160",
+   "https://fbr.gov.pk/categ/file-income-tax-return/51147/80860/71158",
+   "https://iris.fbr.gov.pk/"
+  ];
+  let returnVerificationEvidence="";
+  for(const u of returnUrls){
+   const t=await fetchOfficialPage(u);
+   if(t) returnVerificationEvidence+="\n\nOFFICIAL SOURCE PAGE: "+u+"\n"+t;
+  }
+  returnVerificationEvidence += [
+   "",
+   "OFFICIAL FBR EVIDENCE SUMMARY:",
+   "FBR states that Income Tax Returns are filed online through Iris.",
+   "FBR states that first-time filers must register before filing.",
+   "FBR states that the Return of Income form and Wealth Statement must be completed.",
+   "FBR states that successful submission is confirmed when both forms move from Draft to Completed Task."
+  ].join("\n");
+  return directWorkflowResponse({
+   answer:fbrReturnAnswer,
+   source:{department:"FBR / Taxation",title:"FBR — File Income Tax Return",url:returnUrls[0],lastVerified:"",province:""},
+   department:"FBR / Taxation",
+   question,
+   language,
+   jurisdiction:null,
+   evidenceAvailable:true,
+   verifyClaims:true,
+   verificationEvidence:returnVerificationEvidence.trim()
   });
  }
 

@@ -319,8 +319,8 @@ export async function getDirectNadraAnswer(question: string, language: "English"
   }
 
   // CNIC renewal is a distinct service and must not fall through to the
-  // generic AI path. This is intentionally scoped to CNIC/Smart CNIC renewal
-  // so other NADRA services keep their existing handlers unchanged.
+  // generic AI path. Keep the answer concise: give both available routes
+  // without injecting fee tables unless the citizen asks about fees.
   if (
     hasCnic &&
     /renew|renewal|تجدید/.test(q) &&
@@ -335,37 +335,39 @@ export async function getDirectNadraAnswer(question: string, language: "English"
     const body = language === "Urdu"
       ? `### CNIC Renewal — تجدید کا طریقہ
 
-NADRA کے مطابق CNIC کی تجدید **PakID موبائل ایپ** یا **NADRA Registration Centre** کے ذریعے کی جا سکتی ہے۔
+NADRA کے مطابق CNIC کی تجدید دو طریقوں سے کی جا سکتی ہے:
 
-**بنیادی طریقہ:**
-1. PakID موبائل ایپ میں sign in کریں۔
-2. **ID Documents** میں **ID Card** منتخب کرکے renewal شروع کریں۔
-3. اپنی موجودہ **CNIC number** درج کریں اور مطلوبہ verification مکمل کریں۔
-4. درخواست مکمل کرکے submit کریں۔ ضرورت پڑنے پر NADRA Registration Centre کا دورہ کیا جا سکتا ہے۔
+**1. PakID موبائل ایپ**
+- PakID ایپ میں sign in کریں۔
+- **ID Documents → ID Card** منتخب کرکے renewal شروع کریں۔
+- اپنا موجودہ **CNIC number** درج کریں اور مطلوبہ verification مکمل کریں۔
+- درخواست submit کریں۔
 
-NADRA کے مطابق renewal کے لیے بنیادی requirement **CNIC number** ہے۔ Services Charter کے مطابق card number اور biometric authentication کے ذریعے renewal کیا جا سکتا ہے اور مزید دستاویزات درکار نہیں ہوتیں۔
+**2. NADRA Registration Centre**
+- قریبی NADRA Registration Centre جائیں۔
+- اپنا موجودہ **CNIC number** فراہم کرکے renewal کے لیے درخواست دیں۔
+- NADRA کے مطابق ضرورت کے مطابق biometric verification اور photograph کے لیے مرکز کا دورہ کیا جا سکتا ہے۔
 
-**فیس:** CNIC Renewal — Normal **PKR 400**، Urgent **PKR 1,150**، Executive **PKR 2,150**۔ موجودہ NADRA fee structure میں priority timelines بالترتیب **15، 12 اور 6 دن** درج ہیں۔
-
-**اہم:** NADRA کے مطابق شہری کو card کی expiry کے بعد زیادہ سے زیادہ ایک ماہ کے اندر renewal کے لیے apply کرنا چاہیے۔
+**اہم:** CNIC renewal کے لیے بنیادی requirement **CNIC number** ہے۔
 
 **سرکاری ماخذ:** NADRA — CNIC Renewal
 https://www.nadra.gov.pk/identityDocument/cnic?action=renew`
       : `### CNIC Renewal — Procedure
 
-According to NADRA, CNIC renewal can be applied for through the **PakID mobile app** or at a **NADRA Registration Centre**.
+NADRA provides two ways to renew a CNIC:
 
-**Basic process:**
-1. Sign in to the PakID mobile app.
-2. Under **ID Documents**, select **ID Card** to start the renewal process.
-3. Enter your existing **CNIC number** and complete the required verification.
-4. Complete and submit the application. A NADRA Registration Centre visit may be required where applicable.
+**1. PakID Mobile App**
+- Sign in to the PakID app.
+- Select **ID Documents → ID Card** and start the renewal.
+- Enter your existing **CNIC number** and complete the required verification.
+- Submit the application.
 
-NADRA lists the **CNIC number** as the renewal requirement. Its Services Charter states that renewal can be processed using the card number and biometric authentication, with no further documentation required.
+**2. NADRA Registration Centre**
+- Visit a NADRA Registration Centre.
+- Provide your existing **CNIC number** and apply for renewal.
+- NADRA states that biometric verification and photograph may require a visit to a Registration Centre.
 
-**Fees:** CNIC Renewal — Normal **PKR 400**, Urgent **PKR 1,150**, Executive **PKR 2,150**. NADRA's current fee structure lists priority timelines of **15, 12 and 6 days** respectively.
-
-**Important:** NADRA states that a citizen should apply for renewal no later than one month after the card's expiry or early termination of validity.
+**Important:** The basic requirement for CNIC renewal is the **CNIC number**.
 
 **Official source:** NADRA — CNIC Renewal
 https://www.nadra.gov.pk/identityDocument/cnic?action=renew`;

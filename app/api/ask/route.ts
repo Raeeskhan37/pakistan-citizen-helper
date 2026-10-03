@@ -1138,6 +1138,14 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
    const passportServicesQuestion=/(passport|passports|new passport|renew passport|passport renewal|mrp|dgip|پاسپورٹ|نیا پاسپورٹ|نئی پاسپورٹ|پاسپورٹ تجدید|پاسپورٹ بنوانا|پاسپورٹ بنوانے|پاسپورٹ حاصل|پاسپورٹ کی تجدید)/i.test(q);
    if(passportServicesQuestion) return false;
 
+   // High-confidence NADRA Services questions must not depend on the
+   // generic scope classifier. Urdu CNIC wording is especially important
+   // because phrases such as "شناختی کارڈ گم ہو جائے" may be judged as
+   // out-of-scope by the generic model even though they are unambiguously
+   // NADRA identity-document service requests.
+   const nadraServicesQuestion=/(nadra|cnic|nicop|poc|crc|b-form|b form|pak identity|pakid|smart cnic|smart nic|smart card|identity card|شناختی کارڈ|شناختی کارڈ کا|شناختی کارڈ کی|شناختی کارڈ بنوانا|شناختی کارڈ گم|شناختی کارڈ چوری|شناختی کارڈ خراب|نادرا|ب فارم|ب-فارم|فیملی رجسٹریشن|خاندانی رجسٹریشن)/i.test(q);
+   if(nadraServicesQuestion) return false;
+
    const exciseTaxationQuestion=/(excise|token tax|vehicle registration|vehicle ownership transfer|motor vehicle|vehicle transfer|number plate|vehicle tax|property tax|professional tax|motor registration|رجسٹریشن.*گاڑی|گاڑی.*رجسٹریشن|ٹوکن ٹیکس|گاڑی.*منتقلی|ایکسائز|ٹیکس)/i.test(q);
    if(exciseTaxationQuestion) return false;
 

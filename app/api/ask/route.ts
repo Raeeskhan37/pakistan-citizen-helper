@@ -756,8 +756,8 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
  const isBalochistan=jurisdiction==="Balochistan";
  const isFard=q.includes("fard")||q.includes("فرد")||q.includes("land record")||q.includes("land records")||q.includes("زمین کا ریکارڈ")||q.includes("لینڈ ریکارڈ");
  const isGeneralFardDefinition=isFard && !jurisdiction && /^(what is|define|meaning of|what does .* mean|کیا ہے|کیا ہوتی ہے|کیا ہوتا ہے|مطلب)/i.test(q);
- const isGeneralMutationDefinition=!jurisdiction && isMutation && /^(what is|define|meaning of|what does .* mean|کیا ہے|کیا ہوتی ہے|کیا ہوتا ہے|مطلب)/i.test(q);
  const isMutation=q.includes("mutation")||q.includes("intiqal")||q.includes("inteqal")||q.includes("intikal")||q.includes("انتقال");
+ const isGeneralMutationDefinition=!jurisdiction && isMutation && /^(what is|define|meaning of|what does .* mean|کیا ہے|کیا ہوتی ہے|کیا ہوتا ہے|مطلب)/i.test(q);
  const isRegistry=q.includes("registry")||q.includes("رجسٹری")||q.includes("property registration")||q.includes("registration of property")||q.includes("register property")||q.includes("deed registration");
  const isOwnership=q.includes("ownership")||q.includes("owner")||q.includes("ملکیت");
  // Keep distinct land-service intents separate: ownership information/Fard,

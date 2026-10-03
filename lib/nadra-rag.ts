@@ -280,10 +280,13 @@ export async function getDirectNadraAnswer(question: string, language: "English"
       ? "## " + title + "\n\n" + body
       : "## " + title + "\n\n" + body;
 
-  // Definition questions must not fall into application/document branches.
-  // Keep this separate from the existing CRC application/correction logic.
-  // Simple identity-document definition questions should not trigger application checklists.
+  // Definition questions must not capture procedural questions such as
+  // "What is the procedure for renewing my CNIC?". The phrase "what is"
+  // can appear inside a procedure question, so explicitly exclude process,
+  // procedure, renewal, and step-based intent before using the definition path.
+  const isProcedureQuestion = /procedure|process|steps?|how to|renew|renewal|apply|obtain|get|طریقہ|عمل|مراحل|تجدید|بنوانے|حاصل/.test(q);
   const isDefinitionQuestion = /what is|what does .* mean|define|meaning|explain|کیا ہے|مطلب|تعریف|سمجھائیں/.test(q)
+    && !isProcedureQuestion
     && !isApply && !isDocs && !isModify && !isDuplicate && !isCancel && !isConversion;
 
   if (isDefinitionQuestion && hasCnic && !hasCrc && !hasNicop && !hasPoc) {
@@ -890,6 +893,30 @@ export async function getDirectNadraVerificationEvidence(question: string): Prom
     // Common policy foundations.
     ids.add("CHUNK-0001"); // breeder-document / prior birth-record correction rule
     ids.add("CHUNK-0019"); // Rule 13(1), change/correction framework
+
+    // CNIC renewal verification must use current official NADRA renewal
+    // evidence instead of the generic RP re-print chunks. This keeps a
+    // renewal answer tied to the actual renewal service and prevents
+    // "what is the procedure for renewing..." from being verified against
+    // unrelated generic re-print text.
+    if (/renew|renewal|تجدید/.test(q) && /cnic|smart cnic|شناختی کارڈ|شناختی/.test(q)) {
+      return [
+        "OFFICIAL NADRA EVIDENCE — CNIC RENEWAL",
+        "Source: NADRA CNIC official service page",
+        "URL: https://www.nadra.gov.pk/identityDocument/cnic?action=renew",
+        "Evidence: NADRA states that a citizen must apply for renewal at any time, but not later than one month after the date of expiry or early termination of the validity period.",
+        "Evidence: The renewal service lists the CNIC number as the requirement.",
+        "Evidence: NADRA provides CNIC renewal through the PakID mobile application and through a NADRA Registration Centre.",
+        "",
+        "Source: NADRA Services Charter",
+        "URL: https://www.nadra.gov.pk/assests/downloadsPdf/nadra-services-charter-1-0-0.pdf",
+        "Evidence: Applicants can renew an ID card by providing the card number and biometrics for authentication. No further documentation is needed.",
+        "",
+        "Source: NADRA fee structure",
+        "URL: https://www.nadra.gov.pk/feeStructure",
+        "Evidence: The current fee table lists CNIC Renewal as Normal PKR 400, Urgent PKR 1,150 and Executive PKR 2,150, with priority timelines of 15, 12 and 6 days respectively. Smart NIC renewal is listed separately."
+      ].join("\\n\\n");
+    }
 
     // Lost/stolen CNIC verification must use the actual official lost-card
     // evidence, not the generic RP chunks. CHUNK-0030/0032 only describe the

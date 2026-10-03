@@ -2701,7 +2701,7 @@ IMPORTANT: The official source text and official-domain search results above are
    const retry=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify(makeAiBody("openai/gpt-oss-120b",retryMessages))});
    if(retry.ok){const rd=await retry.json();answer=cleanAnswer(rd?.choices?.[0]?.message?.content||"")||answer;}
  }
- if(language==="Urdu"){ answer = await localizeUrduAnswer(answer); }\n const verificationEvidence=[dbContext,officialText,ragEvidence].filter(Boolean).join("\n\n");
+ const verificationEvidence=[dbContext,officialText,ragEvidence].filter(Boolean).join("\n\n");
  let claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
  const verificationAvailable=claimVerification.available;
  let verificationPassed=verificationAvailable && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
@@ -2715,7 +2715,7 @@ IMPORTANT: The official source text and official-domain search results above are
    claimVerification=await verifyAnswerClaims({answer,evidence:verificationEvidence,language});
    verificationPassed=claimVerification.available && claimVerification.unsupportedClaims.length===0 && claimVerification.unclearClaims.length===0;
  }
- const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"normal",tools:["NADRA RAG","Supabase verified knowledge","Official web research","Jurisdiction detection","Source verification","Claim-level evidence verification"],answer,evidenceAvailable:(selected.records.length>0||officialText.length>200||ragEvidence.length>200) && verificationPassed});
+ if(language==="Urdu"){ answer = await localizeUrduAnswer(answer); }\n const workflow=runFourAgentWorkflow({department:requested,question,jurisdiction:selected.jurisdiction||null,mode:"normal",tools:["NADRA RAG","Supabase verified knowledge","Official web research","Jurisdiction detection","Source verification","Claim-level evidence verification"],answer,evidenceAvailable:(selected.records.length>0||officialText.length>200||ragEvidence.length>200) && verificationPassed});
  workflow.verification = {
    ...workflow.verification,
    passed: verificationPassed,

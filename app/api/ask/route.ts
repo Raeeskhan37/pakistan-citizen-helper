@@ -1009,26 +1009,12 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
  // handles questions that do not match any of the 14 supported government domains.
  async function isOutsideSupportedDepartments(questionText:string, selectedDepartment:string):Promise<boolean>{
    const q=normalize(questionText);
-   const supportedTerms:string[]=[
-     "nadra","cnic","nicop","poc","crc","frc","b-form","pak identity","شناختی کارڈ","نادرا",
-     "passport","پاسپورٹ",
-     "union council","birth certificate","birth registration","death certificate","death registration","marriage certificate","marriage registration","nikah","divorce certificate","پیدائش","وفات","شادی","طلاق",
-     "driving licence","driving license","learner","dlims","driving test","ڈرائیونگ لائسنس",
-     "police","character certificate","police verification","fir","پولیس","ایف آئی آر",
-     "protector","overseas employment","emigrant","emigration","beoe","پروٹیکٹر","بیرون ملک ملازمت",
-     "vaccination","vaccine","polio","yellow fever","hajj","umrah","ویکسین","پولیو","حج","عمرہ",
-     "domicile","permanent residence","residence certificate","ڈومیسائل",
-     "arms licence","arms license","weapon licence","weapon license","gun licence","اسلحہ لائسنس",
-     "scholarship","hec","education","وظیفہ","اسکالرشپ","تعلیم",
-     "land record","fard","property","mutation","intiqal","revenue","زمین","فرد","انتقال","جائیداد",
-     "fbr","ntn","income tax","sales tax","tax return","iris","ٹیکس","ایف بی آر",
-     "government jobs","government job","job vacancy","vacancies","njp","سرکاری نوکری","سرکاری ملازمت",
-     "excise","vehicle registration","vehicle","token tax","گاڑی","ٹوکن ٹیکس","ایکسائز"
-   ];
-   for(let i=0;i<supportedTerms.length;i++){
-     const term=normalize(supportedTerms[i]);
-     if(term && q.includes(term)) return false;
-   }
+   // Do not treat the presence of a single supported keyword as proof that the
+   // whole question belongs to a supported department. For example, a question
+   // can mention "passport" while actually asking for an unrelated service.
+   // The strict classifier below decides whether the question belongs to any of
+   // the 14 supported domains; existing cross-department routing then handles
+   // supported-but-wrong-department questions.
 
    // Explicitly reject common services that are outside all 14 supported departments.
    // This deterministic layer runs before the model classifier so an unrelated

@@ -794,7 +794,8 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
   }
   if((jurisdiction==="Azad Jammu and Kashmir"||jurisdiction==="Gilgit-Baltistan") && hasLandTopic)return language==="Urdu"
    ? "## لینڈ اینڈ ریونیو\n\nاس علاقے کے لیے مخصوص land-record procedure متعلقہ Revenue/Land Records authority کے موجودہ سرکاری طریقۂ کار کے مطابق مختلف ہو سکتا ہے۔ براہ کرم متعلقہ سرکاری land-record office/portal سے تازہ طریقۂ کار کی تصدیق کریں۔"
-   : "## Land & Revenue\n\nThe land-record procedure in this territory can vary by the relevant Revenue/Land Records authority. The current territory-specific procedure should be confirmed from the relevant official land-record office or portal.";\n  if(!hasLandTopic)return "## لینڈ اینڈ ریونیو\n\nیہ سوال منتخب کردہ سرکاری شعبے سے متعلق معلوم نہیں ہوتا۔ براہ کرم لینڈ ریکارڈ، فرد، انتقال، جائیداد کی رجسٹری یا لینڈ/ریونیو سروس سے متعلق سوال کریں۔";
+   : "## Land & Revenue\n\nThe land-record procedure in this territory can vary by the relevant Revenue/Land Records authority. The current territory-specific procedure should be confirmed from the relevant official land-record office or portal.";
+  if(!hasLandTopic)return "## لینڈ اینڈ ریونیو\n\nیہ سوال منتخب کردہ سرکاری شعبے سے متعلق معلوم نہیں ہوتا۔ براہ کرم لینڈ ریکارڈ، فرد، انتقال، جائیداد کی رجسٹری یا لینڈ/ریونیو سروس سے متعلق سوال کریں۔";
   return "## لینڈ اینڈ ریونیو\n\nبراہ کرم صوبہ/علاقہ اور مطلوبہ سروس بتائیں، مثلاً پنجاب میں فرد یا انتقال، یا خیبر پختونخوا میں فرد، انتقال یا SDC سروس۔";
  }
  if(isICT){
@@ -824,7 +825,8 @@ function landRevenueEvidence(question:string,jurisdiction:string|null,language:"
   if(isFard||isOwnership)return "## Khyber Pakhtunkhwa — Fard & Land Record\n\nThe KP Revenue & Estate Department provides Online Fard and computerized land-record services through Service Delivery Centres. Its official pages identify Fard issuance as an SDC service.\n\n**Official sources:**\nhttps://revenue.kp.gov.pk/\nhttps://revenue.kp.gov.pk/sdcs/";
   return "## Khyber Pakhtunkhwa — Land & Revenue Services\n\nThe KP Revenue & Estate Department currently lists Online Fard, Fard/Mutation appointment, e-Registry and Service Delivery Centres among its official online land services.\n\n**Official source:**\nhttps://revenue.kp.gov.pk/";
  }
- if((jurisdiction==="Azad Jammu and Kashmir"||jurisdiction==="Gilgit-Baltistan") && hasLandTopic)return "## Land & Revenue\n\nThe land-record procedure in this territory can vary by the relevant Revenue/Land Records authority. The current territory-specific procedure should be confirmed from the relevant official land-record office or portal.";\n if(!hasLandTopic)return "## Land & Revenue\n\nThis question does not appear to belong to the selected government department. Please ask a question related to land records, Fard, mutation (Intiqal), property registration, or land/revenue services.";
+ if((jurisdiction==="Azad Jammu and Kashmir"||jurisdiction==="Gilgit-Baltistan") && hasLandTopic)return "## Land & Revenue\n\nThe land-record procedure in this territory can vary by the relevant Revenue/Land Records authority. The current territory-specific procedure should be confirmed from the relevant official land-record office or portal.";
+ if(!hasLandTopic)return "## Land & Revenue\n\nThis question does not appear to belong to the selected government department. Please ask a question related to land records, Fard, mutation (Intiqal), property registration, or land/revenue services.";
  return "## Land & Revenue\n\nPlease specify the province or territory and the land service you need, such as Punjab Fard, Punjab mutation (Intiqal), or KP land-record services.";
 }
 function educationEvidence(question:string,jurisdiction:string|null,language:"English"|"Urdu"):string{

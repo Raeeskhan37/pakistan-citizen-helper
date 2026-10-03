@@ -191,6 +191,24 @@ export async function verifyAnswerClaims(args: {
               temperature: 0,
               maxOutputTokens: MAX_COMPLETION_TOKENS,
               responseMimeType: "application/json",
+              responseSchema: {
+                type: "OBJECT",
+                properties: {
+                  claims: {
+                    type: "ARRAY",
+                    items: {
+                      type: "OBJECT",
+                      properties: {
+                        claim: { type: "STRING" },
+                        verdict: { type: "STRING", enum: ["supported", "unsupported", "unclear"] },
+                        reason: { type: "STRING" },
+                      },
+                      required: ["claim", "verdict", "reason"],
+                    },
+                  },
+                },
+                required: ["claims"],
+              },
             },
           }),
         }

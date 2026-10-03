@@ -1179,7 +1179,8 @@ Do not answer the question. Just classify it.`;
 export async function POST(request:NextRequest){try{
  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!GROQ_API_KEY)return NextResponse.json({error:"Server configuration is incomplete. Check the Vercel environment variables."},{status:500});
  const body=await request.json();const question=String(body.question??"").trim();const requested=canonicalDepartment(String(body.service??"").trim());const langInput=String(body.language??"").trim();if(!question)return NextResponse.json({error:"Please enter a question."},{status:400});const language:"English"|"Urdu"=langInput.toLowerCase()==="urdu"||isUrdu(question)?"Urdu":"English";
- const landIntentForRequest=requested==="Land & Revenue" && isLandRevenueIntentQuestion(question);\n const outsideSupportedDepartments=landIntentForRequest ? false : await isOutsideSupportedDepartments(question,requested);
+ const landIntentForRequest=requested==="Land & Revenue" && isLandRevenueIntentQuestion(question);
+ const outsideSupportedDepartments=landIntentForRequest ? false : await isOutsideSupportedDepartments(question,requested);
  if(outsideSupportedDepartments){
    const answer=language==="Urdu"
      ? `معذرت، یہ سوال پاکستان سٹیزن ہیلپر کے دستیاب 14 سرکاری شعبوں میں شامل نہیں ہے۔ براہِ کرم ${requested} سے متعلق سوال پوچھیں۔`

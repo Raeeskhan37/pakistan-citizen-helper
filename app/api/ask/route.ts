@@ -1046,6 +1046,12 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
      && /(travel|travelling|traveler|traveller|visa|work visa|employment|umrah|umra|عمرہ|hajj|haj|حج|pilgrimage|saudi|saudia|saudi arabia|پاکستان|pakistan|abroad|بیرون ملک)/i.test(q);
    if(vaccinationTravelQuestion) return false;
 
+   // High-confidence Land & Revenue questions must not depend on the
+   // general-purpose LLM scope classifier. Fard/land-record wording is a
+   // direct match for this department, including province-specific requests.
+   const landRevenueQuestion=/(fard|fards|land record|land records|mutation|intiqal|khewat|khasra|jamabandi|land ownership|property record|فرد|انتقال|جمعبندی|کھاتہ|کھاتونی|خسرا|زمین کا ریکارڈ|ملکیت)/i.test(q);
+   if(landRevenueQuestion) return false;
+
    // A generic request such as "What documents are required?" can still be
    // legitimate for the selected department. For an ambiguous/no-domain case,
    // the classifier must not treat the selected department itself as proof that

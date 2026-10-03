@@ -1565,7 +1565,7 @@ const url=`${SUPABASE_URL}/rest/v1/verified_information?select=id,service_name,c
  if(requested==="Government Jobs"){
    const gq=normalize(question);
    const mismatch=/passport|پاسپورٹ|vehicle registration|register a vehicle|vehicle|گاڑی|electricity meter|electric meter|new meter|بجلی کا میٹر|driving licence|driving license|ڈرائیونگ لائسنس|fbr|income tax|ntn|tax return|excise|token tax|birth certificate|death certificate|marriage certificate|divorce certificate|union council|domicile certificate|vaccination|vaccine|police clearance|fir|arms licence|arms license/i.test(gq);
-   const jobIntent=/government jobs?|govt jobs?|job vacancies?|vacancies?|employment|careers?|recruitment|national jobs portal|\bnjp\b|نوکری|ملازمت|بھرتی|آسامیاں|روزگار/i.test(gq);
+   const jobIntent=/government jobs?|govt jobs?|jobs?|job vacancies?|vacancies?|current jobs?|available jobs?|jobs available|list .*jobs?|employment|careers?|recruitment|national jobs portal|\bnjp\b|نوکری|ملازمت|بھرتی|آسامیاں|روزگار/i.test(gq);
 
    if(mismatch && !jobIntent){
      return directWorkflowResponse({

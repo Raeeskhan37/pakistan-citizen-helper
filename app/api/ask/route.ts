@@ -1009,24 +1009,24 @@ async function directWorkflowResponse(args:{answer:string;source:any;department:
  // handles questions that do not match any of the 14 supported government domains.
  async function isOutsideSupportedDepartments(questionText:string, selectedDepartment:string):Promise<boolean>{
    const q=normalize(questionText);
-   const supportedTerms=new Set<string>();
-   for(const terms of Object.values({
-     "NADRA Services":["nadra","cnic","nicop","poc","crc","frc","b-form","pak identity","شناختی کارڈ","نادرا"],
-     "Passport Services":["passport","پاسپورٹ"],
-     "Union Council":["union council","birth certificate","birth registration","death certificate","death registration","marriage certificate","marriage registration","nikah","divorce certificate","پیدائش","وفات","شادی","طلاق"],
-     "Driving Licence":["driving licence","driving license","learner","dlims","driving test","ڈرائیونگ لائسنس"],
-     "Police Services":["police","character certificate","police verification","fir","پولیس","ایف آئی آر"],
-     "Protector & Overseas Employment":["protector","overseas employment","emigrant","emigration","beoe","پروٹیکٹر","بیرون ملک ملازمت"],
-     "Vaccination for Travelling Abroad":["vaccination","vaccine","polio","yellow fever","hajj","umrah","ویکسین","پولیو","حج","عمرہ"],
-     "Domicile":["domicile","permanent residence","residence certificate","ڈومیسائل"],
-     "Arms Licence":["arms licence","arms license","weapon licence","weapon license","gun licence","اسلحہ لائسنس"],
-     "Education & Scholarships":["scholarship","hec","education","وظیفہ","اسکالرشپ","تعلیم"],
-     "Land & Revenue":["land record","fard","property","mutation","intiqal","revenue","زمین","فرد","انتقال","جائیداد"],
-     "FBR / Taxation":["fbr","ntn","income tax","sales tax","tax return","iris","ٹیکس","ایف بی آر"],
-     "Government Jobs":["government jobs","government job","job vacancy","vacancies","njp","سرکاری نوکری","سرکاری ملازمت"],
-     "Excise & Taxation":["excise","vehicle registration","vehicle","token tax","گاڑی","ٹوکن ٹیکس","ایکسائز"]
-   })) for(const term of terms) supportedTerms.add(normalize(term));
-   for(const term of supportedTerms){
+   const supportedTerms:string[]=[
+     "nadra","cnic","nicop","poc","crc","frc","b-form","pak identity","شناختی کارڈ","نادرا",
+     "passport","پاسپورٹ",
+     "union council","birth certificate","birth registration","death certificate","death registration","marriage certificate","marriage registration","nikah","divorce certificate","پیدائش","وفات","شادی","طلاق",
+     "driving licence","driving license","learner","dlims","driving test","ڈرائیونگ لائسنس",
+     "police","character certificate","police verification","fir","پولیس","ایف آئی آر",
+     "protector","overseas employment","emigrant","emigration","beoe","پروٹیکٹر","بیرون ملک ملازمت",
+     "vaccination","vaccine","polio","yellow fever","hajj","umrah","ویکسین","پولیو","حج","عمرہ",
+     "domicile","permanent residence","residence certificate","ڈومیسائل",
+     "arms licence","arms license","weapon licence","weapon license","gun licence","اسلحہ لائسنس",
+     "scholarship","hec","education","وظیفہ","اسکالرشپ","تعلیم",
+     "land record","fard","property","mutation","intiqal","revenue","زمین","فرد","انتقال","جائیداد",
+     "fbr","ntn","income tax","sales tax","tax return","iris","ٹیکس","ایف بی آر",
+     "government jobs","government job","job vacancy","vacancies","njp","سرکاری نوکری","سرکاری ملازمت",
+     "excise","vehicle registration","vehicle","token tax","گاڑی","ٹوکن ٹیکس","ایکسائز"
+   ];
+   for(let i=0;i<supportedTerms.length;i++){
+     const term=normalize(supportedTerms[i]);
      if(term && q.includes(term)) return false;
    }
 
